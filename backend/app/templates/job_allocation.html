@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Job Allocation - PNJ Extraction Services{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-8 max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center space-y-2">
+        <h2 class="text-4xl font-extrabold text-slate-800 font-outfit tracking-tight">Job Allocation</h2>
+        <p class="text-slate-500 font-medium">Assign engineers to jobs and manage site contacts.</p>
+    </div>
+
+    <!-- Allocation Form -->
+    <div class="card bg-white shadow-2xl border border-slate-100 overflow-hidden">
+        <div class="card-body p-8 lg:p-12">
+            <form hx-post="/job-allocation" hx-target="#form-feedback" class="space-y-8">
+
+                <div id="form-feedback" class="min-h-[1rem]"></div>
+
+                <!-- Section 1: Job Identifiers -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Job Number</label>
+                        <input type="text" name="job_number" placeholder="e.g. JN1001"
+                            class="input input-bordered focus:border-primary" required />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label font-bold text-slate-600 uppercase text-xs">Date</label>
+                            <input type="date" name="date" class="input input-bordered focus:border-primary" required />
+                        </div>
+                        <div class="form-control">
+                            <label class="label font-bold text-slate-600 uppercase text-xs">Time</label>
+                            <input type="time" name="time" class="input input-bordered focus:border-primary" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider text-[10px] uppercase tracking-widest text-slate-400 font-black">Client & Location
+                </div>
+
+                <!-- Section 2: Account Mapping -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Service Brand</label>
+                        <select name="brand_name" class="select select-bordered focus:border-primary font-medium">
+                            <option value="">No Specific Brand</option>
+                            {% for b in brands %}
+                            <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Priority Level</label>
+                        <select name="priority" class="select select-bordered focus:border-primary font-medium"
+                            required>
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Client Account</label>
+                        <select name="client_name"
+                            class="select select-bordered focus:border-primary font-bold text-indigo-700 bg-indigo-50/20"
+                            hx-get="/admin/sites-lookup" hx-target="#site-selector" hx-trigger="change" required>
+                            <option value="" disabled selected>Select Client</option>
+                            {% for client in clients %}
+                            <option value="{{ client.client_name }}">{{ client.client_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Specific Site / Venue</label>
+                        <select name="site_id" id="site-selector"
+                            class="select select-bordered focus:border-primary font-medium">
+                            <option value="">Select a client first...</option>
+                        </select>
+                        <label class="label py-1">
+                            <span class="label-text-alt text-slate-400 italic">Lookup automatically updates based on
+                                client selection.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="divider text-[10px] uppercase tracking-widest text-slate-400 font-black">Assignment & Notes
+                </div>
+
+                <!-- Section 3: Personnel -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Lead Engineer</label>
+                        <select name="engineer_name"
+                            class="select select-bordered border-primary/30 text-primary font-bold focus:border-primary"
+                            required>
+                            <option value="" disabled selected>Select Engineer</option>
+                            {% for eng in engineers %}
+                            <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Site Contact (Optional)</label>
+                        <select name="site_contact_name" class="select select-bordered font-medium">
+                            <option value="">None / New Contact</option>
+                            {% for contact in site_contacts %}
+                            <option value="{{ contact.contact_name }}">{{ contact.contact_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section 4: Notes -->
+                <div class="form-control">
+                    <label class="label font-bold text-slate-600 uppercase text-xs">Special Instructions (Report
+                        Introduction)</label>
+                    <textarea name="notes"
+                        placeholder="Enter any specific requirements or site access information... These will appear on the final report if not curated."
+                        class="textarea textarea-bordered h-28 focus:border-primary"></textarea>
+                </div>
+
+                <div class="card-actions justify-center pt-8">
+                    <button type="submit"
+                        class="btn btn-primary btn-lg w-full max-w-sm shadow-xl shadow-primary/30 font-bold text-lg">
+                        Confirm Allocation
+                        <span class="loading loading-spinner htmx-indicator"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

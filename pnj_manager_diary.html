@@ -1,0 +1,296 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PNJ Extraction Services – Manager Diary</title>
+  <style>
+    /* Base Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      background-color: #1e5bb8;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #d1d9e6;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #e8f0ff;
+      font-weight: 600;
+      color: #2a3f6b;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+
+    .status-allocated {
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    .status-in-progress {
+      color: #2196f3;
+      font-weight: bold;
+    }
+
+    .status-completed {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    .status-failed {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+
+    .details-link {
+      color: #1e5bb8;
+      text-decoration: none;
+    }
+
+    .details-link:hover {
+      text-decoration: underline;
+    }
+
+    .filter-section {
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .filter-section label {
+      margin-right: 10px;
+      font-weight: 500;
+      color: #2a3f6b;
+    }
+
+    .filter-section select, .filter-section input {
+      padding: 8px;
+      border: 1px solid #c1cbd6;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .filter-section button {
+      background-color: #1e5bb8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .filter-section button:hover {
+      background-color: #174a8e;
+    }
+
+    /* Mobile-Friendly Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      h1 {
+        font-size: 20px;
+        padding: 10px;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      th, td {
+        border: none;
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      th {
+        display: none;
+      }
+      td {
+        border-bottom: 1px solid #d1d9e6;
+        position: relative;
+        font-size: 14px;
+      }
+      td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #2a3f6b;
+        margin-bottom: 5px;
+      }
+      .filter-section {
+        padding: 10px;
+      }
+      .filter-section select, .filter-section input, .filter-section button {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 18px;
+      }
+      td {
+        font-size: 13px;
+      }
+      .filter-section select, .filter-section input, .filter-section button {
+        font-size: 13px;
+        padding: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>PNJ Extraction Services – Manager Diary</h1>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <label for="status_filter">Filter by Status:</label>
+      <select id="status_filter">
+        <option value="">All</option>
+        <option value="Allocated">Allocated</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+        <option value="Failed">Failed</option>
+      </select>
+      <label for="date_filter">Filter by Date:</label>
+      <input type="date" id="date_filter" />
+      <button onclick="filterDiary()">Apply Filters</button>
+    </div>
+
+    <!-- Diary Table -->
+    <table id="diaryTable">
+      <thead>
+        <tr>
+          <th>Job Number</th>
+          <th>Engineer</th>
+          <th>Client</th>
+          <th>Site Address</th>
+          <th>Access Time</th>
+          <th>Job Status</th>
+          <th>Report Status</th>
+          <th>Report Date</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Fetch diary data
+    async function fetchDiary(statusFilter = '', dateFilter = '') {
+      try {
+        const response = await fetch(`/wp-content/themes/your-theme/pnj_api.php?action=get_diary${statusFilter ? `&status=${statusFilter}` : ''}${dateFilter ? `&date=${dateFilter}` : ''}`);
+        const data = await response.json();
+        const tbody = document.querySelector('#diaryTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(entry => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td data-label="Job Number">${entry.job_number}</td>
+            <td data-label="Engineer">${entry.engineer_name}</td>
+            <td data-label="Client">${entry.client_brand}</td>
+            <td data-label="Site Address">${entry.site_address}</td>
+            <td data-label="Access Time">${new Date(entry.access_time).toLocaleString()}</td>
+            <td data-label="Job Status" class="status-${entry.job_status.toLowerCase()}">${entry.job_status}</td>
+            <td data-label="Report Status">${entry.report_status || 'Not Started'}</td>
+            <td data-label="Report Date">${entry.report_date ? new Date(entry.report_date).toLocaleString() : 'N/A'}</td>
+            <td data-label="Details"><a href="/job-details?job_number=${entry.job_number}" class="details-link">View</a></td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching diary:', error);
+        alert('Failed to load diary');
+      }
+    }
+
+    // Filter diary
+    function filterDiary() {
+      const statusFilter = document.querySelector('#statusFilter').value;
+      const dateFilter = document.querySelector('#dateFilter').value;
+      fetchDiary(statusFilter, dateFilter);
+    }
+
+    // Initialize diary
+    fetchDiary();
+  </script>
+</body>
+</html>

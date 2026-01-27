@@ -1,0 +1,134 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNJ Extraction Services - Engineer Diary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-900">
+    <!-- Header -->
+    <header class="bg-blue-900 text-white text-center py-4">
+        <h1 class="text-lg font-semibold">PNJ Extraction Services - Engineer Diary</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto mt-8 p-4 bg-white rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold text-blue-900 mb-6 text-center">Engineer Diary</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Job Number</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Client</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Date</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Address</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Contact Name</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Job Details</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="engineer-job-table-body">
+                    <!-- Populated dynamically via JavaScript -->
+                    <tr>
+                        <td class="py-2 px-4 border-b text-sm">JN001</td>
+                        <td class="py-2 px-4 border-b text-sm">Client A</td>
+                        <td class="py-2 px-4 border-b text-sm">2025-06-24</td>
+                        <td class="py-2 px-4 border-b text-sm">123 Main St, London</td>
+                        <td class="py-2 px-4 border-b text-sm">John Doe</td>
+                        <td class="py-2 px-4 border-b text-sm">Clean ventilation system</td>
+                        <td class="py-2 px-4 border-b text-sm">
+                            <a href="./pnj_extraction_report.html?job_number=JN001&client=Client%20A&address=123%20Main%20St,%20London&contact_name=John%20Doe" class="text-blue-600 hover:underline">Create Report</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-4 border-b text-sm">JN002</td>
+                        <td class="py-2 px-4 border-b text-sm">Client B</td>
+                        <td class="py-2 px-4 border-b text-sm">2025-06-25</td>
+                        <td class="py-2 px-4 border-b text-sm">456 High St, Manchester</td>
+                        <td class="py-2 px-4 border-b text-sm">Jane Smith</td>
+                        <td class="py-2 px-4 border-b text-sm">Inspect ductwork</td>
+                        <td class="py-2 px-4 border-b text-sm">
+                            <a href="./pnj_extraction_report.html?job_number=JN002&client=Client%20B&address=456%20High%20St,%20Manchester&contact_name=Jane%20Smith" class="text-blue-600 hover:underline">Create Report</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch engineer job data from API
+            fetch('../pnj_code/dashboard/pnj_api.php?action=get_engineer_jobs')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const tbody = document.getElementById('engineer-job-table-body');
+                        tbody.innerHTML = ''; // Clear static rows
+                        data.jobs.forEach(job => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="py-2 px-4 border-b text-sm">${job.job_number}</td>
+                                <td class="py-2 px-4 border-b text-sm">${job.client}</td>
+                                <td class="py-2 px-4 border-b text-sm">${job.date}</td>
+                                <td class="py-2 px-4 border-b text-sm">${job.address}</td>
+                                <td class="py-2 px-4 border-b text-sm">${job.contact_name}</td>
+                                <td class="py-2 px-4 border-b text-sm">${job.job_details}</td>
+                                <td class="py-2 px-4 border-b text-sm">
+                                    <a href="./pnj_extraction_report.html?job_number=${encodeURIComponent(job.job_number)}&client=${encodeURIComponent(job.client)}&address=${encodeURIComponent(job.address)}&contact_name=${encodeURIComponent(job.contact_name)}" class="text-blue-600 hover:underline">Create Report</a>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    } else {
+                        console.error('Failed to load engineer jobs:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching engineer jobs:', error);
+                });
+        });
+    </script>
+</body>
+</html>

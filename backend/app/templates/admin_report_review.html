@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Curate Report: {{ report.job_number }} - PNJ Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8 pb-32">
+    <!-- Header -->
+    <div class="flex justify-between items-start">
+        <div class="space-y-1">
+            <div class="text-xs uppercase tracking-[0.2em] font-bold text-slate-400">Quality Control / Report #{{
+                report.id }}</div>
+            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Curate Audit: {{ report.job_number }}</h2>
+            <p class="text-slate-500">Curation Mode: Finalize professional certificate details.</p>
+        </div>
+        <div class="flex gap-2">
+            <div id="save-status"></div>
+            <button form="curation-form" type="submit" class="btn btn-primary shadow-lg shadow-primary/30 font-bold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save Changes
+            </button>
+            <div id="approval-status">
+                {% if report.status == 'Approved' %}
+                <span class="badge badge-success badge-lg font-bold gap-2 py-6 px-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                    APPROVED
+                </span>
+                {% else %}
+                <button hx-post="/admin/reports/{{ report.id }}/approve" hx-target="#approval-status"
+                    class="btn btn-success text-white font-bold">
+                    Approve & Finalize
+                </button>
+                {% endif %}
+            </div>
+            <a href="/admin/reports/{{ report.id }}/download" target="_blank" class="btn btn-outline btn-square"
+                title="Download Professional PDF">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <form id="curation-form" hx-post="/admin/reports/{{ report.id }}/update" hx-target="#save-status" class="space-y-8">
+        <!-- Site Info & Risks -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-sm uppercase tracking-widest text-slate-400 mb-4">Site Information</h3>
+                    <div class="space-y-4">
+                        <div class="form-control">
+                            <label class="label text-xs font-bold text-slate-400 uppercase">Client / Site Name</label>
+                            <input type="text" name="company" value="{{ report.company }}"
+                                class="input input-bordered font-bold text-slate-700" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label text-xs font-bold text-slate-400 uppercase">Site Address</label>
+                            <textarea name="address" class="textarea textarea-bordered text-sm text-slate-500"
+                                rows="2">{{ report.address }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-sm uppercase tracking-widest text-slate-400 mb-4">Risk Scaling (1-6)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label text-xs font-bold text-slate-400 uppercase">Pre-Clean Risk</label>
+                            <input type="number" name="risk_pre" value="{{ report.risk_pre }}" min="1" max="6"
+                                class="input input-bordered text-center font-bold text-orange-500 text-2xl" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label text-xs font-bold text-slate-400 uppercase">Post-Clean Risk</label>
+                            <input type="number" name="risk_post" value="{{ report.risk_post }}" min="1" max="6"
+                                class="input input-bordered text-center font-bold text-emerald-500 text-2xl" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Cleaned Summary -->
+        <div class="card bg-white shadow-xl border border-slate-100 overflow-hidden">
+            <div class="card-body">
+                <h3 class="card-title font-outfit text-lg mb-4">Final System Summaries (Certificate Text)</h3>
+                <div class="space-y-4">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-500 text-xs uppercase">Description of system
+                            cleaned</label>
+                        <textarea name="sketch_details" class="textarea textarea-bordered font-medium"
+                            rows="3">{{ report.sketch_details or '' }}</textarea>
+                        <label class="label">
+                            <span class="label-text-alt text-slate-400 italic">Original Job Notes: {{ job.notes or
+                                'None' }}</span>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label font-bold text-slate-500 text-xs uppercase">Urgent Remedial Requirements
+                                (Page 5)</label>
+                            <textarea name="remedial_requirements"
+                                class="textarea textarea-bordered text-red-700 bg-red-50/30 border-red-100 min-h-[120px]">{{ report.remedial_requirements or '' }}</textarea>
+                        </div>
+                        <div class="form-control">
+                            <label class="label font-bold text-slate-500 text-xs uppercase">Risk Assessment Improvements
+                                (Page 5)</label>
+                            <textarea name="risk_improvements"
+                                class="textarea textarea-bordered text-blue-700 bg-blue-50/30 border-blue-100 min-h-[120px]">{{ report.risk_improvements or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Data Tables -->
+        <div class="grid grid-cols-1 gap-8">
+            <!-- Inspection Items -->
+            <div class="card bg-white shadow-xl border border-slate-100 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="card-title font-outfit text-lg">Detailed Inspection Logic</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table table-compact w-full">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-black">
+                                <tr>
+                                    <th class="p-4">Element</th>
+                                    <th class="w-40 text-center">Status</th>
+                                    <th>Technical Advice / Professional Observations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in inspection_items %}
+                                <tr>
+                                    <td class="p-4 font-bold text-slate-700">{{ item.item_name }}</td>
+                                    <td>
+                                        <select name="insp_status_{{ item.id }}"
+                                            class="select select-bordered select-sm w-full">
+                                            <option value="Pass" {% if item.pass_status %}selected{% endif %}>Compliant
+                                            </option>
+                                            <option value="Fail" {% if item.fail_status %}selected{% endif %}>Issue
+                                            </option>
+                                            <option value="N/A" {% if not item.pass_status and not item.fail_status
+                                                %}selected{% endif %}>N/A / Hidden</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="insp_advice_{{ item.id }}"
+                                            value="{{ item.advice or '' }}"
+                                            class="input input-bordered input-sm w-full" />
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Micron Readings -->
+            <div class="card bg-white shadow-xl border border-slate-100 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="card-title font-outfit text-lg">WFTT Micron Readings (Scientific Proof)</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table table-compact w-full">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-black">
+                                <tr>
+                                    <th class="p-4 w-20">Point</th>
+                                    <th>Location Description</th>
+                                    <th class="text-center w-32">Pre-Clean (μm)</th>
+                                    <th class="text-center w-32">Post-Clean (μm)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in micron_readings %}
+                                <tr>
+                                    <td class="p-4 font-black text-primary">{{ m.location }}</td>
+                                    <td>
+                                        <input type="text" name="read_desc_{{ m.id }}" value="{{ m.description }}"
+                                            class="input input-bordered input-sm w-full" />
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" name="read_pre_{{ m.id }}" value="{{ m.pre_clean or 0 }}"
+                                            class="input input-bordered input-sm w-24 text-center" />
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" name="read_post_{{ m.id }}" value="{{ m.post_clean or 0 }}"
+                                            class="input input-bordered input-sm w-24 text-center" />
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Photo Curation -->
+    <div class="card bg-white shadow-xl border border-slate-100">
+        <div class="card-body">
+            <h3 class="card-title font-outfit text-lg mb-6">Curate Visual Evidence</h3>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {% for photo in photos %}
+                <div class="group relative aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm"
+                    id="photo-{{ photo.id }}">
+                    <img src="{{ photo.photo_path | replace('backend/app/', '/') }}" class="w-full h-full object-cover">
+                    <div
+                        class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
+                        <span class="text-[10px] font-bold text-white uppercase mb-4">{{ photo.photo_type }}</span>
+                        <button hx-post="/admin/reports/{{ report.id }}/photos/delete/{{ photo.id }}"
+                            hx-target="#photo-{{ photo.id }}" hx-swap="outerHTML"
+                            class="btn btn-error btn-xs btn-outline bg-white/10 hover:bg-red-600 border-white/20">
+                            REMOVE FROM REPORT
+                        </button>
+                    </div>
+                    <div
+                        class="absolute bottom-0 left-0 right-0 bg-white/90 p-1 text-[8px] font-bold text-center truncate">
+                        {{ photo.inspection_item or 'Site Overview' }}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Add Photo Trigger -->
+                <label for="photo-upload-modal"
+                    class="aspect-video bg-slate-50 rounded-xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 hover:border-primary/30 hover:text-primary transition-all cursor-pointer group">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-8 w-8 mb-2 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-widest">Add Client Photo</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<input type="checkbox" id="photo-upload-modal" class="modal-toggle" />
+<div class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Upload Curation Photo</h3>
+        <p class="py-4 text-sm text-slate-500">Pick a professional photo to include in the final PDF certificate.</p>
+
+        <form action="/admin/reports/{{ report.id }}/photos/upload" method="POST" enctype="multipart/form-data"
+            class="space-y-4">
+            <div class="form-control">
+                <label class="label">Select Image</label>
+                <input type="file" name="photo_file" class="file-input file-input-bordered w-full" required />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label">Photo Type</label>
+                    <select name="photo_type" class="select select-bordered">
+                        <option>Before</option>
+                        <option selected>After</option>
+                        <option>Compliance</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label">Location/Item</label>
+                    <input type="text" name="photo_item" placeholder="e.g. Canopy 1" class="input input-bordered" />
+                </div>
+            </div>
+            <div class="modal-action">
+                <label for="photo-upload-modal" class="btn btn-ghost">Cancel</label>
+                <button type="submit" class="btn btn-primary">Upload & Refresh</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

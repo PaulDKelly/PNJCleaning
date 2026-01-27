@@ -1,0 +1,709 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PNJ Extraction Services – Report Sheet</title>
+  <style>
+    /* Base Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      background-color: #1e5bb8;
+      color: white;
+      padding: 12px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      font-size: 24px;
+    }
+
+    .form-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 4px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #d1d9e6;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background-color: #e8f0ff;
+      font-weight: 600;
+      color: #2a3f6b;
+    }
+    tr:nth-child(even) td {
+      background-color: #fafbfc;
+    }
+
+    .section-title {
+      background-color: #dce6ff;
+      font-weight: bold;
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 4px 4px 0 0;
+      color: #1a255b;
+      font-size: 16px;
+    }
+
+    input[type="text"], input[type="date"], textarea, input[type="file"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #c1cbd6;
+      border-radius: 4px;
+      background-color: #fbfcfd;
+    }
+    input[type="text"]:focus, input[type="date"]:focus, textarea:focus, input[type="file"]:focus {
+      border-color: #1e5bb8;
+      outline: none;
+      box-shadow: 0 0 4px rgba(30, 91, 184, 0.3);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .small-input {
+      width: 80px;
+    }
+    .wide-text {
+      width: 100%;
+    }
+    .signature-field {
+      width: 100%;
+    }
+    .signature-label {
+      display: block;
+      font-weight: 500;
+      color: #2a3f6b;
+      margin-bottom: 5px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #2a3f6b;
+      font-size: 14px;
+    }
+
+    .submit-row {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .submit-row button {
+      background-color: #1e5bb8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.2s ease;
+      width: 100%;
+      max-width: 300px;
+    }
+    .submit-row button:hover {
+      background-color: #174a8e;
+    }
+
+    /* Mobile-Friendly Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      h1 {
+        font-size: 20px;
+        padding: 10px;
+      }
+      .form-container {
+        padding: 0;
+      }
+      /* Header Section Table */
+      .header-section table, .header-section thead, .header-section tbody, .header-section th, .header-section td, .header-section tr {
+        display: block;
+      }
+      .header-section td {
+        border: none;
+        padding: 8px;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .header-section td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #2a3f6b;
+        margin-bottom: 5px;
+      }
+      /* Inspection Table */
+      .inspection-table {
+        display: block;
+      }
+      .inspection-table thead {
+        display: none; /* Hide headers in mobile view */
+      }
+      .inspection-table tbody, .inspection-table tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #d1d9e6;
+        border-radius: 4px;
+        background-color: #fff;
+      }
+      .inspection-table td {
+        display: block;
+        border: none;
+        padding: 8px;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .inspection-table td.item-cell {
+        background-color: #e8f0ff;
+        font-weight: bold;
+        color: #2a3f6b;
+        padding: 10px;
+        font-size: 15px;
+        border-bottom: 1px solid #d1d9e6;
+      }
+      .inspection-table td:not(.item-cell):before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #2a3f6b;
+        margin-bottom: 5px;
+        font-size: 13px;
+      }
+      .inspection-table .small-input {
+        width: 100%;
+        max-width: 100%;
+      }
+      /* Canopy Filter Table */
+      .filter-table table, .filter-table thead, .filter-table tbody, .filter-table th, .filter-table td, .filter-table tr {
+        display: block;
+      }
+      .filter-table thead {
+        display: none;
+      }
+      .filter-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #d1d9e6;
+        border-radius: 4px;
+        background-color: #fff;
+      }
+      .filter-table td {
+        display: block;
+        border: none;
+        padding: 8px;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .filter-table td.filter-type-cell {
+        background-color: #e8f0ff;
+        font-weight: bold;
+        color: #2a3f6b;
+        padding: 10px;
+        font-size: 15px;
+        border-bottom: 1px solid #d1d9e6;
+      }
+      .filter-table td:not(.filter-type-cell):before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        color: #2a3f6b;
+        margin-bottom: 5px;
+        font-size: 13px;
+      }
+      .submit-row button {
+        font-size: 16px;
+        padding: 12px;
+      }
+      .section-title {
+        font-size: 14px;
+        padding: 8px;
+      }
+      input[type="text"], input[type="date"], textarea, input[type="file"] {
+        font-size: 16px;
+        padding: 10px;
+      }
+      label {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 18px;
+      }
+      .inspection-table td, .filter-table td {
+        font-size: 13px;
+      }
+      .inspection-table td.item-cell, .filter-table td.filter-type-cell {
+        font-size: 14px;
+      }
+      input[type="text"], input[type="date"], textarea, input[type="file"] {
+        font-size: 14px;
+        padding: 8px;
+      }
+      .submit-row button {
+        font-size: 14px;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="form-container">
+    <h1>PNJ Extraction Services – Report Sheet</h1>
+
+    <form action="https://waylander.app.n8n.cloud/webhook-test/67ed7575-bda1-4589-a408-b82e5314e08a" method="POST" enctype="multipart/form-data" id="reportForm">
+      <!-- Hidden field for unique submission ID -->
+      <input type="hidden" name="submission_id" id="submission_id" />
+
+      <!-- Header Section -->
+      <section class="header-section">
+        <table>
+          <tr>
+            <td data-label="Company"><label for="company">Company:</label><input type="text" id="company" name="company" required /></td>
+            <td data-label="Date"><label for="date">Date:</label><input type="date" id="date" name="date" required /></td>
+          </tr>
+          <tr>
+            <td data-label="Brand"><label for="brand">Brand:</label><input type="text" id="brand" name="brand" /></td>
+            <td data-label="Time"><label for="time">Time:</label><input type="text" id="time" name="time" /></td>
+          </tr>
+          <tr>
+            <td data-label="Address"><label for="address">Address:</label><input type="text" id="address" name="address" required /></td>
+            <td data-label="Job Number"><label for="job_number">Job Number:</label><input type="text" id="job_number" name="job_number" required /></td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- Main Inspection Table -->
+      <section class="inspection-table">
+        <div class="section-title">Inspection Details</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th colspan="5">Pre-Clean Inspection</th>
+              <th>Success</th>
+              <th>Pass</th>
+              <th>Fail</th>
+              <th>Work Requirement Advice</th>
+              <th>Initial</th>
+            </tr>
+            <tr>
+              <th></th>
+              <th>VP < 250m</th>
+              <th>P</th>
+              <th>0 250m</th>
+              <th>S</th>
+              <th>0 < 500m</th>
+              <th></th>
+              <th></th>
+              <th>-</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="item-cell" data-label="Item">Canopy – Main</td>
+              <td data-label="VP < 250m"><input type="text" name="canopy_main_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="canopy_main_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="canopy_main_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="canopy_main_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="canopy_main_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="canopy_main_successed" /></td>
+              <td data-label="Pass"><input type="text" name="canopy_main_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="canopy_main_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="canopy_main_advice" /></td>
+              <td data-label="Initial"><input type="text" name="canopy_main_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Canopy – Chipper</td>
+              <td data-label="VP < 250m"><input type="text" name="canopy_chipper_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="canopy_chipper_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="canopy_chipper_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="canopy_chipper_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="canopy_chipper_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="canopy_chipper_successed" /></td>
+              <td data-label="Pass"><input type="text" name="canopy_chipper_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="canopy_chipper_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="canopy_chipper_advice" /></td>
+              <td data-label="Initial"><input type="text" name="canopy_chipper_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Main Ducting – No. of Hatches: <input type="text" name="main_ducting_hatches" class="small-input" /></td>
+              <td data-label="VP < 250m"><input type="text" name="main_ducting_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="main_ducting_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="main_ducting_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="main_ducting_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="main_ducting_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="main_ducting_successed" /></td>
+              <td data-label="Pass"><input type="text" name="main_ducting_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="main_ducting_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="main_ducting_advice" /></td>
+              <td data-label="Initial"><input type="text" name="main_ducting_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Chipper Duct – No. of Hatches: <input type="text" name="chipper_duct_hatches" class="small-input" /></td>
+              <td data-label="VP < 250m"><input type="text" name="chipper_duct_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="chipper_duct_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="chipper_duct_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="chipper_duct_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="chipper_duct_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="chipper_duct_successed" /></td>
+              <td data-label="Pass"><input type="text" name="chipper_duct_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="chipper_duct_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="chipper_duct_advice" /></td>
+              <td data-label="Initial"><input type="text" name="chipper_duct_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Extract Fan</td>
+              <td data-label="VP < 250m"><input type="text" name="extract_fan_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="extract_fan_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="extract_fan_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="extract_fan_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="extract_fan_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="extract_fan_successed" /></td>
+              <td data-label="Pass"><input type="text" name="extract_fan_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="extract_fan_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="extract_fan_advice" /></td>
+              <td data-label="Initial"><input type="text" name="extract_fan_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Attenuator/Silencers</td>
+              <td data-label="VP < 250m"><input type="text" name="attenuator_silencers_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="attenuator_silencers_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="attenuator_silencers_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="attenuator_silencers_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="attenuator_silencers_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="attenuator_silencers_successed" /></td>
+              <td data-label="Pass"><input type="text" name="attenuator_silencers_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="attenuator_silencers_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="attenuator_silencers_advice" /></td>
+              <td data-label="Initial"><input type="text" name="attenuator_silencers_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Duct Riser – No. of Hatches: <input type="text" name="duct_riser_hatches" class="small-input" /></td>
+              <td data-label="VP < 250m"><input type="text" name="duct_riser_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="duct_riser_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="duct_riser_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="duct_riser_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="duct_riser_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="duct_riser_successed" /></td>
+              <td data-label="Pass"><input type="text" name="duct_riser_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="duct_riser_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="duct_riser_advice" /></td>
+              <td data-label="Initial"><input type="text" name="duct_riser_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Electrostatic Filters</td>
+              <td data-label="VP < 250m"><input type="text" name="electrostatic_filters_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="electrostatic_filters_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="electrostatic_filters_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="electrostatic_filters_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="electrostatic_filters_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="electrostatic_filters_successed" /></td>
+              <td data-label="Pass"><input type="text" name="electrostatic_filters_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="electrostatic_filters_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="electrostatic_filters_advice" /></td>
+              <td data-label="Initial"><input type="text" name="electrostatic_filters_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">UV Ozone</td>
+              <td data-label="VP < 250m"><input type="text" name="uv_ozone_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="uv_ozone_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="uv_ozone_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="uv_ozone_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="uv_ozone_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="uv_ozone_successed" /></td>
+              <td data-label="Pass"><input type="text" name="uv_ozone_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="uv_ozone_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="uv_ozone_advice" /></td>
+              <td data-label="Initial"><input type="text" name="uv_ozone_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Carbon Filters</td>
+              <td data-label="VP < 250m"><input type="text" name="carbon_filters_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="carbon_filters_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="carbon_filters_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="carbon_filters_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="carbon_filters_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="carbon_filters_successed" /></td>
+              <td data-label="Pass"><input type="text" name="carbon_filters_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="carbon_filters_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="carbon_filters_advice" /></td>
+              <td data-label="Initial"><input type="text" name="carbon_filters_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Motor Belts</td>
+              <td data-label="VP < 250m"><input type="text" name="motor_belts_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="motor_belts_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="motor_belts_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="motor_belts_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="motor_belts_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="motor_belts_successed" /></td>
+              <td data-label="Pass"><input type="text" name="motor_belts_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="motor_belts_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="motor_belts_advice" /></td>
+              <td data-label="Initial"><input type="text" name="motor_belts_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Pre Filters</td>
+              <td data-label="VP < 250m"><input type="text" name="pre_filters_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="pre_filters_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="pre_filters_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="pre_filters_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="pre_filters_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="pre_filters_successed" /></td>
+              <td data-label="Pass"><input type="text" name="pre_filters_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="pre_filters_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="pre_filters_advice" /></td>
+              <td data-label="Initial"><input type="text" name="pre_filters_initial" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="item-cell" data-label="Item">Perfumer</td>
+              <td data-label="VP < 250m"><input type="text" name="perfumer_vp" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="perfumer_p" class="small-input" /></td>
+              <td data-label="0 250m"><input type="text" name="perfumer_d" class="small-input" /></td>
+              <td data-label="S"><input type="text" name="perfumer_s" class="small-input" /></td>
+              <td data-label="0 < 500m"><input type="text" name="perfumer_g" class="small-input" /></td>
+              <td data-label="Success"><input type="text" name="perfumer_successed" /></td>
+              <td data-label="Pass"><input type="text" name="perfumer_pass" class="small-input" /></td>
+              <td data-label="Fail"><input type="text" name="perfumer_failed" class="small-input" /></td>
+              <td data-label="Work Requirement Advice"><input type="text" name="perfumer_advice" /></td>
+              <td data-label="Initial"><input type="text" name="perfumer_initial" class="small-input" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Canopy Filter Table -->
+      <section class="filter-table">
+        <div class="section-title">Canopy Filter Details</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Filter Type</th>
+              <th>Height</th>
+              <th>Width</th>
+              <th>Depth</th>
+              <th>Quantity</th>
+              <th>P</th>
+              <th>F</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="filter-type-cell" data-label="Filter Type">Canopy</td>
+              <td data-label="Height"><input type="text" name="filter_canopy_height" class="small-input" /></td>
+              <td data-label="Width"><input type="text" name="filter_canopy_width" class="small-input" /></td>
+              <td data-label="Depth"><input type="text" name="filter_canopy_depth" class="small-input" /></td>
+              <td data-label="Quantity"><input type="text" name="filter_canopy_quantity" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="filter_canopy_p" class="small-input" /></td>
+              <td data-label="F"><input type="text" name="filter_canopy_f" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="filter-type-cell" data-label="Filter Type">S/S Baffle</td>
+              <td data-label="Height"><input type="text" name="filter_ss_baffle_height" class="small-input" /></td>
+              <td data-label="Width"><input type="text" name="filter_ss_baffle_width" class="small-input" /></td>
+              <td data-label="Depth"><input type="text" name="filter_ss_baffle_depth" class="small-input" /></td>
+              <td data-label="Quantity"><input type="text" name="filter_ss_baffle_quantity" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="filter_ss_baffle_p" class="small-input" /></td>
+              <td data-label="F"><input type="text" name="filter_ss_baffle_f" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="filter-type-cell" data-label="Filter Type">S/S Mesh</td>
+              <td data-label="Height"><input type="text" name="filter_ss_mesh_height" class="small-input" /></td>
+              <td data-label="Width"><input type="text" name="filter_ss_mesh_width" class="small-input" /></td>
+              <td data-label="Depth"><input type="text" name="filter_ss_mesh_depth" class="small-input" /></td>
+              <td data-label="Quantity"><input type="text" name="filter_ss_mesh_quantity" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="filter_ss_mesh_p" class="small-input" /></td>
+              <td data-label="F"><input type="text" name="filter_ss_mesh_f" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="filter-type-cell" data-label="Filter Type">S/S Combo</td>
+              <td data-label="Height"><input type="text" name="filter_ss_combo_height" class="small-input" /></td>
+              <td data-label="Width"><input type="text" name="filter_ss_combo_width" class="small-input" /></td>
+              <td data-label="Depth"><input type="text" name="filter_ss_combo_depth" class="small-input" /></td>
+              <td data-label="Quantity"><input type="text" name="filter_ss_combo_quantity" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="filter_ss_combo_p" class="small-input" /></td>
+              <td data-label="F"><input type="text" name="filter_ss_combo_f" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="filter-type-cell" data-label="Filter Type">Al Baffle</td>
+              <td data-label="Height"><input type="text" name="filter_al_baffle_height" class="small-input" /></td>
+              <td data-label="Width"><input type="text" name="filter_al_baffle_width" class="small-input" /></td>
+              <td data-label="Depth"><input type="text" name="filter_al_baffle_depth" class="small-input" /></td>
+              <td data-label="Quantity"><input type="text" name="filter_al_baffle_quantity" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="filter_al_baffle_p" class="small-input" /></td>
+              <td data-label="F"><input type="text" name="filter_al_baffle_f" class="small-input" /></td>
+            </tr>
+            <tr>
+              <td class="filter-type-cell" data-label="Filter Type">Al Combo</td>
+              <td data-label="Height"><input type="text" name="filter_al_combo_height" class="small-input" /></td>
+              <td data-label="Width"><input type="text" name="filter_al_combo_width" class="small-input" /></td>
+              <td data-label="Depth"><input type="text" name="filter_al_combo_depth" class="small-input" /></td>
+              <td data-label="Quantity"><input type="text" name="filter_al_combo_quantity" class="small-input" /></td>
+              <td data-label="P"><input type="text" name="filter_al_combo_p" class="small-input" /></td>
+              <td data-label="F"><input type="text" name="filter_al_combo_f" class="small-input" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Additional Details -->
+      <section>
+        <div class="section-title">Additional Details</div>
+        <div style="margin-bottom: 15px;">
+          <label for="sketch_details">Sketch Details:</label>
+          <textarea id="sketch_details" name="sketch_details" class="wide-text"></textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label for="photos_taken">Photos Taken:</label>
+          <input type="text" id="photos_taken" name="photos_taken" placeholder="Y/N" pattern="[YyNn]" />
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label for="photos">Upload Photos:</label>
+          <input type="file" id="photos" name="photos[]" multiple accept="image/*" />
+        </div>
+      </section>
+
+      <!-- Signatures -->
+      <section>
+        <div class="section-title">Signatures</div>
+        <div style="margin-bottom: 15px;">
+          <label class="signature-label" for="client_signature">Client Signature:</label>
+          <input type="text" id="client_signature" name="client_signature" class="signature-field" required />
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label class="signature-label" for="engineer_signature">Engineer Signature:</label>
+          <input type="text" id="engineer_signature" name="engineer_signature" class="signature-field" />
+        </div>
+      </section>
+
+      <!-- Submit Button -->
+      <div class="submit-row">
+        <button type="submit">Submit Report</button>
+      </div>
+    </form>
+
+    <script>
+      // Generate a unique submission ID (UUID)
+      function generateSubmissionId() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
+
+      // Set submission ID on form load
+      document.getElementById('submission_id').value = generateSubmissionId();
+
+      // Handle form submission
+      document.getElementById('reportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        try {
+          // Save to MySQL
+          const formData = new FormData(form);
+          const dbResponse = await fetch('/wp-content/themes/your-theme/pnj_api.php?action=save_report', {
+            method: 'POST',
+            body: formData
+          });
+          const dbResult = await dbResponse.json();
+          if (!dbResult.success) {
+            throw new Error(dbResult.error || 'Failed to save report to database');
+          }
+
+          // Submit to n8n
+          const n8nResponse = await fetch(form.action, {
+            method: form.method,
+            body: formData
+          });
+          if (n8nResponse.ok) {
+            alert('Report submitted successfully!');
+            form.reset();
+            document.getElementById('submission_id').value = generateSubmissionId();
+          } else {
+            const errorText = await n8nResponse.text();
+            alert(`Error submitting to n8n: ${n8nResponse.status} - ${errorText}`);
+            console.error('n8n submission error:', n8nResponse.status, errorText);
+          }
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+          console.error('Submission error:', error);
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+    </script>
+  </div>
+</body>
+</html>

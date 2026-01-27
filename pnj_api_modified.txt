@@ -1,0 +1,150 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *'); // Adjust for production
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+header('Access-Control-Allow-Headers: Content-Type');
+
+$host = 'localhost';
+$dbname = 'pnj_extraction';
+$username = 'your_mysql_username';
+$password = 'your_mysql_password';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
+    exit;
+}
+
+$action = $_GET['action'] ?? null;
+
+switch ($action) {
+    // Get all engineers
+    case 'get_engineers':
+        $stmt = $pdo->query('SELECT id, name, email, phone FROM engineers');
+        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        break;
+
+    // Save engineer
+    case 'save_engineer':
+        $data = json_decode(file_get_contents('php://input'), true);
+        $id = $data['id'] ?? null;
+        $name = $data['name'] ?? '';
+        $email = $data['email'] ?? '';
+        $phone = $data['phone'] ?? '';
+
+        if (!$name || !$email || !$phone) {
+            echo json_encode(['error' => 'All fields are required']);
+            break;
+        }
+
+        if ($id) {
+            $stmt = $pdo->prepare('UPDATE engineers SET name = ?, email = ?, phone = ? WHERE id = ?');
+            $stmt->execute([$name, $email, $phone, $id]);
+            echo json_encode(['success' => 'Engineer updated']);
+        } else {
+            $stmt = $pdo->prepare('INSERT INTO engineers (name, email, phone) VALUES (?, ?, ?)');
+            $stmt->execute([$name, $email, $phone]);
+            echo json_encode(['success' => 'Engineer added', 'id' => $pdo->lastInsertId()]);
+        }
+        break;
+
+    // Delete engineer
+    case 'delete_engineer':
+        $id = $_GET['id'] ?? null;
+        if ($id) {
+            $stmt = $pdo->prepare('DELETE FROM engineers WHERE id = ?');
+            $stmt->execute([$id]);
+            echo json_encode(['success' => 'Engineer deleted']);
+        } else {
+            echo json_encode(['error' => 'ID required']);
+        }
+        break;
+
+    // Get all clients
+    case 'get_clients':
+        $stmt = $pdo->query('SELECT id, brand, address FROM clients');
+        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        break;
+
+    // Save client
+    case 'save_client':
+        $data = json_decode(file_get_contents('php://input'), true);
+        $id = $data['id'] ?? null;
+        $brand = $data['brand'] ?? '';
+        $address = $data['address'] ?? '';
+
+        if (!$brand || !$address) {
+            echo json_encode(['error' => 'All fields required']);
+            break;
+        }
+
+        if ($id) {
+            $stmt = $pdo->prepare('UPDATE clients SET brand = ?, address = ? WHERE id = ?');
+            $stmt->execute([$brand, $address, $id]);
+            echo json_encode(['success' => 'Client updated']);
+        } else {
+            $stmt = $pdo->prepare('INSERT INTO clients (brand, address) VALUES (?, ?)');
+            $stmt->execute([$brand, $address]);
+            echo json_encode(['success' => 'Client added', 'id' => $pdo->lastInsertId()]);
+        }
+        break;
+
+    // Delete client
+    case 'delete_client':
+        $id = $_GET['id'] ?? null;
+        if ($id) {
+            $stmt = $pdo->prepare('DELETE FROM clients WHERE id = ?');
+            $stmt->execute([$id]);
+            echo json_encode(['success' => 'Client deleted']);
+        } else {
+            echo json_encode(['error' => 'ID required']);
+        }
+        break;
+
+    // Save job allocation
+    case 'save_job':
+        $data = $_POST;
+        $submission_id = $data['submission_id'] ?? '';
+        $job_number = $data['job_number'] ?? '';
+        $engineer_id = $data['engineer'] ?? '';
+        $client_id = $data['client'] ?? '';
+        $site_address = $data['site_address'] ?? '';
+        $google_maps_link = $data['google_maps_link'] ?? null;
+        $access_time = $data['access_time'] ?? '';
+        $contact_name = $data['contact_name'] ?? '';
+        $contact_phone = $data['contact_phone'] ?? '';
+        $contact_email = $data['contact_email'] ?? null;
+        $job_details = $data['job_details'] ?? '';
+        $notes = $data['notes'] ?? null;
+        $photo_count = isset($_FILES['photos']) ? count($_FILES['photos']['name']) : 0;
+
+        if (!$submission_id || !$job_number || !$engineer_id || !$client_id || !$site_address || !$access_time || !$contact_name || !$contact_phone || !$job_details) {
+            echo json_encode(['error' => 'Missing required fields']);
+            break;
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO jobs (submission_id, job_number, engineer_id, client_id, site_address, google_maps_link, access_time, contact_name, contact_phone, contact_email, job_details, notes, photo_count, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$submission_id, $job_number, $engineer_id, $client_id, $site_address, $google_maps_link, $access_time, $contact_name, $contact_phone, $contact_email, $job_details, $notes, $photo_count, 'Allocated']);
+        echo json_encode(['success' => 'Job saved']);
+        break;
+
+    // Save report
+    case 'save_report':
+        $data = $_POST;
+        $submission_id = $data['submission_id'] ?? '';
+        $job_number = $data['job_number'] ?? '';
+        $company = $data['company'] ?? '';
+        $date = $data['date'] ?? '';
+        $brand = $data['brand'] ?? null;
+        $time = $data['time'] ?? null;
+        $address = $data['address'] ?? '';
+        $photos_taken = $data['photos_taken'] ?? null;
+        $client_signature = $data['client_signature'] ?? '';
+        $engineer_signature = $data['engineer_signature'] ?? null;
+        $photo_count = isset($_FILES['photos']) ? count($_FILES['photos']['name']) : 0;
+
+        // Collect inspection data
+        $inspection_data = [];
+        $inspection_fields = ['canopy_main', 'canopy_chipper', 'main_ducting', 'chipper_duct', 'extract_fan', 'attenuator_sil

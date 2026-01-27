@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - PNJ Extraction Services{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-8 justify-center items-center h-[60vh]">
+    <div class="text-center space-y-4">
+        <h2 class="text-4xl font-bold text-slate-800 font-outfit">{{ title }}</h2>
+        <div class="badge badge-primary badge-outline">Coming Soon</div>
+        <p class="text-slate-500 max-w-md mx-auto">
+            I'm currently porting this feature from the legacy PHP system to our new high-performance Python
+            architecture.
+        </p>
+        <div class="pt-6">
+            <a href="/" class="btn btn-ghost text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

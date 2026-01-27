@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Login - PNJ Extraction Services{% endblock %}
+
+{% block auth_content %}
+<div class="flex justify-center items-center min-h-[70vh]">
+    <div class="card w-full max-w-md bg-white shadow-2xl glass-card">
+        <div class="card-body">
+            <h2 class="card-title text-3xl font-bold text-center justify-center font-outfit text-primary mb-6">Portal
+                Access</h2>
+
+            <form id="login-form" hx-post="/login" hx-target="#login-error" hx-swap="innerHTML" class="space-y-4">
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Username</span>
+                    </label>
+                    <input type="text" name="username" placeholder="Enter your username"
+                        class="input input-bordered focus:input-primary" required />
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Password</span>
+                    </label>
+                    <input type="password" name="password" placeholder="••••••••"
+                        class="input input-bordered focus:input-primary" required />
+                    <label class="label justify-end">
+                        <a href="/forgot-password" class="label-text-alt link link-hover text-slate-500">Forgot
+                            password?</a>
+                    </label>
+                </div>
+
+                <div id="login-error" class="text-error text-sm text-center min-h-[1.5rem]"></div>
+
+                <div class="form-control mt-6">
+                    <button type="submit" class="btn btn-primary font-bold shadow-lg shadow-primary/30">
+                        Login
+                        <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                <p class="text-slate-500 text-sm">Need help? Contact system administrator.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}My Jobs Queue - PNJ Extraction Services{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 pb-20">
+    <!-- Header -->
+    <div class="flex flex-col gap-1">
+        <div class="text-[10px] uppercase tracking-[0.3em] font-black text-primary">Service Team</div>
+        <h2 class="text-3xl font-black text-slate-800 font-outfit">My Jobs Queue</h2>
+        <p class="text-slate-500 text-sm">Welcome back, <strong>{{ user.username }}</strong>. Here are your assignments
+            for today.</p>
+    </div>
+
+    <!-- Job Cards (Mobile First) -->
+    <div class="grid grid-cols-1 gap-4">
+        {% for job in jobs %}
+        <div
+            class="card bg-white shadow-xl border border-slate-100 group transition-all duration-300 hover:border-primary/30">
+            <div class="card-body p-5">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex flex-col gap-1">
+                        <span class="badge badge-primary badge-sm font-mono uppercase text-[10px] font-bold">{{
+                            job.job_number }}</span>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{
+                            job.time.strftime('%H:%M') }} • {{ job.date.strftime('%d %b') }}</div>
+                    </div>
+                    <span class="badge badge-sm font-black 
+                        {% if job.priority == 'High' %}bg-rose-100 text-rose-700
+                        {% elif job.priority == 'Medium' %}bg-amber-100 text-amber-700
+                        {% else %}bg-emerald-100 text-emerald-700{% endif %} border-none">
+                        {{ job.priority }}
+                    </span>
+                </div>
+
+                <h3 class="text-xl font-bold text-slate-800 mb-1 font-outfit">
+                    {% if job.brand %}<span class="text-primary">{{ job.brand }}</span> @ {% endif %}{{ job.client_name
+                    }}
+                </h3>
+                <div class="flex items-start gap-2 text-slate-500 text-sm mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 shrink-0" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>{{ job.address or 'No address provided' }}</span>
+                </div>
+
+                {% if job.notes %}
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-4">
+                    <div class="text-[9px] uppercase font-black text-slate-400 mb-1">Manager Instructions</div>
+                    <p class="text-xs text-slate-600 italic whitespace-pre-line">{{ job.notes }}</p>
+                </div>
+                {% endif %}
+
+                <div class="pt-4 border-t border-slate-50 flex justify-between items-center">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Status: <span
+                            class="text-primary">{{ job.status }}</span></div>
+                    <a href="/extraction-report?job_number={{ job.job_number }}"
+                        class="btn btn-primary btn-sm px-6 shadow-lg shadow-primary/20 font-bold">
+                        Start Audit
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+            <div class="opacity-20 flex flex-col items-center gap-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <div class="font-black uppercase tracking-[0.2em]">Queue Empty</div>
+            </div>
+            <p class="mt-4 text-slate-400 font-medium px-10">You have no jobs currently assigned to your queue.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

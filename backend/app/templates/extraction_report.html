@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}Extraction Report - PNJ Extraction Services{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8 pb-20">
+    <!-- Header -->
+    <div class="text-center space-y-2">
+        <h2 class="text-4xl font-bold text-slate-800 font-outfit">Extraction Report</h2>
+        <p class="text-slate-500 font-medium italic">Detailed on-site inspection and service documentation.</p>
+    </div>
+
+    <form hx-post="/extraction-report" hx-encoding="multipart/form-data" hx-target="#form-feedback" class="space-y-8">
+        <div id="form-feedback" class="sticky top-20 z-50"></div>
+
+        <!-- Section 1: Job Details -->
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                    Job Information
+                    <span class="text-xs uppercase tracking-widest text-slate-400">Section 1 of 7</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Job Number</label>
+                        <input type="text" name="job_number" value="{{ job.job_number if job else '' }}"
+                            class="input input-bordered focus:border-primary" required readonly />
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Company</label>
+                        <input type="text" name="company" value="{{ job.company if job else '' }}"
+                            class="input input-bordered focus:border-primary" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Date</label>
+                        <input type="date" name="date"
+                            value="{{ job.date.strftime('%Y-%m-%d') if job and job.date else '' }}"
+                            class="input input-bordered focus:border-primary" required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Time</label>
+                        <input type="time" name="time"
+                            value="{{ job.time.strftime('%H:%M') if job and job.time else '' }}"
+                            class="input input-bordered focus:border-primary" required />
+                    </div>
+                    <div class="form-control md:col-span-2">
+                        <label class="label font-bold text-slate-600">Address</label>
+                        <textarea name="address"
+                            class="textarea textarea-bordered focus:border-primary h-20">{{ job.address if job else '' }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Brand</label>
+                        <input type="text" name="brand" value="{{ job.brand if job else '' }}"
+                            class="input input-bordered focus:border-primary" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Contact</label>
+                        <input type="text" name="contact_name" value="{{ job.contact_name }}"
+                            class="input input-bordered focus:border-primary" />
+                        <input type="hidden" name="contact_number" value="{{ job.contact_phone }}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Risk Assessment -->
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                    Risk Assessment & Classification
+                    <span class="text-xs uppercase tracking-widest text-slate-400">Section 2 of 7</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Pre-Clean Risk (1-6)</label>
+                        <select name="risk_pre" class="select select-bordered focus:border-primary">
+                            <option value="1">1 - Minimal</option>
+                            <option value="2">2 - Low</option>
+                            <option value="3" selected>3 - Moderate</option>
+                            <option value="4">4 - High</option>
+                            <option value="5">5 - Very High</option>
+                            <option value="6">6 - Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Post-Clean Risk (1-6)</label>
+                        <select name="risk_post" class="select select-bordered focus:border-primary">
+                            <option value="1" selected>1 - Low/Safe</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Cleaning Interval (Current)</label>
+                        <input type="text" name="cleaning_interval_current" placeholder="6 Months"
+                            class="input input-bordered" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Cleaning Interval (Rec.)</label>
+                        <input type="text" name="cleaning_interval_recommended" placeholder="3 Months"
+                            class="input input-bordered" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: WFTT Micron Readings -->
+        <div class="card bg-white shadow-xl border border-slate-100 overflow-hidden">
+            <div class="card-body p-0">
+                <div class="p-8">
+                    <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                        WFTT Micron Readings
+                        <span class="text-xs uppercase tracking-widest text-slate-400">Section 3 of 7</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4 italic">Record grease thickness measurements at designated
+                        points (μm).</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Point</th>
+                                <th>Location Description</th>
+                                <th>Pre-Clean</th>
+                                <th>Post-Clean</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set points = [
+                            ("T1", "Canopy/Extract Plenum"),
+                            ("T2", "Ductwork 1m from canopy"),
+                            ("T3", "Ductwork 3m from canopy"),
+                            ("T4", "Ductwork midway (Canopy/Fan)"),
+                            ("T5", "Ductwork upstream of fan"),
+                            ("T6", "Fan"),
+                            ("T7", "Discharge downstream of fan")
+                            ] %}
+                            {% for id, desc in points %}
+                            <tr>
+                                <td class="p-4 font-bold text-primary">{{ id }}</td>
+                                <td><input type="text" name="micron_desc[]" value="{{ desc }}"
+                                        class="input input-sm input-ghost w-full"></td>
+                                <td><input type="number" name="micron_pre[]" placeholder="0"
+                                        class="input input-sm input-bordered w-24"></td>
+                                <td><input type="number" name="micron_post[]" placeholder="0"
+                                        class="input input-sm input-bordered w-24"></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Inspection Details (TR/19 Items) -->
+        <div class="card bg-white shadow-xl border border-slate-100 overflow-hidden">
+            <div class="card-body p-0">
+                <div class="p-8">
+                    <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                        System Inspection Summary
+                        <span class="text-xs uppercase tracking-widest text-slate-400">Section 4 of 7</span>
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                            <tr>
+                                <th class="p-4">System Area</th>
+                                <th>Post-Clean Compliance</th>
+                                <th>Advice / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set items = [
+                            "All cooker canopies and Grease traps",
+                            "Extraction Ducting (accessible panels)",
+                            "Extraction fan and housing",
+                            "Duct run / Main Riser",
+                            "Activated Carbon Filters",
+                            "ESP Units",
+                            "UV/Ozone Filters"
+                            ] %}
+                            {% for item in items %}
+                            <tr>
+                                <td class="p-4 font-bold text-slate-700">
+                                    <input type="hidden" name="item_name[]" value="{{ item }}">
+                                    {{ item }}
+                                </td>
+                                <td>
+                                    <select name="item_compliance[]" class="select select-sm select-bordered">
+                                        <option value="Compliant">Compliant</option>
+                                        <option value="Non-Compliant">Non-Compliant</option>
+                                        <option value="N/A">N/A</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" name="item_advice[]" placeholder="Notes..."
+                                        class="input input-sm input-bordered w-full"></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Filter Inventory -->
+        <div class="card bg-white shadow-xl border border-slate-100 overflow-hidden">
+            <div class="card-body p-0">
+                <div class="p-8">
+                    <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                        Filter Inventory & Condition
+                        <span class="text-xs uppercase tracking-widest text-slate-400">Section 5 of 7</span>
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Filter Type</th>
+                                <th>Dimensions (H x W x D)</th>
+                                <th>Quantity</th>
+                                <th>Condition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set filters = ["Baffle Filter", "Mesh Filter", "Carbon Panel", "ESP Cell"] %}
+                            {% for f in filters %}
+                            <tr>
+                                <td class="p-4 font-bold text-slate-700">
+                                    <input type="hidden" name="filter_type[]" value="{{ f }}">
+                                    {{ f }}
+                                </td>
+                                <td>
+                                    <div class="flex gap-1 items-center">
+                                        <input type="number" name="filter_h[]" placeholder="H"
+                                            class="input input-sm input-bordered w-16">
+                                        <span>x</span>
+                                        <input type="number" name="filter_w[]" placeholder="W"
+                                            class="input input-sm input-bordered w-16">
+                                        <span>x</span>
+                                        <input type="number" name="filter_d[]" placeholder="D"
+                                            class="input input-sm input-bordered w-16">
+                                    </div>
+                                </td>
+                                <td><input type="number" name="filter_qty[]" placeholder="0"
+                                        class="input input-sm input-bordered w-20"></td>
+                                <td>
+                                    <select name="filter_pass[]" class="select select-sm select-bordered">
+                                        <option value="pass">Good</option>
+                                        <option value="fail">Needs Replacement</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Service Documentation -->
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                    Service Documentation
+                    <span class="text-xs uppercase tracking-widest text-slate-400">Section 6 of 7</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Urgent Remedial Requirements</label>
+                        <textarea name="remedial_requirements" placeholder="Immediate safety issues..."
+                            class="textarea textarea-bordered h-24 focus:border-primary"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Recommended Risk Improvements</label>
+                        <textarea name="risk_improvements" placeholder="Suggestions for the client..."
+                            class="textarea textarea-bordered h-24 focus:border-primary"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Sketch Details</label>
+                        <textarea name="sketch_details" placeholder="Describe the system layout..."
+                            class="textarea textarea-bordered h-28 focus:border-primary"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Internal Cleaning Summary</label>
+                        <textarea name="photos_taken" placeholder="Brief summary of work done..."
+                            class="textarea textarea-bordered h-28 focus:border-primary"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: Photo Evidence -->
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                    Photo Evidence (Before/After)
+                    <span class="text-xs uppercase tracking-widest text-slate-400">Section 7 of 7</span>
+                </h3>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-bold text-slate-600">Capture Site Photos</span>
+                        <span class="label-text-alt text-slate-400">Take multiple photos of canopies, ducts, and
+                            fans.</span>
+                    </label>
+                    <input type="file" name="photos" multiple accept="image/*" capture="environment"
+                        class="file-input file-input-bordered file-input-primary w-full" />
+                </div>
+                <div class="alert alert-info mt-4 py-2 text-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        class="stroke-current shrink-0 w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>On mobile devices, you can snap photos directly using the camera.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 8: Signatures -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700 font-outfit text-lg mb-4">Client Verification</h3>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-500">Name / Signature</label>
+                        <input type="text" name="client_signature" placeholder="Print Name"
+                            class="input input-bordered focus:border-primary" />
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700 font-outfit text-lg mb-4">Engineer Completion</h3>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-500">Engineer Signature</label>
+                        <input type="text" name="engineer_signature" value="{{ user.username }}"
+                            class="input input-bordered focus:border-primary font-bold text-primary" required />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-center pt-8">
+            <button type="submit"
+                class="btn btn-primary btn-lg w-full max-w-md shadow-2xl shadow-primary/40 font-bold text-lg">
+                Complete & Submit Report
+                <span class="loading loading-spinner htmx-indicator"></span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

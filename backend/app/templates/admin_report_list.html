@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Report Review - PNJ Admin{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Quality Control</h2>
+            <p class="text-slate-500">Review and approve engineer extraction reports before client delivery.</p>
+        </div>
+    </div>
+
+    <!-- Report List Table -->
+    <div class="card bg-white shadow-xl">
+        <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full shadow-inner">
+                    <thead class="bg-slate-50 uppercase text-xs text-slate-500 font-bold">
+                        <tr>
+                            <th class="p-4 text-center w-16">ID</th>
+                            <th>Job Number</th>
+                            <th>Company / Site</th>
+                            <th>Submitted Date</th>
+                            <th>Engineer</th>
+                            <th>Status</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                        <tr>
+                            <td class="p-4 text-center font-bold text-slate-400">#{{ r.id }}</td>
+                            <td class="font-bold text-primary">{{ r.job_number }}</td>
+                            <td>
+                                <div class="font-semibold text-slate-700">{{ r.company }}</div>
+                                <div class="text-[10px] text-slate-400 truncate w-48">{{ r.address }}</div>
+                            </td>
+                            <td class="text-sm">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td class="text-sm font-medium">{{ r.engineer_signature or 'Unknown' }}</td>
+                            <td>
+                                <span class="badge badge-sm font-bold
+                                    {% if r.status == 'Approved' %}badge-success
+                                    {% elif r.status == 'Submitted' %}badge-warning
+                                    {% else %}badge-ghost{% endif %}">
+                                    {{ r.status }}
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <a href="/admin/reports/{{ r.id }}"
+                                    class="btn btn-ghost btn-xs text-primary font-bold">Review</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-20 text-slate-400">No reports submitted for review.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

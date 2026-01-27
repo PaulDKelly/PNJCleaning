@@ -1,0 +1,217 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNJ Extraction Services</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <header class="bg-blue-900 text-white">
+        <nav class="max-w-6xl mx-auto p-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-lg font-semibold">PNJ Extraction Services</h1>
+                <ul id="nav-links" class="flex space-x-4" style="display: none;">
+                    <li><a href="#" onclick="showSection('dashboard')" class="px-3 py-2 bg-blue-700 rounded hover:bg-blue-600">Dashboard</a></li>
+                    <li><a href="#" onclick="showSection('manager-diary')" class="px-3 py-2 hover:bg-blue-600 rounded">Manager Diary</a></li>
+                    <li><a href="#" onclick="showSection('job-diary')" class="px-3 py-2 hover:bg-blue-600 rounded">Job Diary</a></li>
+                    <li><a href="./pnj_job_allocation_form.html" class="px-3 py-2 hover:bg-blue-600 rounded">Job Allocation</a></li>
+                    <li><a href="#" onclick="showSection('extraction-report')" class="px-3 py-2 hover:bg-blue-600 rounded">Extraction Report</a></li>
+                    <li><a href="#" onclick="logout()" class="px-3 py-2 hover:bg-blue-600 rounded">Logout</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="max-w-6xl mx-auto p-4">
+        <div id="login-section" class="login-section">
+            <h2 class="text-2xl font-bold mb-4">Login</h2>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium">Username</label>
+                    <input type="text" id="username" name="username" class="mt-1 w-full p-2 border border-gray-300 rounded" required>
+                    <span id="username-error" class="text-red-500 text-sm hidden">Please enter a username.</span>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium">Password</label>
+                    <input type="password" id="password" name="password" class="mt-1 w-full p-2 border border-gray-300 rounded" required>
+                    <span id="password-error" class="text-red-500 text-sm hidden">Please enter a password.</span>
+                </div>
+                <button type="submit" class="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600">Login</button>
+            </form>
+        </div>
+
+        <div id="dashboard-section" class="dashboard-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 border border-gray-300 rounded">
+                    <h3 class="text-lg font-semibold">Total Jobs</h3>
+                    <p id="total-jobs" class="text-2xl">Loading...</p>
+                    <p class="text-sm text-gray-500">Scheduled this month</p>
+                </div>
+                <div class="bg-white p-4 border border-gray-300 rounded">
+                    <h3 class="text-lg font-semibold">Active Engineers</h3>
+                    <p id="active-engineers" class="text-2xl">Loading...</p>
+                    <p class="text-sm text-gray-500">Currently assigned</p>
+                </div>
+                <div class="bg-white p-4 border border-gray-300 rounded">
+                    <h3 class="text-lg font-semibold">Companies</h3>
+                    <p id="active-companies" class="text-2xl">Loading...</p>
+                    <p class="text-sm text-gray-500">Active accounts</p>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Recent Jobs</h2>
+            <table class="w-full border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border border-gray-300 p-2 text-left">Job Number</th>
+                        <th class="border border-gray-300 p-2 text-left">Company</th>
+                        <th class="border border-gray-300 p-2 text-left">Date</th>
+                        <th class="border border-gray-300 p-2 text-left">Status</th>
+                        <th class="border border-gray-300 p-2 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-jobs">
+                    <tr><td colspan="5" class="border border-gray-300 p-2">Loading jobs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData(url, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            try {
+                const response = await fetch(url, options);
+                const headers = Object.fromEntries(response.headers.entries());
+                console.log(`Response headers for ${url}:`, headers);
+                let data;
+                const text = await response.text();
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error(`Raw response body for ${url}:`, text);
+                    throw new Error(`Invalid JSON: ${e.message}, body: ${text}`);
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}, headers: ${JSON.stringify(headers)}`);
+                }
+                console.log(`Fetch success for ${url}:`, data);
+                return data;
+            } catch (error) {
+                console.error(`Fetch error for ${url}:`, error);
+                throw error;
+            }
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.login-section, .dashboard-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${section}-section`)?.classList.remove('hidden');
+            if (section !== 'login') {
+                document.getElementById('nav-links').style.display = 'flex';
+                if (section === 'dashboard') {
+                    loadDashboardData();
+                }
+            } else {
+                document.getElementById('nav-links').style.display = 'none';
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            document.getElementById('username-error').classList.toggle('hidden', !!username);
+            document.getElementById('password-error').classList.toggle('hidden', !!password);
+            if (!username || !password) {
+                isValid = false;
+            }
+            return isValid;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validateForm()) return;
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const data = await fetchData('https://dev.innovai.co.uk/pnj/pnj_api_test.php?action=login', 'POST', { username, password });
+                console.log('Login response:', data);
+
+                if (data.success) {
+                    alert('Login successful!');
+                    showSection('dashboard');
+                } else {
+                    alert('Login failed: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Network error: ' + error.message);
+            }
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Fetch unallocated jobs
+                const jobsData = await fetchData('https://dev.innovai.co.uk/pnj/pnj_api.php?action=get_unallocated_jobs');
+                console.log('Jobs data:', jobsData);
+                const jobsTable = document.getElementById('recent-jobs');
+                jobsTable.innerHTML = '';
+                if (jobsData.success && jobsData.jobs.length > 0) {
+                    jobsData.jobs.forEach(job => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="border border-gray-300 p-2">${job.job_number}</td>
+                            <td class="border border-gray-300 p-2">${job.company_name}</td>
+                            <td class="border border-gray-300 p-2">${job.date}</td>
+                            <td class="border border-gray-300 p-2">${job.priority}</td>
+                            <td class="border border-gray-300 p-2"><a href="#" onclick="viewJob('${job.job_number}')" class="text-blue-600 hover:underline">View</a></td>
+                        `;
+                        jobsTable.appendChild(row);
+                    });
+                } else {
+                    jobsTable.innerHTML = '<tr><td colspan="5" class="border border-gray-300 p-2">No unallocated jobs found</td></tr>';
+                }
+
+                // Fetch companies
+                const companiesData = await fetchData('https://dev.innovai.co.uk/pnj/pnj_api.php?action=get_companies');
+                console.log('Companies data:', companiesData);
+                document.getElementById('active-companies').textContent = companiesData.success ? companiesData.companies.length : 'Error';
+
+                // Fetch engineers
+                const engineersData = await fetchData('https://dev.innovai.co.uk/pnj/pnj_api.php?action=get_engineers');
+                console.log('Engineers data:', engineersData);
+                document.getElementById('active-engineers').textContent = engineersData.success ? engineersData.engineers.length : 'Error';
+
+                // Update total jobs
+                document.getElementById('total-jobs').textContent = jobsData.success ? jobsData.jobs.length : 'Error';
+            } catch (error) {
+                console.error('Dashboard data error:', error);
+                alert('Error loading dashboard data: ' + error.message);
+            }
+        }
+
+        function viewJob(jobNumber) {
+            alert(`Viewing job: ${jobNumber}`);
+            // Add logic to view job details
+        }
+
+        function logout() {
+            alert('Logged out');
+            showSection('login');
+        }
+    </script>
+</body>
+</html>
+```

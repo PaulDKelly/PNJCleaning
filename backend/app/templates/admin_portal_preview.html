@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Client Portal Preview Selector - PNJ Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8 pb-32">
+    <!-- Header -->
+    <div class="space-y-1">
+        <div class="text-xs uppercase tracking-[0.2em] font-bold text-slate-400">Administration / Portal Experience
+        </div>
+        <h2 class="text-3xl font-bold text-slate-800 font-outfit">Portal Preview Selector</h2>
+        <p class="text-slate-500">Pick a client to preview exactly what they see in their secure portal.</p>
+    </div>
+
+    <!-- Client Selection List -->
+    <div class="card bg-white shadow-xl border border-slate-100">
+        <div class="card-body">
+            <h3 class="card-title text-slate-700 mb-6 font-outfit text-xl">Select Client Portfolio</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for c in clients %}
+                <a href="/portal/{{ c.portal_token }}"
+                    class="p-6 bg-slate-50 border border-slate-100 rounded-2xl hover:bg-slate-100 transition-all flex justify-between items-center group">
+                    <div class="space-y-1">
+                        <div class="font-bold text-slate-800 group-hover:text-primary transition-colors text-lg">{{
+                            c.client_name }}</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-black">{{ c.company or 'Independent' }}
+                        </div>
+                    </div>
+                    <div class="bg-white p-2 rounded-lg shadow-sm group-hover:translate-x-1 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </a>
+                {% else %}
+                <div class="col-span-2 text-center py-12 text-slate-400 italic">No clients found in the system.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 bg-indigo-50 border border-indigo-100 rounded-2xl flex gap-4 items-center">
+        <div class="bg-indigo-600 text-white p-3 rounded-xl shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+        </div>
+        <div>
+            <h4 class="font-bold text-slate-800">Quality Control Preview</h4>
+            <p class="text-xs text-slate-500">This allows you to verify that reports are correctly archived and the
+                branding appears exactly how your customers will experience it.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

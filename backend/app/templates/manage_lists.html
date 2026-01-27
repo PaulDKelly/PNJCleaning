@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}Administrators Panel - PNJ Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8 pb-32">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div class="space-y-1">
+            <div class="text-xs uppercase tracking-[0.2em] font-bold text-slate-400">System Control / Administrators
+                Panel</div>
+            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Administrators Panel</h2>
+            <p class="text-slate-500">Add, edit, or remove core project entities.</p>
+        </div>
+    </div>
+
+    <!-- Main Tabs -->
+    <div role="tablist" class="tabs tabs-lifted">
+
+        <!-- Tab 1: Clients & Sites -->
+        <input type="radio" name="manager_tabs" role="tab" class="tab font-bold" aria-label="Clients & Sites" checked />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Add Client Section -->
+                <div class="card bg-white border border-slate-100 shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Add New Client</h3>
+                        <form action="/admin/manage/clients/add" method="POST" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Client Reference
+                                    Name</label>
+                                <input type="text" name="client_name" placeholder="e.g. Greene King"
+                                    class="input input-bordered" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Full Trading
+                                    Name</label>
+                                <input type="text" name="company" placeholder="Greene King Brewing & Retailing Ltd"
+                                    class="input input-bordered" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Main Office
+                                    Address</label>
+                                <textarea name="address" class="textarea textarea-bordered h-20"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">Add Client</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Add Site Section -->
+                <div class="card bg-white border border-slate-100 shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Add Site to Client</h3>
+                        <form action="/admin/manage/sites/add" method="POST" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Select Client</label>
+                                <select name="client_name" class="select select-bordered" required>
+                                    <option disabled selected>Pick a client</option>
+                                    {% for c in clients %}
+                                    <option value="{{ c.client_name }}">{{ c.client_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Site Name</label>
+                                <input type="text" name="site_name" placeholder="e.g. The Red Lion"
+                                    class="input input-bordered" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Site Address</label>
+                                <textarea name="address" class="textarea textarea-bordered h-20" required></textarea>
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Assign Brand
+                                    (Optional)</label>
+                                <select name="brand_name" class="select select-bordered">
+                                    <option value="">None</option>
+                                    {% for b in brands %}
+                                    <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success text-white w-full">Add Site</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Table -->
+            <div class="card bg-white border border-slate-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700 mb-4">Client Portfolio</h3>
+                    <div class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead>
+                                <tr class="text-slate-400 uppercase text-[10px]">
+                                    <th>Client / Company</th>
+                                    <th>Sites Linked</th>
+                                    <th>Portal Access</th>
+                                    <th class="text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in clients %}
+                                <tr>
+                                    <td>
+                                        <div class="font-bold text-slate-800">{{ c.client_name }}</div>
+                                        <div class="text-[10px] text-slate-400 truncate w-64">{{ c.company or '-' }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% set site_count = sites | selectattr('client_name', 'equalto', c.client_name)
+                                        | list | length %}
+                                        <span class="badge badge-ghost">{{ site_count }} sites</span>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <div class="text-[10px] bg-slate-100 p-1 rounded font-mono truncate w-32">
+                                                /portal/{{ c.portal_token[:8] }}...</div>
+                                            <button class="btn btn-ghost btn-xs text-primary"
+                                                onclick="navigator.clipboard.writeText(window.location.origin + '/portal/{{ c.portal_token }}'); alert('Link copied!')">Copy</button>
+                                        </div>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="flex justify-end gap-1">
+                                            <label for="edit-client-{{ c.client_name|replace(' ', '-') }}"
+                                                class="btn btn-ghost btn-xs text-primary">Edit</label>
+                                            <button hx-delete="/admin/manage/clients/{{ c.client_name }}"
+                                                hx-target="closest tr" hx-confirm="Delete client?"
+                                                class="btn btn-ghost btn-xs text-error">Delete</button>
+                                        </div>
+
+                                        <!-- Edit Client Modal -->
+                                        <input type="checkbox" id="edit-client-{{ c.client_name|replace(' ', '-') }}"
+                                            class="modal-toggle" />
+                                        <div class="modal text-left">
+                                            <div class="modal-box">
+                                                <h3 class="font-bold text-lg">Edit Client: {{ c.client_name }}</h3>
+                                                <form action="/admin/manage/clients/edit/{{ c.client_name }}"
+                                                    method="POST" class="space-y-4 mt-4">
+                                                    <div class="form-control">
+                                                        <label
+                                                            class="label text-xs font-bold uppercase text-slate-400">Trading
+                                                            Name</label>
+                                                        <input type="text" name="company" value="{{ c.company or '' }}"
+                                                            class="input input-bordered" />
+                                                    </div>
+                                                    <div class="form-control">
+                                                        <label
+                                                            class="label text-xs font-bold uppercase text-slate-400">Head
+                                                            Office Address</label>
+                                                        <textarea name="address"
+                                                            class="textarea textarea-bordered h-24">{{ c.address or '' }}</textarea>
+                                                    </div>
+                                                    <div class="modal-action">
+                                                        <label for="edit-client-{{ c.client_name|replace(' ', '-') }}"
+                                                            class="btn btn-ghost">Cancel</label>
+                                                        <button type="submit" class="btn btn-primary">Save
+                                                            Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registered Venues List -->
+            <div class="card bg-white border border-slate-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700 mb-4">Registered Venues (Sites)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead>
+                                <tr class="text-slate-400 uppercase text-[10px]">
+                                    <th>Client</th>
+                                    <th>Site Venue</th>
+                                    <th>Brand</th>
+                                    <th class="text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in sites %}
+                                <tr class="hover">
+                                    <td class="text-[10px] font-black uppercase text-slate-400">{{ s.client_name }}</td>
+                                    <td>
+                                        <div class="font-bold text-slate-800">{{ s.site_name }}</div>
+                                        <div class="text-[10px] text-slate-400 truncate w-64">{{ s.address or '-' }}
+                                        </div>
+                                    </td>
+                                    <td><span class="badge badge-outline badge-xs">{{ s.brand_name or 'Independent'
+                                            }}</span></td>
+                                    <td class="text-right">
+                                        <div class="flex justify-end gap-1">
+                                            <label for="edit-site-{{ s.id }}"
+                                                class="btn btn-ghost btn-xs text-primary">Edit</label>
+                                            <button hx-delete="/admin/manage/sites/{{ s.id }}" hx-target="closest tr"
+                                                hx-confirm="Remove this site?"
+                                                class="btn btn-ghost btn-xs text-error">Delete</button>
+                                        </div>
+
+                                        <!-- Edit Site Modal -->
+                                        <input type="checkbox" id="edit-site-{{ s.id }}" class="modal-toggle" />
+                                        <div class="modal text-left">
+                                            <div class="modal-box">
+                                                <h3 class="font-bold text-lg">Edit Site: {{ s.site_name }}</h3>
+                                                <form action="/admin/manage/sites/edit/{{ s.id }}" method="POST"
+                                                    class="space-y-4 mt-4">
+                                                    <div class="form-control">
+                                                        <label
+                                                            class="label text-xs font-bold uppercase text-slate-400">Site
+                                                            Name</label>
+                                                        <input type="text" name="site_name" value="{{ s.site_name }}"
+                                                            class="input input-bordered" required />
+                                                    </div>
+                                                    <div class="form-control">
+                                                        <label
+                                                            class="label text-xs font-bold uppercase text-slate-400">Site
+                                                            Address</label>
+                                                        <textarea name="address"
+                                                            class="textarea textarea-bordered h-24">{{ s.address or '' }}</textarea>
+                                                    </div>
+                                                    <div class="form-control">
+                                                        <label
+                                                            class="label text-xs font-bold uppercase text-slate-400">Franchise
+                                                            Brand</label>
+                                                        <select name="brand_name" class="select select-bordered">
+                                                            <option value="">None</option>
+                                                            {% for b in brands %}
+                                                            <option value="{{ b.brand_name }}" {% if
+                                                                s.brand_name==b.brand_name %}selected{% endif %}>{{
+                                                                b.brand_name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="modal-action">
+                                                        <label for="edit-site-{{ s.id }}"
+                                                            class="btn btn-ghost">Cancel</label>
+                                                        <button type="submit" class="btn btn-primary">Save
+                                                            Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Brands -->
+        <input type="radio" name="manager_tabs" role="tab" class="tab font-bold" aria-label="Franchise Brands" />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card bg-white border border-slate-100 shadow-sm h-fit">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Add Brand</h3>
+                        <form action="/admin/manage/brands/add" method="POST" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Brand
+                                    Name</label>
+                                <input type="text" name="brand_name" placeholder="e.g. KFC" class="input input-bordered"
+                                    required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">Save Brand</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 card bg-white border border-slate-100 shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Global Brands</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {% for b in brands %}
+                            <div
+                                class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 group">
+                                <span class="font-bold text-slate-700">{{ b.brand_name }}</span>
+                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                    <label for="edit-brand-{{ b.id }}"
+                                        class="text-slate-300 hover:text-primary cursor-pointer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </label>
+                                    <button hx-delete="/admin/manage/brands/{{ b.id }}" hx-target="closest div"
+                                        hx-swap="outerHTML" class="text-slate-300 hover:text-red-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Edit Brand Modal -->
+                                <input type="checkbox" id="edit-brand-{{ b.id }}" class="modal-toggle" />
+                                <div class="modal">
+                                    <div class="modal-box">
+                                        <h3 class="font-bold text-lg">Edit Brand</h3>
+                                        <form action="/admin/manage/brands/edit/{{ b.id }}" method="POST"
+                                            class="space-y-4 mt-4 text-left">
+                                            <div class="form-control">
+                                                <label class="label">Brand Name</label>
+                                                <input type="text" name="brand_name" value="{{ b.brand_name }}"
+                                                    class="input input-bordered" required />
+                                            </div>
+                                            <div class="modal-action">
+                                                <label for="edit-brand-{{ b.id }}" class="btn btn-ghost">Cancel</label>
+                                                <button type="submit" class="btn btn-primary">Save
+                                                    Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Engineers -->
+        <input type="radio" name="manager_tabs" role="tab" class="tab font-bold" aria-label="Engineers Team" />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="card bg-white border border-slate-100 shadow-sm h-fit">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Add Engineer</h3>
+                        <form action="/admin/manage/engineers/add" method="POST" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Full
+                                    Name</label>
+                                <input type="text" name="contact_name" class="input input-bordered" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Email
+                                    Address</label>
+                                <input type="email" name="email" class="input input-bordered" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Phone
+                                    Number</label>
+                                <input type="text" name="phone" class="input input-bordered" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Home Address</label>
+                                <textarea name="address" class="textarea textarea-bordered h-20"
+                                    placeholder="Engineer center of operations..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full">Register Engineer</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 card bg-white border border-slate-100 shadow-sm">
+                    <div class="card-body h-[400px] overflow-y-auto">
+                        <h3 class="card-title text-slate-700 mb-4">Current Team</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% for e in engineers %}
+                            <div
+                                class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center group">
+                                <div class="flex gap-3 items-center">
+                                    <div class="avatar placeholder">
+                                        <div class="bg-primary text-white rounded-full w-10">
+                                            <span class="text-xs">{{ e.contact_name[:1] }}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800">{{ e.contact_name }}</div>
+                                        <div class="text-[10px] text-slate-400">{{ e.email or 'No email' }}</div>
+                                        {% if e.address %}
+                                        <div class="text-[10px] text-slate-400 italic truncate w-32">{{ e.address }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-all items-center">
+                                    <label for="edit-eng-{{ e.contact_name|replace(' ', '-') }}"
+                                        class="btn btn-ghost btn-circle btn-xs text-primary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                    </label>
+                                    <button hx-delete="/admin/manage/engineers/{{ e.contact_name }}"
+                                        hx-target="closest div" hx-confirm="Remove this engineer from the system?"
+                                        class="btn btn-circle btn-ghost btn-xs text-slate-300 hover:text-red-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Edit Engineer Modal -->
+                                <input type="checkbox" id="edit-eng-{{ e.contact_name|replace(' ', '-') }}"
+                                    class="modal-toggle" />
+                                <div class="modal text-left">
+                                    <div class="modal-box">
+                                        <h3 class="font-bold text-lg">Edit Engineer: {{ e.contact_name }}
+                                        </h3>
+                                        <form action="/admin/manage/engineers/edit/{{ e.contact_name }}" method="POST"
+                                            class="space-y-4 mt-4">
+                                            <div class="form-control">
+                                                <label class="label">Email Address</label>
+                                                <input type="email" name="email" value="{{ e.email or '' }}"
+                                                    class="input input-bordered" />
+                                            </div>
+                                            <div class="form-control">
+                                                <label class="label">Phone Number</label>
+                                                <input type="text" name="phone" value="{{ e.phone or '' }}"
+                                                    class="input input-bordered" />
+                                            </div>
+                                            <div class="form-control">
+                                                <label class="label">Home Address</label>
+                                                <textarea name="address"
+                                                    class="textarea textarea-bordered h-24">{{ e.address or '' }}</textarea>
+                                            </div>
+                                            <div class="modal-action">
+                                                <label for="edit-eng-{{ e.contact_name|replace(' ', '-') }}"
+                                                    class="btn btn-ghost">Cancel</label>
+                                                <button type="submit" class="btn btn-primary">Save
+                                                    Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Administrators -->
+        <input type="radio" name="manager_tabs" role="tab" class="tab font-bold" aria-label="System Admins" />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="card bg-white border border-slate-100 shadow-sm h-fit">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">New Admin Account</h3>
+                        <form action="/admin/manage/admins/add" method="POST" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Username</label>
+                                <input type="text" name="username" class="input input-bordered" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Initial
+                                    Password</label>
+                                <input type="password" name="password" class="input input-bordered" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-full shadow-lg shadow-primary/30">Create
+                                Admin Account</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 card bg-white border border-slate-100 shadow-sm h-fit">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Portal Access Management</h3>
+                        <div class="space-y-4">
+                            {% for a in admins %}
+                            <div
+                                class="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 group">
+                                <div class="flex gap-3 items-center">
+                                    <div class="badge badge-primary badge-sm">ADMIN</div>
+                                    <span class="font-bold text-slate-800">{{ a.username }}</span>
+                                </div>
+                                {% if a.username != user.username %}
+                                <button hx-delete="/admin/manage/admins/{{ a.id }}" hx-target="closest div"
+                                    hx-confirm="Revoke admin access for {{ a.username }}?"
+                                    class="btn btn-ghost btn-xs text-error font-bold opacity-0 group-hover:opacity-100 transition-all">Revoke
+                                    Access</button>
+                                {% else %}
+                                <span class="text-[10px] font-bold text-slate-400 uppercase italic">Logged
+                                    In
+                                    (Current)</span>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

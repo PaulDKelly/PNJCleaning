@@ -1,0 +1,583 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNJ Extraction Services - Extraction Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-900">
+    <!-- Header -->
+    <header class="bg-blue-900 text-white text-center py-4">
+        <h1 class="text-lg font-semibold">PNJ Extraction Services - Extraction Report</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto mt-8 p-4 bg-white rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold text-blue-900 mb-6 text-center">Extraction Report</h2>
+        <div id="extraction-report-form">
+            <!-- Job Details -->
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">Job Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label for="company" class="block text-sm font-medium text-gray-700">Company</label>
+                    <input type="text" id="company" name="company" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="company-error">Please enter a company name.</p>
+                </div>
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                    <input type="date" id="date" name="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="date-error">Please select a date.</p>
+                </div>
+                <div>
+                    <label for="brand" class="block text-sm font-medium text-gray-700">Brand</label>
+                    <input type="text" id="brand" name="brand" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="brand-error">Please enter a brand.</p>
+                </div>
+                <div>
+                    <label for="time" class="block text-sm font-medium text-gray-700">Time</label>
+                    <input type="time" id="time" name="time" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="time-error">Please select a time.</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                    <input type="text" id="address" name="address" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="address-error">Please enter an address.</p>
+                </div>
+                <div>
+                    <label for="job-number" class="block text-sm font-medium text-gray-700">Job Number</label>
+                    <input type="text" id="job-number" name="job-number" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="e.g., JN001">
+                    <p class="text-red-500 text-sm hidden" id="job-number-error">Please enter a valid job number (e.g., JN001).</p>
+                </div>
+                <div>
+                    <label for="contact-name" class="block text-sm font-medium text-gray-700">Contact Name</label>
+                    <input type="text" id="contact-name" name="contact-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="contact-name-error">Please enter a contact name.</p>
+                </div>
+                <div>
+                    <label for="contact-number" class="block text-sm font-medium text-gray-700">Contact Number</label>
+                    <input type="text" id="contact-number" name="contact-number" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="contact-number-error">Please enter a contact number.</p>
+                </div>
+            </div>
+
+            <!-- Inspection Details -->
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">Inspection Details</h3>
+            <div class="overflow-x-auto mb-6">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Item</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Pre-Clean Inspection</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Success</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Pass</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Fail</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Work Requirement Advice</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Initial</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="VP < 250m"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Canopy – Main"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Canopy – Chipper"></td>
+                            <td class="py-problem px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Main Ducting"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Chipper Duct"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Extract Fan"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Attenuator/Silencers"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Duct Riser"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Electrostatic Filters"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="UV Ozone"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Carbon Filters"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Motor Belts"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Pre Filters"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Perfumer"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" id="add-inspection-row" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mb-4">Add Inspection Row</button>
+
+            <!-- Canopy Filter Details -->
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">Canopy Filter Details</h3>
+            <div class="overflow-x-auto mb-6">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Filter Type</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Height (mm)</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Width (mm)</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Depth (mm)</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Quantity</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">P</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">F</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="Canopy"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="S/S Baffle"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="S/S Mesh"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="S/S Combo"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="Al Baffle"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="Al Combo"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" id="add-filter-row" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mb-4">Add Filter Row</button>
+
+            <!-- Additional Details -->
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">Additional Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="md:col-span-2">
+                    <label for="sketch-details" class="block text-sm font-medium text-gray-700">Sketch Details</label>
+                    <textarea id="sketch-details" name="sketch-details" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="4"></textarea>
+                    <p class="text-red-500 text-sm hidden" id="sketch-details-error">Please enter sketch details.</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="photos-taken" class="block text-sm font-medium text-gray-700">Photos Taken</label>
+                    <textarea id="photos-taken" name="photos-taken" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="4"></textarea>
+                    <p class="text-red-500 text-sm hidden" id="photos-taken-error">Please enter photos taken details.</p>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="photos" class="block text-sm font-medium text-gray-700">Upload Photos</label>
+                    <input type="file" id="photos" name="photos[]" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" multiple accept="image/*">
+                    <p class="text-red-500 text-sm hidden" id="photos-error">Please upload at least one photo.</p>
+                </div>
+            </div>
+
+            <!-- Signatures -->
+            <h3 class="text-lg font-semibold text-blue-900 mb-4">Signatures</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label for="client-signature" class="block text-sm font-medium text-gray-700">Client Signature</label>
+                    <input type="text" id="client-signature" name="client-signature" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="client-signature-error">Please enter client signature.</p>
+                </div>
+                <div>
+                    <label for="engineer-signature" class="block text-sm font-medium text-gray-700">Engineer Signature</label>
+                    <input type="text" id="engineer-signature" name="engineer-signature" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="engineer-signature-error">Please enter engineer signature.</p>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="bg-blue-900 text-white px-6 py-2 rounded-md hover:bg-blue-800">Submit Report</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Pre-fill form from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobNumber = urlParams.get('job_number');
+            const client = urlParams.get('client');
+            const address = urlParams.get('address');
+            const contactName = urlParams.get('contact_name');
+            if (jobNumber) {
+                document.getElementById('job-number').value = jobNumber;
+            }
+            if (client) {
+                document.getElementById('company').value = client;
+            }
+            if (address) {
+                document.getElementById('address').value = address;
+            }
+            if (contactName) {
+                document.getElementById('contact-name').value = contactName;
+            }
+
+            // Add Inspection Row
+            document.getElementById('add-inspection-row').addEventListener('click', () => {
+                const tbody = document.querySelector('#extraction-report-form table:nth-of-type(1) tbody');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Add Filter Row
+            document.getElementById('add-filter-row').addEventListener('click', () => {
+                const tbody = document.querySelector('#extraction-report-form table:nth-of-type(2) tbody');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
+                    <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Form Validation
+            document.getElementById('extraction-report-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                let isValid = true;
+
+                // Job Number
+                const jobNumber = document.getElementById('job-number');
+                const jobNumberError = document.getElementById('job-number-error');
+                if (!jobNumber.value.match(/^JN\d{3}$/)) {
+                    jobNumberError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    jobNumberError.classList.add('hidden');
+                }
+
+                // Company
+                const company = document.getElementById('company');
+                const companyError = document.getElementById('company-error');
+                if (!company.value.trim()) {
+                    companyError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    companyError.classList.add('hidden');
+                }
+
+                // Brand
+                const brand = document.getElementById('brand');
+                const brandError = document.getElementById('brand-error');
+                if (!brand.value.trim()) {
+                    brandError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    brandError.classList.add('hidden');
+                }
+
+                // Time
+                const time = document.getElementById('time');
+                const timeError = document.getElementById('time-error');
+                if (!time.value) {
+                    timeError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    timeError.classList.add('hidden');
+                }
+
+                // Address
+                const address = document.getElementById('address');
+                const addressError = document.getElementById('address-error');
+                if (!address.value.trim()) {
+                    addressError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    addressError.classList.add('hidden');
+                }
+
+                // Contact Name
+                const contactName = document.getElementById('contact-name');
+                const contactNameError = document.getElementById('contact-name-error');
+                if (!contactName.value.trim()) {
+                    contactNameError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    contactNameError.classList.add('hidden');
+                }
+
+                // Contact Number
+                const contactNumber = document.getElementById('contact-number');
+                const contactNumberError = document.getElementById('contact-number-error');
+                if (!contactNumber.value.trim()) {
+                    contactNumberError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    contactNumberError.classList.add('hidden');
+                }
+
+                // Date
+                const date = document.getElementById('date');
+                const dateError = document.getElementById('date-error');
+                if (!date.value) {
+                    dateError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    dateError.classList.add('hidden');
+                }
+
+                // Sketch Details
+                const sketchDetails = document.getElementById('sketch-details');
+                const sketchDetailsError = document.getElementById('sketch-details-error');
+                if (!sketchDetails.value.trim()) {
+                    sketchDetailsError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    sketchDetailsError.classList.add('hidden');
+                }
+
+                // Photos Taken
+                const photosTaken = document.getElementById('photos-taken');
+                const photosTakenError = document.getElementById('photos-taken-error');
+                if (!photosTaken.value.trim()) {
+                    photosTakenError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    photosTakenError.classList.add('hidden');
+                }
+
+                // Photos
+                const photos = document.getElementById('photos');
+                const photosError = document.getElementById('photos-error');
+                if (photos.files.length === 0) {
+                    photosError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    photosError.classList.add('hidden');
+                }
+
+                // Client Signature
+                const clientSignature = document.getElementById('client-signature');
+                const clientSignatureError = document.getElementById('client-signature-error');
+                if (!clientSignature.value.trim()) {
+                    clientSignatureError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    clientSignatureError.classList.add('hidden');
+                }
+
+                // Engineer Signature
+                const engineerSignature = document.getElementById('engineer-signature');
+                const engineerSignatureError = document.getElementById('engineer-signature-error');
+                if (!engineerSignature.value.trim()) {
+                    engineerSignatureError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    engineerSignatureError.classList.add('hidden');
+                }
+
+                if (isValid) {
+                    alert('Report submitted successfully!');
+                    // Uncomment to submit to API
+                    /*
+                    const formData = new FormData(document.getElementById('extraction-report-form'));
+                    fetch('../pnj_code/dashboard/pnj_api.php?action=submit_report', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Report submitted successfully!');
+                            document.getElementById('extraction-report-form').reset();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting report:', error);
+                        alert('Error submitting report. Please try again.');
+                    });
+                    */
+                }
+            });
+        });
+    </script>
+</body>
+</html>

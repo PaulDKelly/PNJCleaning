@@ -1,0 +1,206 @@
+--- TEXT FROM 08012026 Chuck and Blade Dolphin Centre.docx ---
+CERTIFICATE                        
+This is to certify that	                               
+The areas listed below were cleaned and/or inspected by PNJ Cleaners Ltd 
+All cooker canopies and Grease traps :                                           Compliant. Baffle filters need cleaning weekly at least. In poor condition.
+Extraction Ducting accessible through inspection hatches: Compliant
+Extraction fan and housing:                    Compliant
+Duct run.                                                 Compliant . 
+Riser/s                                              
+Activated carbon.                                  N/A
+ESP Filters                                            N/A
+Ozone filters                                         N/A
+Next clean in April 2026
+Mr G.N.Kelly
+PNJ Cleaners LTD
+Email: gary@pnjcleaning.co.uk
+Mobile +44 758 512 7242
+Office +44 1283 791 953
+POST CLEAN INSPECTION REPORT
+                         Kitchen Extract System Audit
+Introduction  
+This report follows an inspection and system clean carried out by PNJ Cleaners Ltd on behalf of Chuck and Blade
+ This survey was conducted in accordance with recommendations set out in the following documents:  
+BS EN 15780:2011 Ventilation for Buildings- Ductwork- Cleanliness of Ventilation Systems BESA TR19 Grease Guide to Good Practice Internal Cleanliness of Ventilation Systems RC44 Recommendations for fire risk assessment of catering extract ventilation HVCA DW/172: Specification for Kitchen Ventilation Systems (2005) Health & Safety Act at Work 1974 The Regulatory Reform (Fire) Safety Order 2005 (as of April 2006) Occupiers Liability Act (1984)  
+The intention is to provide complete management and traceability of the Kitchen Extract Systems across the food outlets within the centre. Observations supported by photographs and, Wet Film Thickness Test measurements taken provide an objective account of the condition of each extract installation. Where no access for measurements was possible, reasonable estimations based on observations and experience have been made.  
+The Guide to Good Practice summary sheet below highlights the criteria used for conclusions made during this inspection.  
+Definition  
+The BESA TR19 Grease Guidance to Good practice, define kitchen extract ventilation as "the extract systems intended to collect and remove contaminants, heat and moisture from cooking appliances". This includes all extract and supply or make-up ventilation that service the following:
+  Cooking Ranges (gas rings, hot plates)
+  Fryers 
+ Oven/Microwave Banks
+  Potwash /Dishwash areas  
+Purpose  
+Kitchen extract systems present particular hazards. As well as removing odours and steam from the kitchen areas, the extract system removes greasy vapours from cooking appliances which are an ignition source.  
+‘Accumulated grease in an extract system forms a hidden combustion load’ - BESA TR19 Grease During the cooking process, flammable vapours are given off from cooking oils at temperatures between 200 to 300'C. Grease extract ductwork cleansing therefore helps reduce the flammable materials that build up within the system.  
+‘Spontaneous ignition occurs at 310-360'C’ - RC44 Recommendations for fire risk assessment of catering extract ventilation BSRIA).  
+Guide to Good Practice Summary 
+The information below forms the basis of the inspection plan and provides a method of ‘measuring and defining cleanliness as a benchmark for good practice’:  
+1) Recommended Frequency of Cleaning (as set out in BESA TR19 Grease )  
+NB These are minimum guidelines only and should be adjusted through monitoring and inspection to ensure grease deposits do not exceed those stated below in section 2.  
+2) Maximum Grease Deposit Levels (to be measured during Phase 2)  
+NB Post Clean Verification levels are more stringent as set out below in section 3.  
+3) Acceptable Grease Deposit Levels for Post Clean Verification (Phase 3)
+4) Kitchen Extract System Measuring Points (as per BESA TR19 Grease and BS EN 15780:2011) 
+Where practicable (via accessible inspection panels), measurements will be taken at the following points to ensure an objective, repeatable and verifiable measurement across the complete extract system.    
+TABLE 5
+FREQUENCY OF CONTROL CLEAN DAILY MICRON AVERAGE ACCUMULATION RANGE
+Photographs
+Photo File
+  Cleaning Chemicals Data sheet: 
+Evans Lift A054 
+
+--- TABLES ---
+
+Table 1:
+10 Dowling Drive Sheasby Park Fradley Lichfield Staffordshire WS13 8WW
+
+Table 2:
+Office  :           01543318974 Mobiles:          07837393505 07585127242  Email: gary@pnjcleaning.onmicrosoft.com Website : www.pnjcleaning.co.uk
+
+Table 3:
+08012026 Chuck and Blade Dolphin Centre
+
+Table 4:
+Pre-inspection Risk Classification | Post inspection Risk Classification | Urgent Remedial Requirements | Recommended Risk Improvements
+3 | 1 |  | 
+ | 1 |  | 
+
+Table 5:
+Heavy Use | 12-16 hours per day | 3 Monthly
+Moderate Use | 6-12 hours per day | 6 Monthly
+Low Use | 2-6 hours per day | 12 Monthly
+
+Table 6:
+Wet Film Thickness Test Measurement | Recommended Action
+Average of 200microns across Kitchen Extract System | Complete system cleaning required
+Any single measurement above 500microns i.e. ‘hot spots’ | Urgent Local Clean Required (i.e. specific attention to problem areas)
+
+Table 7:
+Wet film thickness test Measurement | Recommended Action
+Any single measurement above 50 microns. | System re-clean or urgent local clean. i.e. specific attention to problem areas or ‘hot spots’     NB Recommendation to be subject to reasonable appreciation of extent of fouling and risk posed.
+
+Table 8:
+Testing Point (T) | Location
+T1 | Canopy/Extract Plenum behind filters
+T2 | Ductwork 1 metre from canopy
+T3 | Ductwork 3 metres from canopy
+T4 | Ductwork midway between canopy and fan
+T5 | Ductwork upstream of fan
+T6 | Fan
+T7 | Discharge Ductwork downstream of fan
+
+Table 9:
+Risk | Assessment
+1 | Grease levels average below200 microns. There are no outstanding issues in extraction or supply systems
+2 | System averages below 200 microns following W.F.T.T.   Spot levels of over 200um
+3 | System averages of over 200 microns  OR  The system has several sections of over 500 microns
+4 | System averages over 200 microns and has  an area or areas of the system also exceeded 500 microns.  A specific area of risk concern may also be present such as poor filter maintenance or inaccessibility to areas of ducting. Grease drain channels may be blocked. Grease filter maintenance may be poor.
+5 | System exceeds an average of well above the 200+ microns. Several sections of the system have been identified as exceeding 500+ microns and should be subject to urgent local clean.  High risk factors such as insufficient ducting access panels, fan maintenance issues (e.g Canvas connectors worn or leaking), broken or badly maintained grease filters, build-up of grease on fan blades. Carbon and pre-filters may be requiring attention. Attenuators may have grease build up. There may be other issues that are deemed of concern not included in this list
+6 | System well exceeds an average of 500+ microns. Heavy and obvious build up throughout system and canopies with specific concern to canopies and around fan area. Several sections of the system identified as exceeding over 1mm   And / Or there may be serious safety issues such as (but not inclusive of) the following :- loose or blocked hatches, leaking ductwork; pooling or splattering of grease around extract fan housing.  Broken blocked or badly maintained grease filters. Discharge may have heavy grease build up on mesh or around the roof. Attenuators may have heavy build up or inaccessible or leaking. There may be insufficient access to an area of the ducting or fan for cleaning and inspection.
+
+Table 10:
+ |  | Extract and supply Systems Inspection and clean Report | Extract and supply Systems Inspection and clean Report | Extract and supply Systems Inspection and clean Report | Extract and supply Systems Inspection and clean Report | Extract and supply Systems Inspection and clean Report | Extract and supply Systems Inspection and clean Report
+ |  |  |  |  |  |  | 
+Current Cleaning Interval | Current Cleaning Interval | First Visit | First Visit | First Visit | First Visit | First Visit | First Visit
+Minimum Recommended Cleaning Interval | Minimum Recommended Cleaning Interval | 3 Months to be assessed at second visit | 3 Months to be assessed at second visit | 3 Months to be assessed at second visit | 3 Months to be assessed at second visit | 3 Months to be assessed at second visit | 3 Months to be assessed at second visit
+Supply System issues. | Supply System issues. |  |  |  |  |  | 
+Extraction system issues | Extraction system issues |  |  |  |  |  | 
+Hatches | Hatches |  |  |  |  |  | 
+Riser/duct run | Riser/duct run |  |  |  |  |  | 
+Carbon Filters Standards | Carbon Filters Standards |  |  |  |  |  | 
+Electrostat filter Condition/carbon filters | Electrostat filter Condition/carbon filters |  |  |  |  |  | 
+Canopy Filters and cleanliness |  | Restaurant Staff | Yes | Weekly | Condition | Before inspection | After
+Canopy Filters and cleanliness |  | Restaurant Staff |  |  | Condition | Very Poor | 
+Canopy Filters and cleanliness |  | PNJ Clean | NO | NO | Condition | Before | After
+Canopy Filters and cleanliness |  | PNJ Clean | NO | NO | Condition | NA | 
+Filter Type and size |  | Stainless Steel Baffle | Stainless Steel Baffle | Stainless Steel Baffle |  |  | 
+Attentuator (silencers) Condition |  | Good | Good | Good | Good | Good | Good
+
+Table 11:
+Pre recognised areas of inaccessibility. | 
+Pre recognised areas of inaccessibility or in ability to clean | Risers have no hatches. Also not easily accessible
+
+Table 12:
+DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS | DEPOSIT THICKNESS TEST RESULTS
+ |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+ | Micron Reading Locations | Micron Reading Locations | Micron Reading Locations | Readings Prior To System Clean | Readings Prior To System Clean | Readings Prior To System Clean | Readings Prior To System Clean | Readings Prior To System Clean | Readings After System Clean | Readings After System Clean | Readings After System Clean | Additional Information | Additional Information | Additional Information | 
+ | 1 | 1 | 3 Canopy/Extract Filters | 350 | 350 | 350 | 350 | 350 | 0 | 0 | 0 |  |  |  | 
+ | 1 | 1 | Chipper Canopy |  |  |  |  |  | 0 | 0 | 0 |  |  |  | 
+ | 2 | 2 | Main Duct | 300 | 300 | 300 | 300 | 300 | 0 | 0 | 0 |  |  |  | 
+ | 2 | 2 | Chipper Duct |  |  |  |  |  | 0 | 0 | 0 |  |  |  | 
+ | 3 | 3 | Ducting 3 meters from Canopy ESP | 300 | 300 | 300 | 300 | 300 | 0 | 0 | 0 |  |  |  | 
+ | 4 | 4 | Ducting midway between Canopy & Fan |  |  |  |  |  | 0 | 0 | 0 |  |  |  | 
+ | 5 | 5 | Ducting before Fan | 300 | 300 | 300 | 300 | 300 | 0 | 0 | 0 |  |  |  | 
+ | 6 | 6 | Ducting after Fan | 300 | 300 | 300 | 300 | 300 |  |  |  |  |  |  | 
+ | 7 | 7 | Fan Unit | > | > | > | > | > |  |  |  |  |  |  | 
+ | 8 | 8 | Other location with significant grease accumulation (record location): Grease Traps,                       ESP Units Filter Box Ranges |  |  |  |  |  |  |  |  |  |  |  | 
+ |  |  | Average Micron Reading: | total/per day | total/per day | total/per day |  |  | Fan not removed every visit | Fan not removed every visit | Fan not removed every visit | Ref page table 5 | Ref page table 5 | Ref page table 5 | 
+ |  |  | Air Flow Meter Testing: | na | na | na | na | na |  |  |  |  |  |  | 
+ |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+POTENTIAL GREASE PRODUCTION LEVELS
+ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+ | System | System | System | System | Low | Medium | Medium | High | High | Up to 12 hrs | 6-12 hrs | 6-12 hrs | 12-16 hrs | 16+ hrs | 16+ hrs | 16+ hrs | 
+ | 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+ | 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+ | 3 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+ | 4 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+ | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) | Recommended Cleaning Frequency (recoded in months) |  |  |  | 
+
+Table 13:
+Works/ Notifications | Extraction Systems | Air Supply System | Other( e.g. Work Practice)
+URGENT Requirements |  |  | 
+Recommended Work required or Action to be taken. |  |  | 
+ |  |  | 
+
+Table 14:
+FREQUENCY OF CONTROL CLEAN | DAILY MICRON AVERAGE ACCUMULATION RANGE
+Twice weekly | 28.7 upwards
+Weekly cleaning | 14.4 to 28.6
+Every 2 weeks | 9.6 to 14.3
+Every 3 weeks | 6.7 to 9.5
+Monthly | 4.8 to 6.6
+Every 6 weeks | 3.3 to 4.7
+Every 2 months | 2.2 to 3.2
+Quarterly | 1.7 to 2.1
+Every 4 months | 1.1 to 1.6
+Every 6 months | 6 months 0.6 to 1.0
+Annually | 0.5 or LESS
+
+Table 15:
+Area | Inspection | Post Clean
+1 |  | 
+ |  | 
+2. |  | 
+ |  | 
+3. |  | 
+ |  | 
+ | Inspection | Post Clean
+4. |  | 
+ |  | 
+ |  | 
+ |  | 
+ |  | 
+ |  | 
+ |  | 
+ |  | 
+Further Pictures |  | 
+ |  | 
+Further Pictures |  | 
+Baffle filters |  | 
+
+Table 16:
+SYSTEM CLEANED | SYSTEM CLEANED | SYSTEM CLEANED
+ |  | 
+ | Provide a brief description of the system cleaned: | 
+ | Main Canopies and Ducting. Chipper canopy ducting  and main ducting inside store | 
+ | Has the entire system been cleaned? Yes  / No  If no, please record areas that do not comply and why? YES | 
+ | No. Attenuator not accessible. | 
+ | Chemicals used (attach DATA sheets): | 
+ |  | 
+ |  | 
+
+Table 17:
+SCHEMATIC DRAWING | SCHEMATIC DRAWING | SCHEMATIC DRAWING | SCHEMATIC DRAWING
+1 Record location of testing locations | 2 Record location of access panels & fans | 3 Record uncleaned/inaccessible areas
+Drawing not to scale | Drawing not to scale | Drawing not to scale
