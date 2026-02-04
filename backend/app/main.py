@@ -1186,16 +1186,6 @@ def edit_client(client_name: str, company: str = Form(None), address: str = Form
     }).eq("client_name", client_name).execute()
     return RedirectResponse(url="/admin/manage", status_code=303)
 
-@app.post("/admin/manage/clients/{client_name}/archive")
-def archive_client(client_name: str, user: models.User = Depends(login_required)):
-    supabase.table("clients").update({"archived": True}).eq("client_name", client_name).execute()
-    return HTMLResponse(content="", headers={"HX-Trigger": "refreshClients"})
-
-@app.post("/admin/manage/clients/{client_name}/restore")
-def restore_client(client_name: str, user: models.User = Depends(login_required)):
-    supabase.table("clients").update({"archived": False}).eq("client_name", client_name).execute()
-    return HTMLResponse(content="", headers={"HX-Trigger": "refreshClients"})
-
 @app.post("/admin/manage/sites/add")
 def add_site(client_name: str = Form(...), site_name: str = Form(...), address: str = Form(...), brand_name: str = Form(None), user: models.User = Depends(login_required)):
     supabase.table("client_sites").insert({
@@ -1214,16 +1204,6 @@ def edit_site(site_id: int, site_name: str = Form(...), address: str = Form(...)
         "brand_name": brand_name if brand_name else None
     }).eq("id", site_id).execute()
     return RedirectResponse(url="/admin/manage", status_code=303)
-
-@app.post("/admin/manage/sites/{site_id}/archive")
-def archive_site(site_id: int, user: models.User = Depends(login_required)):
-    supabase.table("client_sites").update({"archived": True}).eq("id", site_id).execute()
-    return HTMLResponse(content="", headers={"HX-Trigger": "refreshSites"})
-
-@app.post("/admin/manage/sites/{site_id}/restore")
-def restore_site(site_id: int, user: models.User = Depends(login_required)):
-    supabase.table("client_sites").update({"archived": False}).eq("id", site_id).execute()
-    return HTMLResponse(content="", headers={"HX-Trigger": "refreshSites"})
 
 @app.post("/admin/manage/brands/add")
 def add_brand(brand_name: str = Form(...), user: models.User = Depends(login_required)):
@@ -1278,33 +1258,6 @@ def delete_admin(admin_id: int, user: models.User = Depends(login_required)):
     supabase.table("users").delete().eq("id", admin_id).execute()
     return HTMLResponse(content="")
 
-@app.get("/admin/manage/clients-table", response_class=HTMLResponse)
-def get_clients_table(request: Request, client_name: str = None, brand_name: str = None, site_id: int = None, user: models.User = Depends(login_required)):
-    query = supabase.table("clients").select("*")
-    if client_name:
-        query = query.eq("client_name", client_name)
-    clients_res = query.execute()
-    clients = [models.Client(**c) for c in clients_res.data] if clients_res.data else []
-    
-    return templates.TemplateResponse("partials/clients_table_rows.html", {
-        "request": request,
-        "clients": clients
-    })
-
-@app.get("/admin/manage/sites-table", response_class=HTMLResponse)
-def get_sites_table(request: Request, client_name: str = None, show_archived: bool = False, user: models.User = Depends(login_required)):
-    query = supabase.table("client_sites").select("*")
-    if client_name:
-        query = query.eq("client_name", client_name)
-    if not show_archived:
-        query = query.eq("archived", False)
-    sites_res = query.execute()
-    sites = [models.Site(**s) for s in sites_res.data] if sites_res.data else []
-    
-    return templates.TemplateResponse("partials/sites_table_rows.html", {
-        "request": request,
-        "sites": sites
-    })
 
 
 # Client Portal Routes
