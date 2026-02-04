@@ -46,6 +46,19 @@
                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
             </a>
+
+            <!-- Sage Invoice Button -->
+            <div id="invoice-status">
+                <button hx-post="/admin/reports/{{ report.id }}/raise-invoice" hx-target="#invoice-status"
+                    class="btn btn-outline btn-square text-slate-400 hover:text-white hover:bg-emerald-600"
+                    title="Raise Sage Invoice">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -213,13 +226,24 @@
     <!-- Photo Curation -->
     <div class="card bg-white shadow-xl border border-slate-100">
         <div class="card-body">
-            <h3 class="card-title font-outfit text-lg mb-6">Curate Visual Evidence</h3>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="card-title font-outfit text-lg">Curate Visual Evidence</h3>
+                <a href="/admin/reports/{{ report.id }}/photos/download"
+                    class="btn btn-outline btn-primary btn-sm rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download All Photos (.zip)
+                </a>
+            </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {% for photo in photos %}
                 <div class="group relative aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm"
                     id="photo-{{ photo.id }}">
-                    <img src="{{ photo.photo_path | replace('backend/app/', '/') }}" class="w-full h-full object-cover">
+                    <img src="{{ photo.photo_path }}" class="w-full h-full object-cover">
                     <div
                         class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
                         <span class="text-[10px] font-bold text-white uppercase mb-4">{{ photo.photo_type }}</span>

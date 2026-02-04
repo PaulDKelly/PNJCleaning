@@ -55,7 +55,8 @@
                         <form action="/admin/manage/sites/add" method="POST" class="space-y-4">
                             <div class="form-control">
                                 <label class="label text-xs font-bold uppercase text-slate-500">Select Client</label>
-                                <select name="client_name" class="select select-bordered" required>
+                                <select name="client_name" id="add-site-client-select" class="select select-bordered"
+                                    required>
                                     <option disabled selected>Pick a client</option>
                                     {% for c in clients %}
                                     <option value="{{ c.client_name }}">{{ c.client_name }}</option>
@@ -90,7 +91,63 @@
             <!-- Clients Table -->
             <div class="card bg-white border border-slate-100 shadow-sm">
                 <div class="card-body">
-                    <h3 class="card-title text-slate-700 mb-4">Client Portfolio</h3>
+                    <!-- Filter Bar -->
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-4 gap-4">
+                        <div>
+                            <h3 class="card-title text-slate-700">Client Portfolio</h3>
+                            <p class="text-xs text-slate-400">View and manage client accounts.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <!-- Filter by Client -->
+                            <div class="form-control w-full sm:w-auto">
+                                <label class="label py-0"><span
+                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Client</span></label>
+                                <select name="client_name" id="pf-client-filter"
+                                    class="select select-bordered select-sm text-xs w-40"
+                                    hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
+                                    hx-include="#pf-brand-filter, #pf-site-filter">
+                                    <option value="">All Clients</option>
+                                    {% for c in clients %}
+                                    <option value="{{ c.client_name }}">{{ c.client_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Brand -->
+                            <div class="form-control w-full sm:w-auto">
+                                <label class="label py-0"><span
+                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Brand</span></label>
+                                <select name="brand_name" id="pf-brand-filter"
+                                    class="select select-bordered select-sm text-xs w-32"
+                                    hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
+                                    hx-include="#pf-client-filter, #pf-site-filter">
+                                    <option value="">All Brands</option>
+                                    {% for b in brands %}
+                                    <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Site (Dependent) -->
+                            <div class="form-control w-full sm:w-auto">
+                                <label class="label py-0"><span
+                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Site</span></label>
+                                <select name="site_id" id="pf-site-filter"
+                                    class="select select-bordered select-sm text-xs w-48"
+                                    hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
+                                    hx-include="#pf-client-filter, #pf-brand-filter"
+                                    hx-trigger="change, updateSites from:body">
+                                    <option value="">All Sites</option>
+                                    <!-- Populated via HTMX/JS -->
+                                </select>
+                            </div>
+
+                            <button class="btn btn-sm btn-ghost text-slate-400"
+                                onclick="document.getElementById('pf-client-filter').value=''; document.getElementById('pf-brand-filter').value=''; document.getElementById('pf-site-filter').value=''; htmx.trigger('#pf-client-filter', 'change');">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="table w-full">
                             <thead>
@@ -101,70 +158,10 @@
                                     <th class="text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for c in clients %}
-                                <tr>
-                                    <td>
-                                        <div class="font-bold text-slate-800">{{ c.client_name }}</div>
-                                        <div class="text-[10px] text-slate-400 truncate w-64">{{ c.company or '-' }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% set site_count = sites | selectattr('client_name', 'equalto', c.client_name)
-                                        | list | length %}
-                                        <span class="badge badge-ghost">{{ site_count }} sites</span>
-                                    </td>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <div class="text-[10px] bg-slate-100 p-1 rounded font-mono truncate w-32">
-                                                /portal/{{ c.portal_token[:8] }}...</div>
-                                            <button class="btn btn-ghost btn-xs text-primary"
-                                                onclick="navigator.clipboard.writeText(window.location.origin + '/portal/{{ c.portal_token }}'); alert('Link copied!')">Copy</button>
-                                        </div>
-                                    </td>
-                                    <td class="text-right">
-                                        <div class="flex justify-end gap-1">
-                                            <label for="edit-client-{{ c.client_name|replace(' ', '-') }}"
-                                                class="btn btn-ghost btn-xs text-primary">Edit</label>
-                                            <button hx-delete="/admin/manage/clients/{{ c.client_name }}"
-                                                hx-target="closest tr" hx-confirm="Delete client?"
-                                                class="btn btn-ghost btn-xs text-error">Delete</button>
-                                        </div>
-
-                                        <!-- Edit Client Modal -->
-                                        <input type="checkbox" id="edit-client-{{ c.client_name|replace(' ', '-') }}"
-                                            class="modal-toggle" />
-                                        <div class="modal text-left">
-                                            <div class="modal-box">
-                                                <h3 class="font-bold text-lg">Edit Client: {{ c.client_name }}</h3>
-                                                <form action="/admin/manage/clients/edit/{{ c.client_name }}"
-                                                    method="POST" class="space-y-4 mt-4">
-                                                    <div class="form-control">
-                                                        <label
-                                                            class="label text-xs font-bold uppercase text-slate-400">Trading
-                                                            Name</label>
-                                                        <input type="text" name="company" value="{{ c.company or '' }}"
-                                                            class="input input-bordered" />
-                                                    </div>
-                                                    <div class="form-control">
-                                                        <label
-                                                            class="label text-xs font-bold uppercase text-slate-400">Head
-                                                            Office Address</label>
-                                                        <textarea name="address"
-                                                            class="textarea textarea-bordered h-24">{{ c.address or '' }}</textarea>
-                                                    </div>
-                                                    <div class="modal-action">
-                                                        <label for="edit-client-{{ c.client_name|replace(' ', '-') }}"
-                                                            class="btn btn-ghost">Cancel</label>
-                                                        <button type="submit" class="btn btn-primary">Save
-                                                            Changes</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                            <tbody id="clients-table-body">
+                                {% include "partials/clients_table_rows.html" %}
+                                {# The loop is now in the partial #}
+                            </tbody>
                             </tbody>
                         </table>
                     </div>
@@ -172,90 +169,220 @@
             </div>
 
             <!-- Registered Venues List -->
-            <div class="card bg-white border border-slate-100 shadow-sm">
+            <div class="card bg-white border border-slate-100 shadow-sm" id="sites-card">
                 <div class="card-body">
-                    <h3 class="card-title text-slate-700 mb-4">Registered Venues (Sites)</h3>
-                    <div class="overflow-x-auto">
-                        <table class="table w-full">
-                            <thead>
-                                <tr class="text-slate-400 uppercase text-[10px]">
-                                    <th>Client</th>
-                                    <th>Site Venue</th>
-                                    <th>Brand</th>
-                                    <th class="text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for s in sites %}
-                                <tr class="hover">
-                                    <td class="text-[10px] font-black uppercase text-slate-400">{{ s.client_name }}</td>
-                                    <td>
-                                        <div class="font-bold text-slate-800">{{ s.site_name }}</div>
-                                        <div class="text-[10px] text-slate-400 truncate w-64">{{ s.address or '-' }}
-                                        </div>
-                                    </td>
-                                    <td><span class="badge badge-outline badge-xs">{{ s.brand_name or 'Independent'
-                                            }}</span></td>
-                                    <td class="text-right">
-                                        <div class="flex justify-end gap-1">
-                                            <label for="edit-site-{{ s.id }}"
-                                                class="btn btn-ghost btn-xs text-primary">Edit</label>
-                                            <button hx-delete="/admin/manage/sites/{{ s.id }}" hx-target="closest tr"
-                                                hx-confirm="Remove this site?"
-                                                class="btn btn-ghost btn-xs text-error">Delete</button>
-                                        </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="card-title text-slate-700">Registered Venues (Sites)</h3>
+                            <p class="text-xs text-slate-400">Manage site locations and franchise mappings.</p>
+                        </div>
 
-                                        <!-- Edit Site Modal -->
-                                        <input type="checkbox" id="edit-site-{{ s.id }}" class="modal-toggle" />
-                                        <div class="modal text-left">
-                                            <div class="modal-box">
-                                                <h3 class="font-bold text-lg">Edit Site: {{ s.site_name }}</h3>
-                                                <form action="/admin/manage/sites/edit/{{ s.id }}" method="POST"
-                                                    class="space-y-4 mt-4">
-                                                    <div class="form-control">
-                                                        <label
-                                                            class="label text-xs font-bold uppercase text-slate-400">Site
-                                                            Name</label>
-                                                        <input type="text" name="site_name" value="{{ s.site_name }}"
-                                                            class="input input-bordered" required />
-                                                    </div>
-                                                    <div class="form-control">
-                                                        <label
-                                                            class="label text-xs font-bold uppercase text-slate-400">Site
-                                                            Address</label>
-                                                        <textarea name="address"
-                                                            class="textarea textarea-bordered h-24">{{ s.address or '' }}</textarea>
-                                                    </div>
-                                                    <div class="form-control">
-                                                        <label
-                                                            class="label text-xs font-bold uppercase text-slate-400">Franchise
-                                                            Brand</label>
-                                                        <select name="brand_name" class="select select-bordered">
-                                                            <option value="">None</option>
-                                                            {% for b in brands %}
-                                                            <option value="{{ b.brand_name }}" {% if
-                                                                s.brand_name==b.brand_name %}selected{% endif %}>{{
-                                                                b.brand_name }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </div>
-                                                    <div class="modal-action">
-                                                        <label for="edit-site-{{ s.id }}"
-                                                            class="btn btn-ghost">Cancel</label>
-                                                        <button type="submit" class="btn btn-primary">Save
-                                                            Changes</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                        <!-- Filters -->
+                        <div class="flex gap-2 items-center">
+                            <select name="client_name" id="site-filter-select"
+                                class="select select-bordered select-sm text-xs" hx-get="/admin/manage/sites-table"
+                                hx-target="#sites-table-body" hx-include="[name='show_archived'], #site-filter-brand">
+                                <option value="">All Clients</option>
+                                {% for c in clients %}
+                                <option value="{{ c.client_name }}">{{ c.client_name }}</option>
                                 {% endfor %}
-                            </tbody>
-                        </table>
+                            </select>
+
+                            <!-- Hidden Brand Filter (Synced from Portfolio) -->
+                            <input type="hidden" name="brand_name" id="site-filter-brand" value="">
+
+                            <label class="label cursor-pointer gap-2 border rounded-lg px-2 py-1 hover:bg-slate-50">
+                                <span class="label-text text-xs font-bold text-slate-500">Show Archived</span>
+                                <input type="checkbox" name="show_archived"
+                                    class="checkbox checkbox-xs checkbox-primary" hx-get="/admin/manage/sites-table"
+                                    hx-target="#sites-table-body"
+                                    hx-include="#site-filter-select, #site-filter-brand" />
+                            </label>
+                        </div>
                     </div>
+
+                    <!-- Bulk Actions Toolbar (Hidden by default) -->
+                    <div id="bulk-actions"
+                        class="hidden bg-slate-800 text-white p-2 rounded-lg mb-4 flex justify-between items-center shadow-lg transition-all">
+                        <span class="text-xs font-bold px-2"><span id="selected-count">0</span> sites selected</span>
+                        <div class="flex gap-2">
+                            <button hx-post="/admin/manage/sites/bulk-archive" hx-include="#sites-form"
+                                hx-target="#sites-table-body" class="btn btn-xs btn-error text-white">
+                                Archive Selected
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="sites-form">
+                        <div class="overflow-x-auto">
+                            <table class="table w-full">
+                                <thead>
+                                    <tr class="text-slate-400 uppercase text-[10px]">
+                                        <th class="w-10">
+                                            <label>
+                                                <input type="checkbox" id="select-all-sites"
+                                                    class="checkbox checkbox-xs" />
+                                            </label>
+                                        </th>
+                                        <th>Client</th>
+                                        <th>Site Venue</th>
+                                        <th>Brand</th>
+                                        <th class="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sites-table-body" hx-trigger="refreshSites from:body"
+                                    hx-get="/admin/manage/sites-table?show_archived=false">
+                                    {% include "partials/sites_table_rows.html" %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
                 </div>
             </div>
+
+            <script>
+                // Portfolio Filter Logic
+                const pfClient = document.getElementById('pf-client-filter');
+                const pfBrand = document.getElementById('pf-brand-filter');
+                const pfSite = document.getElementById('pf-site-filter');
+
+                function updatePortfolioClients() {
+                    const brand = pfBrand.value;
+                    const currentClient = pfClient.value;
+
+                    fetch(`/admin/clients-lookup?brand_name=${encodeURIComponent(brand)}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            pfClient.innerHTML = html;
+                            // Restore selection if possible, otherwise it defaults to "All Clients" or first option.
+                            // If the previously selected client is in the new list, select it.
+                            if (currentClient) {
+                                // Try to set it back
+                                pfClient.value = currentClient;
+                                // If value didn't stick (because option is gone), we might want to trigger change?
+                                // If client is no longer valid for this brand, we effectively clear the client filter.
+                                if (pfClient.value !== currentClient) {
+                                    // Client filter cleared automatically. 
+                                    // We should probably trigger change to update table and sites?
+                                    // But updatePortfolioSites() handles the sites update based on current DOM values.
+                                    // If we trigger change here, it might cause a loop or double fetch.
+                                    // Let's just update sites now.
+                                    updatePortfolioSites();
+                                    htmx.trigger(pfClient, 'change'); // Trigger HTMX to update table
+                                }
+                            }
+                        });
+                }
+
+                function updatePortfolioSites() {
+                    const client = pfClient.value;
+                    const brand = pfBrand.value;
+
+                    // 1. Update dependent Site dropdown in Portfolio
+                    fetch(`/admin/sites-lookup?client_name=${encodeURIComponent(client)}&brand_name=${encodeURIComponent(brand)}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            pfSite.innerHTML = html;
+                        });
+
+                    // 2. Sync with "Registered Venues" table filter
+                    const registeredVenuesFilter = document.getElementById('site-filter-select');
+                    const registeredVenuesBrandFilter = document.getElementById('site-filter-brand');
+
+                    if (registeredVenuesFilter) {
+                        let changed = false;
+
+                        // Sync Client Filter
+                        if (client) {
+                            if (registeredVenuesFilter.value !== client) {
+                                registeredVenuesFilter.value = client;
+                                changed = true;
+                            }
+                        } else {
+                            if (registeredVenuesFilter.value !== "") {
+                                registeredVenuesFilter.value = "";
+                                changed = true;
+                            }
+                        }
+
+                        // Sync Brand Filter
+                        if (registeredVenuesBrandFilter) {
+                            if (registeredVenuesBrandFilter.value !== brand) {
+                                registeredVenuesBrandFilter.value = brand;
+                                changed = true;
+                            }
+                        }
+
+                        if (changed) {
+                            htmx.trigger(registeredVenuesFilter, 'change');
+                        }
+                    }
+                }
+
+                if (pfClient && pfBrand && pfSite) {
+                    pfClient.addEventListener('change', updatePortfolioSites);
+                    pfBrand.addEventListener('change', function () {
+                        updatePortfolioSites();
+                        updatePortfolioClients();
+                    });
+                }
+
+                // Sync Dropdowns (Existing Logic - Updated to point to new filters if needed, or keep separate)
+                // The user asked for "Add Site" sync logic before. 
+                // That logic synced "add-site-client-select" with "site-filter-select" (the old filter).
+                // "site-filter-select" (ID) exists in the "Registered Venues" card.
+                // "pf-client-filter" is the NEW filter in "Client Portfolio".
+
+                // If we want consistency, maybe sync them all? 
+                // For now, I will leave the old sync logic as is for the "Registered Venues" list (Site List), 
+                // and this new logic handles the "Client Portfolio" (Client List).
+
+                const addSiteSelect = document.getElementById('add-site-client-select');
+                const siteFilterSelect = document.getElementById('site-filter-select'); // This is on the Sites card
+
+                if (addSiteSelect && siteFilterSelect) {
+                    addSiteSelect.addEventListener('change', function () {
+                        siteFilterSelect.value = this.value;
+                        htmx.trigger(siteFilterSelect, 'change');
+                    });
+                    siteFilterSelect.addEventListener('change', function () {
+                        addSiteSelect.value = this.value;
+                    });
+                }
+
+
+                // Simple Bulk Selection Logic
+                document.addEventListener('change', function (e) {
+                    if (e.target.id === 'select-all-sites') {
+                        const checkboxes = document.querySelectorAll('input[name="site_ids"]');
+                        checkboxes.forEach(cb => cb.checked = e.target.checked);
+                        updateBulkUI();
+                    } else if (e.target.name === 'site_ids') {
+                        updateBulkUI();
+                    }
+                });
+
+                function updateBulkUI() {
+                    const checked = document.querySelectorAll('input[name="site_ids"]:checked');
+                    const toolbar = document.getElementById('bulk-actions');
+                    const countSpan = document.getElementById('selected-count');
+
+                    if (checked.length > 0) {
+                        toolbar.classList.remove('hidden');
+                        countSpan.innerText = checked.length;
+                    } else {
+                        toolbar.classList.add('hidden');
+                    }
+                }
+
+                // Re-initialize logic after HTMX swaps if needed (though event delegation works fine)
+                document.body.addEventListener('htmx:afterSwap', function (evt) {
+                    if (evt.detail.target.id === 'sites-table-body') {
+                        document.getElementById('select-all-sites').checked = false;
+                        updateBulkUI();
+                    }
+                });
+            </script>
         </div>
 
         <!-- Tab 2: Brands -->
@@ -375,7 +502,8 @@
                                 <div class="flex gap-3 items-center">
                                     <div class="avatar placeholder">
                                         <div class="bg-primary text-white rounded-full w-10">
-                                            <span class="text-xs">{{ e.contact_name[:1] }}</span>
+                                            <span class="text-xs">{{ e.contact_name[:1] if e.contact_name else 'E'
+                                                }}</span>
                                         </div>
                                     </div>
                                     <div>
@@ -451,49 +579,51 @@
         <!-- Tab 4: Administrators -->
         <input type="radio" name="manager_tabs" role="tab" class="tab font-bold" aria-label="System Admins" />
         <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="card bg-white border border-slate-100 shadow-sm h-fit">
+            ...
+        </div>
+
+        <!-- Tab 5: System Center -->
+        <input type="radio" name="manager_tabs" role="tab" class="tab font-bold" aria-label="System Center" />
+        <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- OneDrive Configuration -->
+                <div class="card bg-white border border-slate-100 shadow-sm">
                     <div class="card-body">
-                        <h3 class="card-title text-slate-700 mb-4">New Admin Account</h3>
-                        <form action="/admin/manage/admins/add" method="POST" class="space-y-4">
-                            <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Username</label>
-                                <input type="text" name="username" class="input input-bordered" required />
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                </svg>
                             </div>
+                            <h3 class="card-title text-slate-700">OneDrive Integration</h3>
+                        </div>
+                        <p class="text-sm text-slate-500 mb-6">Configure the global link used in the sidebar menu for
+                            quick file access.</p>
+
+                        <form action="/admin/manage/settings" method="POST" class="space-y-4">
                             <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Initial
-                                    Password</label>
-                                <input type="password" name="password" class="input input-bordered" required />
+                                <label class="label text-xs font-bold uppercase text-slate-500">Shortcut Link</label>
+                                <input type="url" name="onedrive_link" value="{{ settings.onedrive_link }}"
+                                    placeholder="https://onedrive.live.com/..." class="input input-bordered" required />
+                                <label class="label">
+                                    <span class="label-text-alt text-slate-400 italic">Tip: Paste the link to your
+                                        specific "PNJ Reports" shared folder here.</span>
+                                </label>
                             </div>
-                            <button type="submit" class="btn btn-primary w-full shadow-lg shadow-primary/30">Create
-                                Admin Account</button>
+                            <button type="submit" class="btn btn-primary w-full">Update Shortcut</button>
                         </form>
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 card bg-white border border-slate-100 shadow-sm h-fit">
-                    <div class="card-body">
-                        <h3 class="card-title text-slate-700 mb-4">Portal Access Management</h3>
-                        <div class="space-y-4">
-                            {% for a in admins %}
-                            <div
-                                class="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100 group">
-                                <div class="flex gap-3 items-center">
-                                    <div class="badge badge-primary badge-sm">ADMIN</div>
-                                    <span class="font-bold text-slate-800">{{ a.username }}</span>
-                                </div>
-                                {% if a.username != user.username %}
-                                <button hx-delete="/admin/manage/admins/{{ a.id }}" hx-target="closest div"
-                                    hx-confirm="Revoke admin access for {{ a.username }}?"
-                                    class="btn btn-ghost btn-xs text-error font-bold opacity-0 group-hover:opacity-100 transition-all">Revoke
-                                    Access</button>
-                                {% else %}
-                                <span class="text-[10px] font-bold text-slate-400 uppercase italic">Logged
-                                    In
-                                    (Current)</span>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
+                <!-- Future Settings Placeholder -->
+                <div class="card bg-slate-50 border border-dashed border-slate-200 shadow-sm opacity-60">
+                    <div class="card-body flex items-center justify-center text-center">
+                        <div class="space-y-2">
+                            <h3 class="font-bold text-slate-400">Additional Settings</h3>
+                            <p class="text-xs text-slate-400">More configuration options will appear here in future
+                                updates.</p>
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,80 @@
+{% for s in sites %}
+<tr class="hover group transition-colors {% if s.archived %}bg-slate-50 opacity-60{% endif %}">
+    <th>
+        <label>
+            <input type="checkbox" name="site_ids" value="{{ s.id }}" class="checkbox checkbox-xs" />
+        </label>
+    </th>
+    <td class="text-[10px] font-black uppercase text-slate-400">{{ s.client_name }}</td>
+    <td>
+        <div class="font-bold text-slate-800 {{ 'line-through text-slate-400' if s.archived else '' }}">{{ s.site_name
+            }}</div>
+        <div class="text-[10px] text-slate-400 truncate w-64">{{ s.address or '-' }}</div>
+    </td>
+    <td><span class="badge badge-outline badge-xs {{ 'badge-ghost' if s.archived else '' }}">{{ s.brand_name or
+            'Independent' }}</span></td>
+    <td class="text-right">
+        <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {% if not s.archived %}
+            <label for="edit-site-{{ s.id }}" class="btn btn-ghost btn-xs text-primary">Edit</label>
+            <button hx-post="/admin/manage/sites/{{ s.id }}/archive" hx-trigger="click" hx-swap="none"
+                class="btn btn-ghost btn-xs text-warning" title="Archive Site">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+            </button>
+            {% else %}
+            <button hx-post="/admin/manage/sites/{{ s.id }}/restore" hx-trigger="click" hx-swap="none"
+                class="btn btn-ghost btn-xs text-success" title="Restore Site">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Edit Site Modal (Hidden) -->
+        <input type="checkbox" id="edit-site-{{ s.id }}" class="modal-toggle" />
+        <div class="modal text-left">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg">Edit Site: {{ s.site_name }}</h3>
+                <form action="/admin/manage/sites/edit/{{ s.id }}" method="POST" class="space-y-4 mt-4">
+                    <div class="form-control">
+                        <label class="label text-xs font-bold uppercase text-slate-400">Site Name</label>
+                        <input type="text" name="site_name" value="{{ s.site_name }}" class="input input-bordered"
+                            required />
+                    </div>
+                    <div class="form-control">
+                        <label class="label text-xs font-bold uppercase text-slate-400">Site Address</label>
+                        <textarea name="address"
+                            class="textarea textarea-bordered h-24">{{ s.address or '' }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label text-xs font-bold uppercase text-slate-400">Franchise Brand</label>
+                        <select name="brand_name" class="select select-bordered">
+                            <option value="">None</option>
+                            {% for b in brands %}
+                            <option value="{{ b.brand_name }}" {% if s.brand_name==b.brand_name %}selected{% endif %}>{{
+                                b.brand_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-action">
+                        <label for="edit-site-{{ s.id }}" class="btn btn-ghost">Cancel</label>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </td>
+</tr>
+{% endfor %}
+{% if not sites %}
+<tr>
+    <td colspan="5" class="text-center py-8 text-slate-400 italic">No sites found.</td>
+</tr>
+{% endif %}
