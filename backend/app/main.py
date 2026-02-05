@@ -420,15 +420,29 @@ def job_allocation(request: Request, user: models.User = Depends(login_required)
         "clients": clients,
         "engineers": engineers,
         "site_contacts": site_contacts,
-        "brands": brands
+        "brands": brands,
+        "today": datetime.now().date().isoformat()
     })
 
 def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str):
     if not engineer or not engineer.phone:
         return None
     
+    # Determine base URL (Cloud env var or local request host)
+    base_url = os.getenv("PUBLIC_URL")
+    if not base_url:
+        # If no PUBLIC_URL, we guess based on host. 
+        # If it's a domain with a dot, assume HTTPS (cloud), else HTTP (local)
+        protocol = "https" if "." in host and not host.startswith("localhost") and not host.startswith("127.0.0.1") else "http"
+        base_url = f"{protocol}://{host}"
+    
+    # Remove trailing slash if present for consistency
+    if base_url.endswith('/'):
+        base_url = base_url[:-1]
+    
     # Persistent Portal Link (Magic Link)
-    portal_link = f"http://{host}/portal/{engineer.access_token}" if engineer.access_token else f"http://{host}/portal/login"
+    portal_link = f"{base_url}/portal/{engineer.access_token}" if engineer.access_token else f"{base_url}/portal/login"
+    report_link = f"{base_url}/extraction-report?job_number={job.job_number}"
     map_link = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(job.address)}" if job.address else "N/A"
     
     msg = f"""*PNJ Job Allocation: {job.job_number}*
@@ -442,6 +456,9 @@ def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str
 *Instructions:*
 {job.notes or 'Standard extraction clean.'}
 
+*Report:*
+{report_link}
+
 *Engineer Dashboard:*
 {portal_link}"""
     
@@ -454,6 +471,16 @@ def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str
             phone = '44' + phone
             
     return f"https://wa.me/{phone}?text={encoded_msg}"
+
+@app.post("/extraction-report/start")
+async def start_extraction_report(request: Request, user: models.User = Depends(login_required)):
+    form_data = await request.form()
+    job_number = form_data.get("job_number")
+    if not job_number:
+        raise HTTPException(status_code=400, detail="Job number is required")
+    
+    # Redirect to the report form with the job number pre-filled
+    return RedirectResponse(url=f"/extraction-report?job_number={job_number}", status_code=303)
 
 @app.get("/admin/sites-lookup", response_class=HTMLResponse)
 def get_sites_for_client(
@@ -619,6 +646,11 @@ def allocate_job(
     user: models.User = Depends(login_required)
 ):
     try:
+        # 0. Validate Date/Time not in past
+        requested_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        if requested_dt < datetime.now():
+            return HTMLResponse(content=f"<div class='alert alert-error font-bold'>Error: Cannot allocate a job in the past ({requested_dt.strftime('%d/%m/%Y %H:%M')})</div>", status_code=400)
+
         # Site logic
         site_name_val = None
         company_val = None
