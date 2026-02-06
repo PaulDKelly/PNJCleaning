@@ -229,11 +229,9 @@ def logout():
     response.delete_cookie("access_token")
     return response
 
-    return response
-<<<<<<< HEAD
-=======
 
 @app.get("/api/admin/events")
+
 def get_admin_events(user: models.User = Depends(login_required)):
     events = []
     
@@ -346,7 +344,6 @@ async def book_leave_for_staff(request: Request, user: models.User = Depends(log
     except Exception as e:
         return HTMLResponse(f"<div class='alert alert-error'>Error: {str(e)}</div>")
 
->>>>>>> feature/photo-download-storage
 @app.get("/manager-diary", response_class=HTMLResponse)
 def management_dashboard(request: Request, user: models.User = Depends(login_required)):
     # Fetch all jobs - Date Ascending for Queue
