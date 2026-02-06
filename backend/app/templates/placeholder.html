@@ -3,14 +3,32 @@
 {% block title %}{{ title }} - PNJ Extraction Services{% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-8 justify-center items-center h-[60vh]">
-    <div class="text-center space-y-4">
+<div class="flex flex-col gap-8 justify-center items-center min-h-[60vh] p-4">
+    <div class="text-center space-y-4 w-full max-w-2xl">
         <h2 class="text-4xl font-bold text-slate-800 font-outfit">{{ title }}</h2>
+        {% if message %}
+        <div class="alert alert-success shadow-lg">
+            <span>{{ message }}</span>
+        </div>
+        {% else %}
         <div class="badge badge-primary badge-outline">Coming Soon</div>
+        {% endif %}
+
+        {% if json_data %}
+        <div class="mt-8 text-left">
+            <h3 class="text-lg font-bold mb-2">Authenticated Profile Data:</h3>
+            <div
+                class="bg-slate-900 text-green-400 p-6 rounded-xl font-mono text-xs overflow-x-auto shadow-2xl border border-slate-700">
+                <pre>{{ json_data | tojson(indent=2) }}</pre>
+            </div>
+        </div>
+        {% else %}
         <p class="text-slate-500 max-w-md mx-auto">
             I'm currently porting this feature from the legacy PHP system to our new high-performance Python
             architecture.
         </p>
+        {% endif %}
+
         <div class="pt-6">
             <a href="/" class="btn btn-ghost text-slate-500">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"

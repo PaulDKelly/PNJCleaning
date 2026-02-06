@@ -41,6 +41,24 @@
                 </div>
             </form>
 
+            <div class="divider text-xs uppercase text-slate-400 font-bold my-8">OR</div>
+
+            <!-- WorkOS SSO Section -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider text-center">Enterprise SSO
+                    (WorkOS)</h3>
+                <form action="/auth/workos" method="POST" class="space-y-4">
+                    <div class="form-control">
+                        <input type="email" name="email" placeholder="work-email@company.com"
+                            class="input input-bordered focus:input-secondary w-full" required />
+                    </div>
+                    <button type="submit" class="btn btn-outline btn-secondary w-full font-bold">
+                        Continue with SSO
+                    </button>
+                </form>
+                <p class="text-[10px] text-center text-slate-400">Identity provided by WorkOS.</p>
+            </div>
+
             <div class="mt-8 pt-6 border-t border-slate-100 text-center">
                 <p class="text-slate-500 text-sm">Need help? Contact system administrator.</p>
             </div>

@@ -9,6 +9,9 @@ from .database import get_session, engine
 from . import models, security
 from jose import jwt
 import urllib.parse
+from .supabase_client import supabase
+import os
+import json
 
 app = FastAPI(title="PNJ Extraction Services")
 
@@ -96,6 +99,7 @@ def logout():
     response.delete_cookie("access_token")
     return response
 
+    return response
 @app.get("/manager-diary", response_class=HTMLResponse)
 def management_dashboard(request: Request, db: Session = Depends(get_session), user: models.User = Depends(login_required)):
     # Fetch all jobs for the unified dashboard
