@@ -30,7 +30,7 @@
     <!-- Breadcrumbs -->
     <div class="text-sm breadcrumbs text-slate-400">
         <ul>
-            <li><a href="/portal/{{ token }}">Client Portal</a></li>
+            <li><a href="/client-portal/{{ token }}">Client Portal</a></li>
             <li>Report {{ report.job_number }}</li>
         </ul>
     </div>
@@ -43,7 +43,7 @@
             <p class="text-slate-500 text-sm">Completed on {{ report.date.strftime('%d %B %Y') }}</p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-            <a href="/portal/{{ token }}/pdf/{{ report.job_number }}"
+            <a href="/client-portal/{{ token }}/pdf/{{ report.job_number }}"
                 class="btn btn-primary flex-1 sm:flex-initial shadow-lg shadow-primary/20">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
@@ -160,7 +160,7 @@
                         <div class="space-y-2 group cursor-pointer">
                             <div
                                 class="aspect-square rounded-xl overflow-hidden border border-slate-100 shadow-sm transition-transform group-hover:scale-[1.02]">
-                                <img src="/static/uploads/{{ photo.photo_path }}" class="w-full h-full object-cover"
+                                <img src="{{ photo.photo_path }}" class="w-full h-full object-cover"
                                     alt="Proof of service">
                             </div>
                             <div class="text-[8px] uppercase font-black text-slate-400 tracking-tighter text-center">

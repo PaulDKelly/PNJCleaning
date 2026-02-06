@@ -56,8 +56,9 @@
 </head>
 
 <body class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    {% if user or engineer %}
+    <!-- Sidebar (Desktop) - ADMIN ONLY -->
     {% if user %}
-    <!-- Sidebar (Desktop) -->
     <aside class="hidden md:flex flex-col w-80 bg-slate-900 h-screen sticky top-0 shadow-2xl z-50">
         <div class="px-6 py-10 border-b border-slate-800">
             <h1 class="text-2xl font-bold text-white font-outfit">PNJ <span class="text-primary">Cleaning</span></h1>
@@ -66,7 +67,7 @@
 
         <nav class="flex-1 px-4 py-6 sidebar-scroll overflow-y-auto space-y-1">
             <a href="/"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if request.url.path == '/' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -76,7 +77,7 @@
             </a>
 
             <a href="/manager-diary"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if request.url.path == '/manager-diary' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/manager-diary') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,7 +87,7 @@
             </a>
 
             <a href="/engineer/diary"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if request.url.path == '/engineer/diary' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/engineer/diary') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -96,7 +97,7 @@
             </a>
 
             <a href="/job-allocation"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if request.url.path == '/job-allocation' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/job-allocation') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,17 +107,17 @@
             </a>
 
             <a href="/admin/reports"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' if request.url.path.startswith('/admin/reports') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' if (request and request.url and request.url.path and request.url.path.startswith('/admin/reports')) else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="font-medium">Report Review</span>
+                <span class="font-medium">Client Reports</span>
             </a>
 
             <a href="/admin/manage"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' if request.url.path == '/admin/manage' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' if (request and request.url and request.url.path == '/admin/manage') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -126,7 +127,7 @@
             </a>
 
             <a href="/admin/portal-preview"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' if request.url.path == '/admin/portal-preview' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' if (request and request.url and request.url.path == '/admin/portal-preview') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -136,13 +137,25 @@
             </a>
 
             <a href="/extraction-report"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if request.url.path == '/extraction-report' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/extraction-report') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span class="font-medium">Extraction Report</span>
+            </a>
+
+            <!-- OneDrive Link -->
+            <a href="{{ settings.onedrive_link if settings and settings.onedrive_link else 'https://onedrive.live.com' }}"
+                target="_blank"
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                <span class="font-medium">OneDrive Files</span>
             </a>
         </nav>
 
@@ -151,7 +164,8 @@
                 <div class="avatar placeholder">
                     <div
                         class="bg-primary text-primary-content rounded-full w-10 ring-2 ring-primary ring-offset-2 ring-offset-slate-900">
-                        <span class="text-sm font-bold uppercase">{{ user.username[0] if user else 'U' }}</span>
+                        <span class="text-sm font-bold uppercase">{{ user.username[0] if user and user.username else 'U'
+                            }}</span>
                     </div>
                 </div>
                 <div class="overflow-hidden">
@@ -162,10 +176,13 @@
             <a href="/logout" class="btn btn-error btn-outline btn-sm btn-block rounded-xl">Logout</a>
         </div>
     </aside>
+    {% endif %}
 
     <!-- Mobile Header -->
     <header class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold font-outfit">PNJ <span class="text-primary">Cleaning</span></h1>
+
+        {% if user %}
         <div class="dropdown dropdown-end">
             <label tabindex="0" class="btn btn-ghost btn-circle">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -179,9 +196,25 @@
                 <li><a href="/job-diary">Job Diary</a></li>
                 <li><a href="/job-allocation">Job Allocation</a></li>
                 <li><a href="/extraction-report">Extraction Report</a></li>
+                <li><a href="/admin/reports">Client Reports</a></li>
+                <li><a href="{{ settings.onedrive_link if settings and settings.onedrive_link else 'https://onedrive.live.com' }}"
+                        target="_blank">OneDrive Files</a></li>
                 <li class="border-t border-slate-700 mt-2 pt-2"><a href="/logout" class="text-error">Logout</a></li>
             </ul>
         </div>
+        {% elif engineer %}
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-avatar btn-circle">
+                <div class="w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                    {{ engineer.contact_name[0] }}
+                </div>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-slate-800 rounded-box w-52">
+                <li class="menu-title text-slate-400">Engineer</li>
+                <li><a href="#" class="active">Dashboard/Calendar</a></li>
+            </ul>
+        </div>
+        {% endif %}
     </header>
 
     <!-- Main Content -->

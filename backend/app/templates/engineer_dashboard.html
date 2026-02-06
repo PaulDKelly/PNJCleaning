@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Engineer Dashboard - PNJ Services{% endblock %}
+
+{% block content %}
+<!-- FullCalendar JS/CSS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+
+<div class="max-w-6xl mx-auto pb-20 space-y-8">
+
+    <!-- Profile & Actions Header -->
+    <div
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+            <h2 class="text-3xl font-bold font-outfit text-slate-800">Hello, {{ engineer.contact_name }}</h2>
+            <div class="text-sm text-slate-500 font-medium flex items-center gap-2">
+                <span class="badge badge-success badge-xs">Online</span>
+                <span>Engineer Dashboard</span>
+            </div>
+        </div>
+        <div class="flex gap-2 w-full md:w-auto">
+            <!-- Leave Request Button -->
+            <button onclick="leave_modal.showModal()" class="btn btn-primary flex-1 md:flex-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Request Time Off
+            </button>
+            <a href="#today-queue" class="btn btn-outline btn-ghost md:hidden">
+                View Queue
+            </a>
+        </div>
+    </div>
+
+    <!-- Calendar Section -->
+    <div class="card bg-white shadow-xl border border-slate-100">
+        <div class="card-body p-4 md:p-6">
+            <h3 class="card-title text-slate-700 font-outfit mb-4">Your Schedule</h3>
+            <div id='calendar' class="min-h-[500px] font-sans text-sm"></div>
+        </div>
+    </div>
+
+    <!-- Today's Queue (Legacy List View) -->
+    <div id="today-queue" class="divider text-slate-400 font-bold tracking-widest uppercase text-xs">Today's Active
+        Queue</div>
+
+    <div class="space-y-4">
+        {% if today_jobs %}
+        {% for job in today_jobs %}
+        <div class="card bg-white shadow-md border-l-4 border-l-primary hover:shadow-xl transition-shadow">
+            <div class="card-body p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="badge badge-ghost font-mono mb-2">{{ job.time.strftime('%H:%M') }}</div>
+                        <h3 class="card-title font-outfit text-xl mb-1">{{ job.client_name }}</h3>
+                        <p class="text-slate-500 text-sm font-medium">{{ job.site_name or 'Main Site' }}</p>
+                        <p class="text-xs text-slate-400 mt-1 uppercase font-bold tracking-wider">{{ job.job_number }}
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        {% if job.status == 'Scheduled' %}
+                        <a href="{{ job.wa_link }}"
+                            class="btn btn-circle btn-success btn-sm text-white shadow-lg shadow-success/40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-50 flex justify-between items-end">
+                    <div class="text-sm">
+                        <span class="font-bold text-slate-600">Address:</span>
+                        <span class="block text-slate-500">{{ job.address or 'No address provided' }}</span>
+                    </div>
+                    {% if job.status == 'Scheduled' %}
+                    <form method="POST" action="/extraction-report/start">
+                        <input type="hidden" name="job_number" value="{{ job.job_number }}">
+                        <button class="btn btn-primary btn-sm">Start Job</button>
+                    </form>
+                    {% else %}
+                    <div class="badge badge-info">{{ job.status }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+            <p class="text-slate-400 font-bold italic">No active jobs found for today.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Leave Request Modal -->
+<dialog id="leave_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-primary">Request Time Off</h3>
+        <p class="py-4 text-sm text-slate-500">Submit a request for holiday or sickness logic.</p>
+
+        <form hx-post="/api/engineer/{{ token }}/leave" hx-swap="outerHTML" hx-target="#leave-feedback">
+            <div class="form-control w-full mb-4">
+                <label class="label"><span class="label-text font-bold">Reason</span></label>
+                <select name="reason" class="select select-bordered w-full">
+                    <option value="Holiday">Holiday</option>
+                    <option value="Sickness">Sickness</option>
+                    <option value="Personal">Personal Emergency</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Start Date</span></label>
+                    <input type="date" name="start_date" class="input input-bordered" required />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">End Date</span></label>
+                    <input type="date" name="end_date" class="input input-bordered" required />
+                </div>
+            </div>
+
+            <div id="leave-feedback"></div>
+
+            <div class="modal-action">
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+                <form method="dialog">
+                    <button class="btn">Close</button>
+                </form>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            height: 'auto',
+            events: '/api/engineer/{{ token }}/events',
+            eventClick: function (info) {
+                // Handle event click if needed (e.g. show details modal)
+                alert('Event: ' + info.event.title + '\nLocation: ' + (info.event.extendedProps.location || 'N/A'));
+            }
+        });
+        window.calendar = calendar;
+        calendar.render();
+    });
+</script>
+{% endblock %}

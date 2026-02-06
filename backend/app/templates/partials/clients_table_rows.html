@@ -1,0 +1,68 @@
+{% for c in clients %}
+<tr>
+    <td>
+        <div class="font-bold text-slate-800">{{ c.client_name }}</div>
+        <div class="text-[10px] text-slate-400 truncate w-64">{{ c.company or '-' }}</div>
+    </td>
+    <td>
+        {% set site_count = sites | selectattr('client_name', 'equalto', c.client_name) | list | length %}
+        <span class="badge badge-ghost">{{ site_count }} sites</span>
+    </td>
+    <td>
+        <div class="flex items-center gap-2">
+            <div class="text-[10px] bg-slate-100 p-1 rounded font-mono truncate w-32">/client-portal/{{
+                (c.portal_token[:8] if
+                c.portal_token else 'no-token')
+                }}...</div>
+            <button class="btn btn-ghost btn-xs text-primary"
+                onclick="navigator.clipboard.writeText(window.location.origin + '/client-portal/{{ c.portal_token }}'); alert('Link copied!')">Copy</button>
+        </div>
+    </td>
+    <td class="text-right">
+        <div class="flex justify-end gap-1">
+            <label for="edit-client-{{ c.client_name|replace(' ', '-') }}"
+                class="btn btn-ghost btn-xs text-primary">Edit</label>
+
+            {% if not c.archived %}
+            <button hx-post="/admin/manage/clients/{{ c.client_name }}/archive" hx-target="closest tr" hx-swap="none"
+                hx-confirm="Archive this client? Linked sites will remain but this client will be hidden from new allocations."
+                class="btn btn-ghost btn-xs text-warning" title="Archive Client">
+                Archive
+            </button>
+            {% else %}
+            <button hx-post="/admin/manage/clients/{{ c.client_name }}/restore" hx-target="closest tr" hx-swap="none"
+                class="btn btn-ghost btn-xs text-success">Restore</button>
+            {% endif %}
+        </div>
+
+        <!-- Edit Client Modal -->
+        <input type="checkbox" id="edit-client-{{ c.client_name|replace(' ', '-') }}" class="modal-toggle" />
+        <div class="modal text-left">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg">Edit Client: {{ c.client_name }}</h3>
+                <form action="/admin/manage/clients/edit/{{ c.client_name }}" method="POST" class="space-y-4 mt-4">
+                    <div class="form-control">
+                        <label class="label text-xs font-bold uppercase text-slate-400">Trading Name</label>
+                        <input type="text" name="company" value="{{ c.company or '' }}" class="input input-bordered" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label text-xs font-bold uppercase text-slate-400">Head Office Address</label>
+                        <textarea name="address"
+                            class="textarea textarea-bordered h-24">{{ c.address or '' }}</textarea>
+                    </div>
+                    <div class="modal-action">
+                        <label for="edit-client-{{ c.client_name|replace(' ', '-') }}"
+                            class="btn btn-ghost">Cancel</label>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </td>
+</tr>
+{% endfor %}
+{% if not clients %}
+<tr>
+    <td colspan="4" class="text-center py-8 text-slate-400 italic">No clients found.</td>
+</tr>
+{% endif %}
