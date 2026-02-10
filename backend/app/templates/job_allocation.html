@@ -188,7 +188,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Service Brand</label>
-                        <select name="brand_name" class="select select-bordered focus:border-primary font-medium">
+                        <select name="brand_name" class="select select-bordered focus:border-primary font-medium"
+                            hx-get="/admin/clients-lookup" hx-target="#client-selector" hx-trigger="change"
+                            hx-on:change="htmx.ajax('GET', '/admin/sites-lookup', {target:'#site-selector', values:{brand_name: this.value}})">
                             <option value="">No Specific Brand</option>
                             {% for b in brands %}
                             <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
@@ -206,9 +208,10 @@
                     </div>
                     <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Client Account</label>
-                        <select name="client_name"
+                        <select name="client_name" id="client-selector"
                             class="select select-bordered focus:border-primary font-bold text-indigo-700 bg-indigo-50/20"
-                            hx-get="/admin/sites-lookup" hx-target="#site-selector" hx-trigger="change" required>
+                            hx-get="/admin/sites-lookup" hx-target="#site-selector" hx-trigger="change"
+                            hx-include="[name='brand_name']" required>
                             <option value="" disabled selected>Select Client</option>
                             {% for client in clients %}
                             <option value="{{ client.client_name }}">{{ client.client_name }}</option>

@@ -76,16 +76,6 @@
                 <span class="font-medium">Dashboard</span>
             </a>
 
-            <a href="/manager-diary"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/manager-diary') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span class="font-medium">Management Dashboard</span>
-            </a>
-
             <a href="/engineer/diary"
                 class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/engineer/diary') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -192,7 +182,6 @@
             </label>
             <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-slate-800 rounded-box w-52">
                 <li><a href="/">Dashboard</a></li>
-                <li><a href="/manager-diary">Manager Diary</a></li>
                 <li><a href="/job-diary">Job Diary</a></li>
                 <li><a href="/job-allocation">Job Allocation</a></li>
                 <li><a href="/extraction-report">Extraction Report</a></li>

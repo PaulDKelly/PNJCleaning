@@ -13,6 +13,8 @@ import urllib.parse
 from .supabase_client import supabase
 import os
 import json
+import workos
+from workos import client as workos_client
 
 
 app = FastAPI(title="PNJ Extraction Services")
@@ -23,7 +25,13 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 templates = Jinja2Templates(directory="app/templates")
 
-# Helper to get user by username using Supabase
+# Helper to get user by email using Supabase
+def get_user_by_email(email: str):
+    res = supabase.table("users").select("*").eq("email", email).execute()
+    if res.data:
+        return models.User(**res.data[0])
+    return None
+
 def get_user_by_username(username: str):
     res = supabase.table("users").select("*").eq("username", username).execute()
     if res.data:
@@ -36,33 +44,60 @@ def get_current_user(request: Request):
         return None
     try:
         payload = jwt.decode(token, security.SECRET_KEY, algorithms=[security.ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             return None
-        return get_user_by_username(username)
+        return get_user_by_email(email)
     except Exception:
         return None
 
 def login_required(user: models.User = Depends(get_current_user)):
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-            headers={"Location": "/login"}
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     return user
 
+def role_required(allowed_roles: list):
+    def dependency(user: models.User = Depends(login_required)):
+        if user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        return user
+    return dependency
+
+# Dashboard Route
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request, user: models.User = Depends(login_required)):
     try:
-        # Basic summary stats using count (Head request or select count)
-        # Supabase select(count='exact', head=True)
+        # 1. Summary stats
         total_jobs = supabase.table("jobs").select("*", count="exact", head=True).execute().count
         active_engineers = supabase.table("engineers").select("*", count="exact", head=True).execute().count
         total_clients = supabase.table("clients").select("*", count="exact", head=True).execute().count
         
-        # Recent jobs
-        recent_jobs_res = supabase.table("jobs").select("*").order("date", desc=True).limit(5).execute()
+        # 2. Recent jobs (Increased limit to 20 for the new unified view)
+        recent_jobs_res = supabase.table("jobs").select("*").order("date", desc=True).limit(20).execute()
         recent_jobs = [models.Job(**j) for j in recent_jobs_res.data]
+        
+        # 3. All Recent Jobs for "Operation History" (Full history but limited for performance)
+        all_jobs_res = supabase.table("jobs").select("*").order("date", desc=True).limit(10).execute()
+        all_jobs = [models.Job(**j) for j in all_jobs_res.data]
+        
+        # 4. Archived Clients
+        archived_clients_res = supabase.table("clients").select("*").eq("archived", True).execute()
+        archived_clients = [models.Client(**c) for c in archived_clients_res.data]
+        
+        # 5. Archived Sites
+        archived_sites_res = supabase.table("client_sites").select("*").eq("archived", True).execute()
+        archived_sites = [models.ClientSite(**s) for s in archived_sites_res.data]
+        
+        # 6. Engineers (for Leave Booking Modal)
+        engineers_res = supabase.table("engineers").select("*").execute()
+        engineers = [models.Engineer(**e) for e in engineers_res.data]
         
         return templates.TemplateResponse("index.html", {
             "request": request,
@@ -70,6 +105,10 @@ def read_root(request: Request, user: models.User = Depends(login_required)):
             "active_engineers": active_engineers,
             "total_clients": total_clients,
             "recent_jobs": recent_jobs,
+            "all_jobs": all_jobs,
+            "archived_clients": archived_clients,
+            "archived_sites": archived_sites,
+            "engineers": engineers,
             "user": user
         })
     except Exception as e:
@@ -83,6 +122,123 @@ def login_page(request: Request, user: models.User = Depends(get_current_user)):
     if user:
         return RedirectResponse(url="/")
     return templates.TemplateResponse("login.html", {"request": request, "user": user})
+
+# --- WorkOS SSO Integration ---
+
+# Initialize WorkOS
+workos_api_key = os.getenv("WORKOS_API_KEY")
+workos_client_id = os.getenv("WORKOS_CLIENT_ID")
+workos_redirect_uri = os.getenv("WORKOS_REDIRECT_URI")
+
+print(f"DEBUG: WORKOS_CLIENT_ID exists: {bool(workos_client_id)} (Length: {len(workos_client_id) if workos_client_id else 0})")
+print(f"DEBUG: WORKOS_API_KEY exists: {bool(workos_api_key)} (Length: {len(workos_api_key) if workos_api_key else 0})")
+if workos_api_key:
+    print(f"DEBUG: WORKOS_API_KEY prefix: {workos_api_key[:10]}...")
+
+from workos import WorkOSClient
+wos = WorkOSClient(api_key=workos_api_key, client_id=workos_client_id)
+
+@app.post("/auth/workos")
+async def auth_workos(email: str = Form(...)):
+    """Initiate WorkOS SSO flow with robust connection lookup"""
+    try:
+        # 1. Get the domain from the email
+        domain = email.split('@')[-1]
+        print(f"DEBUG: Initiating SSO for domain: {domain}")
+        
+        # 2. Find the connection for this domain
+        connections = wos.sso.list_connections(domain=domain)
+        if not connections.data:
+            print(f"ERROR: No WorkOS connection found for domain: {domain}")
+            return RedirectResponse(url=f"/login?error=unknown_domain&domain={domain}", status_code=303)
+        
+        connection_id = connections.data[0].id
+        print(f"DEBUG: Found connection {connection_id} for domain {domain}")
+        
+        # 3. Get the authorization URL
+        authorization_url = wos.sso.get_authorization_url(
+            connection=connection_id,
+            redirect_uri=workos_redirect_uri,
+            state={},
+        )
+        return RedirectResponse(url=authorization_url, status_code=303)
+    except Exception as e:
+        import traceback
+        print(f"WorkOS Auth Error: {e}")
+        traceback.print_exc()
+        return RedirectResponse(url="/login?error=sso_failed", status_code=303)
+
+@app.post("/auth/google")
+async def auth_google():
+    """Initiate Google Social Login flow via WorkOS"""
+    try:
+        # Use 'GoogleOAuth' provider for personal Gmail accounts
+        authorization_url = wos.sso.get_authorization_url(
+            provider='GoogleOAuth',
+            redirect_uri=workos_redirect_uri,
+            state={},
+        )
+        return RedirectResponse(url=authorization_url, status_code=303)
+    except Exception as e:
+        import traceback
+        print(f"WorkOS Google Auth Error: {e}")
+        traceback.print_exc()
+        return RedirectResponse(url="/login?error=sso_failed", status_code=303)
+
+@app.get("/auth/callback")
+async def auth_callback(request: Request, code: str):
+    """Handle WorkOS callback and auto-provision users"""
+    try:
+        # 1. Exchange the code for a profile
+        # Version 4.x returns a ProfileAndToken object (Pydantic-based)
+        profile_and_token = wos.sso.get_profile_and_token(code)
+        profile = profile_and_token.profile
+        
+        email = profile.email
+        if not email:
+            print("ERROR: WorkOS SSO: No email returned in profile")
+            return RedirectResponse(url="/login?error=no_email")
+            
+        # 2. Check if user exists
+        user = get_user_by_email(email)
+        
+        if not user:
+            # AUTO-PROVISION
+            print(f"Auto-provisioning user: {email}")
+            first_name = profile.first_name or ""
+            last_name = profile.last_name or ""
+            username = f"{first_name} {last_name}".strip()
+            if not username:
+                username = email.split('@')[0]
+                
+            # Create user with random password (they use SSO)
+            random_pw = str(uuid.uuid4())
+            hashed_pw = security.get_password_hash(random_pw)
+            
+            supabase.table("users").insert({
+                "username": username,
+                "email": email,
+                "password": hashed_pw,
+                "role": "Admin" # Default role for new SSO users
+            }).execute()
+            
+            user = get_user_by_email(email)
+            
+        if not user:
+            print(f"ERROR: Provisioning failed for {email}")
+            return RedirectResponse(url="/login?error=provisioning_failed")
+
+        # 3. Log user in
+        access_token = security.create_access_token(data={"sub": user.email})
+        response = RedirectResponse(url="/", status_code=303)
+        response.set_cookie(key="access_token", value=access_token, httponly=True)
+        return response
+        
+    except Exception as e:
+        print(f"WorkOS Callback Error: {e}")
+        return RedirectResponse(url="/login?error=callback_failed")
+
+# --- End WorkOS SSO ---
 
 @app.get("/portal/{token}", response_class=HTMLResponse)
 def engineer_portal(token: str, request: Request):
@@ -202,26 +358,106 @@ async def submit_leave_request(token: str, request: Request):
 @app.post("/login")
 async def login(
     request: Request,
-    username: str = Form(...),
-    password: str = Form(...)
+    email: str = Form(...),
+    password: Optional[str] = Form(None)
 ):
-    print(f"Login attempt for user: {username}")
-    user = get_user_by_username(username)
+    print(f"Login attempt for email: {email}")
+    if not password:
+        return HTMLResponse(content="<div class='alert alert-error'>Password is required</div>", status_code=200)
+    user = get_user_by_email(email)
     
     if not user:
-        print(f"User {username} not found")
+        print(f"User with email {email} not found")
         return HTMLResponse(content="<div class='alert alert-error'>User not found</div>", status_code=200)
         
     if not security.verify_password(password, user.password):
-        print(f"Password mismatch for user {username}")
+        print(f"Password mismatch for user {email}")
         return HTMLResponse(content="<div class='alert alert-error'>Invalid password</div>", status_code=200)
     
-    print(f"Login success for {username}")
-    access_token = security.create_access_token(data={"sub": user.username})
+    print(f"Login success for {email}")
+    access_token = security.create_access_token(data={"sub": user.email})
     response = HTMLResponse(content="", status_code=200, headers={"HX-Redirect": "/"})
     # Secure cookies
     response.set_cookie(key="access_token", value=access_token, httponly=True)
     return response
+
+@app.get("/forgot-password", response_class=HTMLResponse)
+def forgot_password_page(request: Request):
+    return templates.TemplateResponse("forgot_password.html", {"request": request})
+
+@app.post("/forgot-password")
+async def handle_forgot_password(request: Request, email: str = Form(...)):
+    user = get_user_by_email(email)
+    if not user:
+        # Don't reveal if user exists or not for security, but for helper bot let's just say success
+        return templates.TemplateResponse("forgot_password.html", {
+            "request": request, 
+            "message": "If an account exists with that email, a reset link has been generated."
+        })
+    
+    # Generate token
+    token = str(uuid.uuid4())
+    expires = datetime.utcnow() + timedelta(hours=1)
+    
+    supabase.table("users").update({
+        "reset_token": token,
+        "reset_expires": expires.isoformat()
+    }).eq("email", email).execute()
+    
+    # LOG TO CONSOLE (as requested)
+    reset_link = f"{request.url.scheme}://{request.url.netloc}/reset-password/{token}"
+    print("\n" + "="*50)
+    print(f"PASSWORD RESET REQUEST FOR: {email}")
+    print(f"LINK: {reset_link}")
+    print("="*50 + "\n")
+    
+    return templates.TemplateResponse("forgot_password.html", {
+        "request": request, 
+        "message": "A reset link has been generated and logged to the server console."
+    })
+
+@app.get("/reset-password/{token}", response_class=HTMLResponse)
+def reset_password_page(request: Request, token: str):
+    # Verify token
+    res = supabase.table("users").select("*").eq("reset_token", token).execute()
+    if not res.data:
+        return templates.TemplateResponse("placeholder.html", {
+            "request": request, "title": "Invalid Token", "message": "The reset link is invalid or has expired."
+        })
+    
+    user_data = res.data[0]
+    expires = datetime.fromisoformat(user_data['reset_expires'])
+    if datetime.utcnow() > expires:
+        return templates.TemplateResponse("placeholder.html", {
+            "request": request, "title": "Expired Token", "message": "The reset link has expired."
+        })
+        
+    return templates.TemplateResponse("reset_password.html", {"request": request, "token": token})
+
+@app.post("/reset-password/{token}")
+async def handle_reset_password(request: Request, token: str, password: str = Form(...)):
+    # Verify token again
+    res = supabase.table("users").select("*").eq("reset_token", token).execute()
+    if not res.data:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    
+    user_data = res.data[0]
+    expires = datetime.fromisoformat(user_data['reset_expires'])
+    if datetime.utcnow() > expires:
+        raise HTTPException(status_code=400, detail="Expired token")
+    
+    # Update password
+    hashed_password = security.get_password_hash(password)
+    supabase.table("users").update({
+        "password": hashed_password,
+        "reset_token": None,
+        "reset_expires": None
+    }).eq("id", user_data['id']).execute()
+    
+    return RedirectResponse(url="/login?message=password_updated", status_code=303)
+
+# Add missing import for timedelta
+from datetime import timedelta
 
 @app.get("/logout")
 def logout():
@@ -919,7 +1155,7 @@ async def submit_extraction_report(request: Request, user: models.User = Depends
         return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}<pre>{traceback.format_exc()}</pre></div>", status_code=400)
 
 @app.get("/admin/reports", response_class=HTMLResponse)
-def admin_reports(request: Request, user: models.User = Depends(login_required)):
+def admin_reports(request: Request, user: models.User = Depends(role_required(["Admin", "Manager", "Viewer"]))):
     res = supabase.table("extraction_reports").select("*").order("created_at", desc=True).execute()
     reports = [models.ExtractionReport(**r) for r in res.data]
     
@@ -1148,7 +1384,7 @@ def approve_report(report_id: int, user: models.User = Depends(login_required)):
 
 # Admin Management Panel Routes
 @app.get("/admin/manage", response_class=HTMLResponse)
-def admin_manage(request: Request, user: models.User = Depends(login_required)):
+def admin_manage(request: Request, user: models.User = Depends(role_required(["Admin", "Manager"]))):
     """Admin management panel for clients, sites, brands, engineers, and admins"""
     clients_res = supabase.table("clients").select("*").execute()
     clients = [models.Client(**c) for c in clients_res.data] if clients_res.data else []
@@ -1186,7 +1422,7 @@ def admin_manage(request: Request, user: models.User = Depends(login_required)):
     })
 
 @app.post("/admin/manage/settings")
-def update_settings(request: Request, user: models.User = Depends(login_required)):
+def update_settings(request: Request, user: models.User = Depends(role_required(["Admin"]))):
     import asyncio
     form_data = asyncio.run(request.form())
     
@@ -1409,3 +1645,68 @@ def portal_download_pdf(token: str, job_number: str):
     # TODO: Generate PDF from report data
     # For now, return a placeholder response
     return HTMLResponse(content="<h1>PDF Generation Coming Soon</h1><p>This feature will generate a downloadable PDF report.</p>")
+
+# User Management (IAM) Routes
+@app.post("/admin/manage/users/add")
+async def add_user(
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    role: str = Form("Admin"),
+    user: models.User = Depends(login_required)
+):
+    # Only admins can add users
+    if user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    # Check if user exists
+    existing = get_user_by_email(email)
+    if existing:
+        return RedirectResponse(url="/admin/manage?error=email_exists", status_code=303)
+    
+    hashed_password = security.get_password_hash(password)
+    supabase.table("users").insert({
+        "username": username,
+        "email": email,
+        "password": hashed_password,
+        "role": role
+    }).execute()
+    
+    return RedirectResponse(url="/admin/manage?success=user_added", status_code=303)
+
+@app.post("/admin/manage/users/edit/{user_id}")
+async def edit_user(
+    user_id: int,
+    username: str = Form(...),
+    email: str = Form(...),
+    password: Optional[str] = Form(None),
+    role: str = Form("Admin"),
+    user: models.User = Depends(login_required)
+):
+    # Only admins can edit users
+    if user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    update_data = {
+        "username": username,
+        "email": email,
+        "role": role
+    }
+    if password:
+        update_data["password"] = security.get_password_hash(password)
+        
+    supabase.table("users").update(update_data).eq("id", user_id).execute()
+    return RedirectResponse(url="/admin/manage?success=user_updated", status_code=303)
+
+@app.delete("/admin/manage/users/{user_id}")
+def delete_user(user_id: int, user: models.User = Depends(login_required)):
+    # Only admins can delete users
+    if user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+        
+    # Prevent self-deletion
+    if user.id == user_id:
+        return HTMLResponse(content="<div class='alert alert-warning'>Cannot delete yourself!</div>", status_code=400)
+        
+    supabase.table("users").delete().eq("id", user_id).execute()
+    return HTMLResponse(content="")

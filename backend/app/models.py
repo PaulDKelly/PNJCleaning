@@ -89,6 +89,9 @@ class User(BaseModel):
     username: str
     email: Optional[str] = None
     password: str
+    role: str = "Admin"
+    reset_token: Optional[str] = None
+    reset_expires: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
 class PasswordReset(BaseModel):

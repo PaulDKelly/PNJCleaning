@@ -3,83 +3,138 @@
 {% block title %}Dashboard - PNJ Extraction Services{% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-8">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Dashboard Overview</h2>
-            <p class="text-slate-500">Welcome back to the PNJ management portal.</p>
-        </div>
-        <button class="btn btn-primary shadow-lg shadow-primary/20">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                    clip-rule="evenodd" />
+<!-- Header -->
+<div class="flex justify-between items-end mb-8">
+    <div>
+        <div class="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-400 mb-1">Central Operations</div>
+        <h2 class="text-3xl font-bold text-slate-800 font-outfit">Dashboard</h2>
+        <p class="text-slate-500">System overview and operational schedule.</p>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="manager_leave_modal.showModal()" class="btn btn-outline btn-secondary shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            New Job
+            Book Leave
         </button>
-    </div>
-
-    <!-- Summary Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a href="/job-allocation" class="stats shadow glass-card hover:bg-slate-50 transition-all cursor-pointer">
-            <div class="stat">
-                <div class="stat-figure text-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        class="inline-block w-8 h-8 stroke-current">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="stat-title font-semibold">Total Jobs</div>
-                <div class="stat-value text-primary font-outfit">{{ total_jobs }}</div>
-                <div class="stat-desc">Click to allocate new jobs</div>
-            </div>
-        </a>
-
-        <a href="/admin/manage" class="stats shadow glass-card hover:bg-slate-50 transition-all cursor-pointer">
-            <div class="stat">
-                <div class="stat-figure text-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        class="inline-block w-8 h-8 stroke-current">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                        </path>
-                    </svg>
-                </div>
-                <div class="stat-title font-semibold">Active Engineers</div>
-                <div class="stat-value text-secondary font-outfit">{{ active_engineers }}</div>
-                <div class="stat-desc">Click to manage team</div>
-            </div>
-        </a>
-
-        <a href="/admin/manage" class="stats shadow glass-card hover:bg-slate-50 transition-all cursor-pointer">
-            <div class="stat">
-                <div class="stat-figure text-accent">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        class="inline-block w-8 h-8 stroke-current">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
-                        </path>
-                    </svg>
-                </div>
-                <div class="stat-title font-semibold">Active Clients</div>
-                <div class="stat-value text-accent font-outfit">{{ total_clients }}</div>
-                <div class="stat-desc">Click to manage clients</div>
-            </div>
+        <a href="/job-allocation" class="btn btn-primary shadow-lg shadow-primary/20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Allocate Job
         </a>
     </div>
+</div>
 
-    <!-- Recent Jobs Table -->
-    <div class="card bg-white shadow-xl">
-        <div class="card-body p-0">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="card-title font-outfit text-xl">Recent Jobs</h3>
-                <div class="join">
-                    <input class="input input-sm input-bordered join-item" placeholder="Search jobs..." />
-                    <button class="btn btn-sm btn-ghost join-item border border-slate-300">Filter</button>
+<!-- Operational Calendar -->
+<div class="card bg-white shadow-xl mb-8">
+    <div class="card-body">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="card-title font-outfit text-xl">Operational Calendar</h3>
+            <div class="flex gap-4 text-xs font-bold uppercase tracking-wider">
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Jobs</div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500"></span> Leave
                 </div>
             </div>
+        </div>
+        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+        <div id='manager-calendar' class="min-h-[500px] font-sans text-sm"></div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var calendarEl = document.getElementById('manager-calendar');
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    },
+                    height: 'auto',
+                    events: '/api/admin/events',
+                    eventClassNames: function (arg) {
+                        return ['cursor-pointer', 'transition-transform', 'hover:scale-[1.02]'];
+                    }
+                });
+                calendar.render();
+                window.mainCalendar = calendar;
+            });
+        </script>
+    </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <a href="/job-allocation" class="stats shadow glass-card hover:bg-slate-50 transition-all cursor-pointer">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div class="stat-title font-semibold">Total Jobs</div>
+            <div class="stat-value text-primary font-outfit">{{ total_jobs }}</div>
+            <div class="stat-desc">Click to allocate new jobs</div>
+        </div>
+    </a>
+
+    <a href="/admin/manage" class="stats shadow glass-card hover:bg-slate-50 transition-all cursor-pointer">
+        <div class="stat">
+            <div class="stat-figure text-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                    </path>
+                </svg>
+            </div>
+            <div class="stat-title font-semibold">Active Engineers</div>
+            <div class="stat-value text-secondary font-outfit">{{ active_engineers }}</div>
+            <div class="stat-desc">Click to manage team</div>
+        </div>
+    </a>
+
+    <a href="/admin/manage" class="stats shadow glass-card hover:bg-slate-50 transition-all cursor-pointer">
+        <div class="stat">
+            <div class="stat-figure text-accent">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="inline-block w-8 h-8 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4">
+                    </path>
+                </svg>
+            </div>
+            <div class="stat-title font-semibold">Active Clients</div>
+            <div class="stat-value text-accent font-outfit">{{ total_clients }}</div>
+            <div class="stat-desc">Click to manage clients</div>
+        </div>
+    </a>
+</div>
+
+<!-- Unified Activity & Archive Panel -->
+<div class="card bg-white shadow-xl mb-32">
+    <div class="card-body p-0">
+        <!-- Tab Navigation -->
+        <div
+            class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="tabs tabs-boxed bg-slate-100/50">
+                <a class="tab tab-active font-bold" onclick="switchTab(event, 'jobs-tab')">All Recent Jobs</a>
+                <a class="tab font-bold" onclick="switchTab(event, 'archive-tab')">Archive ({{ archived_clients|length +
+                    archived_sites|length }})</a>
+            </div>
+
+            <div id="jobs-tab-controls" class="join">
+                <input class="input input-sm input-bordered join-item" placeholder="Search jobs..." />
+                <button class="btn btn-sm btn-ghost join-item border border-slate-300">Filter</button>
+            </div>
+        </div>
+
+        <!-- Tab Content: Jobs -->
+        <div id="jobs-tab" class="tab-content-panel">
             <div class="overflow-x-auto">
                 <table class="table table-zebra w-full shadow-inner">
                     <thead class="bg-slate-50 uppercase text-xs text-slate-500 font-bold">
@@ -88,17 +143,18 @@
                             <th>Client</th>
                             <th>Date</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th>Engineer</th>
+                            <th class="text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="job-table-body">
+                    <tbody>
                         {% for job in recent_jobs %}
-                        <tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
                             <td class="p-4 font-semibold text-primary">{{ job.job_number }}</td>
-                            <td>{{ job.client_name }}</td>
-                            <td>{{ job.date }}</td>
+                            <td class="font-medium">{{ job.client_name }}</td>
+                            <td class="text-slate-500">{{ job.date }}</td>
                             <td>
-                                <span class="badge badge-outline 
+                                <span class="badge badge-sm badge-outline 
                                     {% if job.status == 'Completed' %}badge-success
                                     {% elif job.status == 'In Progress' %}badge-info
                                     {% elif job.status == 'Scheduled' %}badge-warning
@@ -106,26 +162,99 @@
                                     {{ job.status }}
                                 </span>
                             </td>
-                            <td>
+                            <td class="text-sm italic text-slate-500">{{ job.engineer_contact_name }}</td>
+                            <td class="text-right">
                                 <a href="/extraction-report?job_number={{ job.job_number }}"
-                                    class="btn btn-ghost btn-xs text-emerald-600 font-bold"
-                                    title="Complete Report">Report</a>
-                                <button class="btn btn-ghost btn-xs text-primary">View</button>
-                                <button class="btn btn-ghost btn-xs text-secondary">Edit</button>
+                                    class="btn btn-ghost btn-xs text-emerald-600 font-bold">Report</a>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="text-center py-10 text-slate-400">No recent jobs found.</td>
+                            <td colspan="6" class="text-center py-10 text-slate-400">No recent jobs found.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            <div class="p-4 border-t border-slate-100 text-center">
-                <button class="btn btn-ghost btn-sm text-slate-500">View All Jobs</button>
+        </div>
+
+        <!-- Tab Content: Archive -->
+        <div id="archive-tab" class="tab-content-panel hidden p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Archived Clients -->
+                <div>
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Archived Clients</h4>
+                    <ul class="space-y-2">
+                        {% for client in archived_clients %}
+                        <li
+                            class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="font-bold text-slate-700">{{ client.client_name }}</span>
+                            <button class="btn btn-ghost btn-xs text-secondary normal-case">Restore</button>
+                        </li>
+                        {% endfor %}
+                        {% if not archived_clients %}
+                        <li class="text-xs text-slate-400 italic">No archived clients.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Archived Sites -->
+                <div>
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Archived Sites</h4>
+                    <ul class="space-y-2">
+                        {% for site in archived_sites %}
+                        <li
+                            class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div>
+                                <div class="font-bold text-slate-700">{{ site.site_name }}</div>
+                                <div class="text-[10px] text-slate-400">{{ site.client_name }}</div>
+                            </div>
+                            <span class="badge badge-ghost badge-xs">Site</span>
+                        </li>
+                        {% endfor %}
+                        {% if not archived_sites %}
+                        <li class="text-xs text-slate-400 italic">No archived sites.</li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function switchTab(event, tabId) {
+        // Toggle tabs
+        document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('tab-active'));
+        event.currentTarget.classList.add('tab-active');
+
+        // Toggle content
+        document.querySelectorAll('.tab-content-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+
+        // Toggle controls
+        const controls = document.getElementById('jobs-tab-controls');
+        if (tabId === 'jobs-tab') {
+            controls.classList.remove('hidden');
+        } else {
+            controls.classList.add('hidden');
+        }
+    }
+</script>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+</style>
 {% endblock %}
