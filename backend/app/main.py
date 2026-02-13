@@ -376,7 +376,7 @@ async def login(
     
     print(f"Login success for {email}")
     access_token = security.create_access_token(data={"sub": user.email})
-    response = HTMLResponse(content="", status_code=200, headers={"HX-Redirect": "/"})
+    response = RedirectResponse(url="/", status_code=303)
     # Secure cookies
     response.set_cookie(key="access_token", value=access_token, httponly=True)
     return response

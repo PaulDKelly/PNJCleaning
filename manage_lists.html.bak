@@ -1,0 +1,376 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PNJ Extraction Services – Manage Engineers and Clients</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f7fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      background-color: #1e5bb8;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 24px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .section {
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      background-color: #dce6ff;
+      padding: 10px;
+      margin: -15px -15px 15px -15px;
+      color: #1a255b;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #d1d9e6;
+      text-align: left;
+    }
+    th {
+      background-color: #e8f0ff;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: 500;
+      color: #2a3f6b;
+      font-size: 14px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #c1cbd6;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #1e5bb8;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #174a8e;
+    }
+    .delete-btn {
+      background-color: #d32f2f;
+    }
+    .delete-btn:hover {
+      background-color: #b71c1c;
+    }
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      h1 { font-size: 20px; }
+      table, thead, tbody, th, td, tr { display: block; }
+      th, td { border: none; padding: 8px; width: 100%; }
+      td:before { content: attr(data-label); font-weight: bold; display: block; }
+      .form-group { margin-bottom: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Manage Engineers and Clients</h1>
+
+    <!-- Engineers Management -->
+    <div class="section">
+      <h2>Engineers</h2>
+      <form id="engineerForm">
+        <input type="hidden" name="engineer_id" id="engineer_id" />
+        <div class="form-group">
+          <label for="engineer_name">Name:</label>
+          <input type="text" id="engineer_name" name="engineer_name" required />
+        </div>
+        <div class="form-group">
+          <label for="engineer_email_form">Email:</label>
+          <input type="email" id="engineer_email_form" name="engineer_email" required />
+        </div>
+        <div class="form-group">
+          <label for="engineer_phone_form">Phone:</label>
+          <input type="tel" id="engineer_phone_form" name="engineer_phone" required />
+        </div>
+        <button type="submit">Add Engineer</button>
+      </form>
+      <table id="engineersTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Clients Management -->
+    <div class="section">
+      <h2>Clients</h2>
+      <form id="clientForm">
+        <input type="hidden" name="client_id" id="client_id" />
+        <div class="form-group">
+          <label for="client_brand">Brand:</label>
+          <input type="text" id="client_brand" name="client_brand" required />
+        </div>
+        <div class="form-group">
+          <label for="client_address">Address:</label>
+          <input type="text" id="client_address" name="client_address" required />
+        </div>
+        <button type="submit">Add Client</button>
+      </form>
+      <table id="clientsTable">
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Address</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <script>
+      // Fetch and update engineers table
+      async function updateEngineersTable() {
+        try {
+          const response = await fetch('/wp-content/themes/your-theme/pnj_api.php?action=get_engineers');
+          const engineers = await response.json();
+          const tbody = document.querySelector('#engineersTable tbody');
+          tbody.innerHTML = '';
+          engineers.forEach(eng => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td data-label="Name">${eng.name}</td>
+              <td data-label="Email">${eng.email}</td>
+              <td data-label="Phone">${eng.phone}</td>
+              <td data-label="Actions">
+                <button onclick="editEngineer(${eng.id})">Edit</button>
+                <button class="delete-btn" onclick="deleteEngineer(${eng.id})">Delete</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (error) {
+          console.error('Error fetching engineers:', error);
+        }
+      }
+
+      // Fetch and update clients table
+      async function updateClientsTable() {
+        try {
+          const response = await fetch('/wp-content/themes/your-theme/pnj_api.php?action=get_clients');
+          const clients = await response.json();
+          const tbody = document.querySelector('#clientsTable tbody');
+          tbody.innerHTML = '';
+          clients.forEach(client => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td data-label="Brand">${client.brand}</td>
+              <td data-label="Address">${client.address}</td>
+              <td data-label="Actions">
+                <button onclick="editClient(${client.id})">Edit</button>
+                <button class="delete-btn" onclick="deleteClient(${client.id})">Delete</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (error) {
+          console.error('Error fetching clients:', error);
+        }
+      }
+
+      // Edit engineer
+      function editEngineer(id) {
+        fetch('/wp-content/themes/your-theme/pnj_api.php?action=get_engineers')
+          .then(res => res.json())
+          .then(engineers => {
+            const eng = engineers.find(e => e.id == id);
+            document.getElementById('engineer_id').value = eng.id;
+            document.getElementById('engineer_name').value = eng.name;
+            document.getElementById('engineer_email_form').value = eng.email;
+            document.getElementById('engineer_phone_form').value = eng.phone;
+            document.getElementById('engineerForm').querySelector('button').textContent = 'Update Engineer';
+          });
+      }
+
+      // Delete engineer
+      async function deleteEngineer(id) {
+        if (confirm('Delete this engineer?')) {
+          try {
+            const response = await fetch(`/wp-content/themes/your-theme/pnj_api.php?action=delete_engineer&id=${id}`);
+            const result = await response.json();
+            if (result.success) {
+              updateEngineersTable();
+              alert(result.success);
+            } else {
+              alert(result.error);
+            }
+          } catch (error) {
+            alert('Error deleting engineer');
+          }
+        }
+      }
+
+      // Edit client
+      function editClient(id) {
+        fetch('/wp-content/themes/your-theme/pnj_api.php?action=get_clients')
+          .then(res => res.json())
+          .then(clients => {
+            const client = clients.find(c => c.id == id);
+            document.getElementById('client_id').value = client.id;
+            document.getElementById('client_brand').value = client.brand;
+            document.getElementById('client_address').value = client.address;
+            document.getElementById('clientForm').querySelector('button').textContent = 'Update Client';
+          });
+      }
+
+      // Delete client
+      async function deleteClient(id) {
+        if (confirm('Delete this client?')) {
+          try {
+            const response = await fetch(`/wp-content/themes/your-theme/pnj_api.php?action=delete_client&id=${id}`);
+            const result = await response.json();
+            if (result.success) {
+              updateClientsTable();
+              alert(result.success);
+            } else {
+              alert(result.error);
+            }
+          } catch (error) {
+            alert('Error deleting client');
+          }
+        }
+      }
+
+      // Handle engineer form submission
+      document.getElementById('engineerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+          id: form.engineer_id.value || null,
+          name: form.engineer_name.value,
+          email: form.engineer_email.value,
+          phone: form.engineer_phone.value
+        };
+        try {
+          const response = await fetch('/wp-content/themes/your-theme/pnj_api.php?action=save_engineer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          if (result.success) {
+            updateEngineersTable();
+            form.reset();
+            form.querySelector('button').textContent = 'Add Engineer';
+            alert(result.success);
+          } else {
+            alert(result.error);
+          }
+        } catch (error) {
+          alert('Error saving engineer');
+        }
+      });
+
+      // Handle client form submission
+      document.getElementById('clientForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const data = {
+          id: form.client_id.value || null,
+          brand: form.client_brand.value,
+          address: form.client_address.value
+        };
+        try {
+          const response = await fetch('/wp-content/themes/your-theme/pnj_api.php?action=save_client', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          if (result.success) {
+            updateClientsTable();
+            form.reset();
+            form.querySelector('button').textContent = 'Add Client';
+            alert(result.success);
+          } else {
+            alert(result.error);
+          }
+        } catch (error) {
+          alert('Error saving client');
+        }
+      });
+
+      // Initialize tables
+      updateEngineersTable();
+      updateClientsTable();
+    </script>
+  </div>
+</body>
+</html>

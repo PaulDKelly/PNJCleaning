@@ -1,0 +1,179 @@
+# Admin Management Routes - Add these to main.py
+
+@app.get("/admin/manage", response_class=HTMLResponse)
+def admin_manage(request: Request, user: models.User = Depends(login_required)):
+    """Admin management panel for clients, sites, brands, engineers, and admins"""
+    # Fetch all data needed for the template
+    clients_res = supabase.table("clients").select("*").execute()
+    clients = [models.Client(**c) for c in clients_res.data] if clients_res.data else []
+    
+    sites_res = supabase.table("sites").select("*").execute()
+    sites = [models.Site(**s) for s in sites_res.data] if sites_res.data else []
+    
+    brands_res = supabase.table("brands").select("*").execute()
+    brands = [models.Brand(**b) for b in brands_res.data] if brands_res.data else []
+    
+    engineers_res = supabase.table("engineers").select("*").execute()
+    engineers = [models.Engineer(**e) for e in engineers_res.data] if engineers_res.data else []
+    
+    admins_res = supabase.table("users").select("*").execute()
+    admins = [models.User(**a) for a in admins_res.data] if admins_res.data else []
+    
+    return templates.TemplateResponse("manage_lists.html", {
+        "request": request,
+        "title": "Administrators Panel",
+        "user": user,
+        "clients": clients,
+        "sites": sites,
+        "brands": brands,
+        "engineers": engineers,
+        "admins": admins
+    })
+
+# Client Management Routes
+@app.post("/admin/manage/clients/add")
+def add_client(client_name: str = Form(...), company: str = Form(None), address: str = Form(None), user: models.User = Depends(login_required)):
+    import secrets
+    portal_token = secrets.token_urlsafe(32)
+    supabase.table("clients").insert({
+        "client_name": client_name,
+        "company": company,
+        "address": address,
+        "portal_token": portal_token
+    }).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.post("/admin/manage/clients/edit/{client_name}")
+def edit_client(client_name: str, company: str = Form(None), address: str = Form(None), user: models.User = Depends(login_required)):
+    supabase.table("clients").update({
+        "company": company,
+        "address": address
+    }).eq("client_name", client_name).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.post("/admin/manage/clients/{client_name}/archive")
+def archive_client(client_name: str, user: models.User = Depends(login_required)):
+    supabase.table("clients").update({"archived": True}).eq("client_name", client_name).execute()
+    return HTMLResponse(content="")
+
+@app.post("/admin/manage/clients/{client_name}/restore")
+def restore_client(client_name: str, user: models.User = Depends(login_required)):
+    supabase.table("clients").update({"archived": False}).eq("client_name", client_name).execute()
+    return HTMLResponse(content="")
+
+# Site Management Routes
+@app.post("/admin/manage/sites/add")
+def add_site(client_name: str = Form(...), site_name: str = Form(...), address: str = Form(...), brand_name: str = Form(None), user: models.User = Depends(login_required)):
+    supabase.table("sites").insert({
+        "client_name": client_name,
+        "site_name": site_name,
+        "address": address,
+        "brand_name": brand_name if brand_name else None
+    }).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.post("/admin/manage/sites/edit/{site_id}")
+def edit_site(site_id: int, site_name: str = Form(...), address: str = Form(...), brand_name: str = Form(None), user: models.User = Depends(login_required)):
+    supabase.table("sites").update({
+        "site_name": site_name,
+        "address": address,
+        "brand_name": brand_name if brand_name else None
+    }).eq("id", site_id).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.post("/admin/manage/sites/{site_id}/archive")
+def archive_site(site_id: int, user: models.User = Depends(login_required)):
+    supabase.table("sites").update({"archived": True}).eq("id", site_id).execute()
+    return HTMLResponse(content="")
+
+@app.post("/admin/manage/sites/{site_id}/restore")
+def restore_site(site_id: int, user: models.User = Depends(login_required)):
+    supabase.table("sites").update({"archived": False}).eq("id", site_id).execute()
+    return HTMLResponse(content="")
+
+# Brand Management Routes
+@app.post("/admin/manage/brands/add")
+def add_brand(brand_name: str = Form(...), user: models.User = Depends(login_required)):
+    supabase.table("brands").insert({"brand_name": brand_name}).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.post("/admin/manage/brands/edit/{brand_id}")
+def edit_brand(brand_id: int, brand_name: str = Form(...), user: models.User = Depends(login_required)):
+    supabase.table("brands").update({"brand_name": brand_name}).eq("id", brand_id).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.delete("/admin/manage/brands/{brand_id}")
+def delete_brand(brand_id: int, user: models.User = Depends(login_required)):
+    supabase.table("brands").delete().eq("id", brand_id).execute()
+    return HTMLResponse(content="")
+
+# Engineer Management Routes
+@app.post("/admin/manage/engineers/add")
+def add_engineer(contact_name: str = Form(...), email: str = Form(None), phone: str = Form(None), address: str = Form(None), user: models.User = Depends(login_required)):
+    supabase.table("engineers").insert({
+        "contact_name": contact_name,
+        "email": email,
+        "phone": phone,
+        "address": address
+    }).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.post("/admin/manage/engineers/edit/{contact_name}")
+def edit_engineer(contact_name: str, email: str = Form(None), phone: str = Form(None), address: str = Form(None), user: models.User = Depends(login_required)):
+    supabase.table("engineers").update({
+        "email": email,
+        "phone": phone,
+        "address": address
+    }).eq("contact_name", contact_name).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.delete("/admin/manage/engineers/{contact_name}")
+def delete_engineer(contact_name: str, user: models.User = Depends(login_required)):
+    supabase.table("engineers").delete().eq("contact_name", contact_name).execute()
+    return HTMLResponse(content="")
+
+# Admin Management Routes
+@app.post("/admin/manage/admins/add")
+def add_admin(username: str = Form(...), password: str = Form(...), user: models.User = Depends(login_required)):
+    hashed_password = security.get_password_hash(password)
+    supabase.table("users").insert({
+        "username": username,
+        "password": hashed_password
+    }).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+@app.delete("/admin/manage/admins/{admin_id}")
+def delete_admin(admin_id: int, user: models.User = Depends(login_required)):
+    supabase.table("users").delete().eq("id", admin_id).execute()
+    return HTMLResponse(content="")
+
+# HTMX Table Refresh Routes
+@app.get("/admin/manage/clients-table", response_class=HTMLResponse)
+def get_clients_table(request: Request, client_name: str = None, brand_name: str = None, site_id: int = None, user: models.User = Depends(login_required)):
+    # Fetch clients with optional filters
+    query = supabase.table("clients").select("*")
+    if client_name:
+        query = query.eq("client_name", client_name)
+    # Add more filtering logic as needed
+    clients_res = query.execute()
+    clients = [models.Client(**c) for c in clients_res.data] if clients_res.data else []
+    
+    return templates.TemplateResponse("partials/clients_table_rows.html", {
+        "request": request,
+        "clients": clients
+    })
+
+@app.get("/admin/manage/sites-table", response_class=HTMLResponse)
+def get_sites_table(request: Request, client_name: str = None, show_archived: bool = False, user: models.User = Depends(login_required)):
+    query = supabase.table("sites").select("*")
+    if client_name:
+        query = query.eq("client_name", client_name)
+    if not show_archived:
+        query = query.eq("archived", False)
+    sites_res = query.execute()
+    sites = [models.Site(**s) for s in sites_res.data] if sites_res.data else []
+    
+    return templates.TemplateResponse("partials/sites_table_rows.html", {
+        "request": request,
+        "sites": sites
+    })

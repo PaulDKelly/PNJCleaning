@@ -1,0 +1,11 @@
+--- Found failure at line 8 ---
+0: Connecting to the container 'pnj-cleaning-backend'...
+1: Successfully Connected to container: 'pnj-cleaning-backend' [Revision: 'pnj-cleaning-backend--0000038', Replica: 'pnj-cleaning-backend--0000038-7644cd4d7d-ng5sn']
+2: F INFO:     100.100.0.213:33968 - "POST /auth/google HTTP/1.1" 303 See Other
+3: F INFO:     127.0.0.1:41044 - "GET /login HTTP/1.1" 200 OK
+4: F INFO:     127.0.0.1:41048 - "GET /login HTTP/1.1" 200 OK
+5: F DEBUG: Auth callback received with code: 01KH1KFPX8...
+6: F WorkOS Callback Error: 'ProfileAndToken' object has no attribute 'to_dict'
+7: F INFO:     100.100.0.213:33968 - "GET /auth/callback?code=01KH1KFPX811BGEMTX6DMBEYMY&state=%7B%7D HTTP/1.1" 307 Temporary Redirect
+8: F INFO:     100.100.0.213:33968 - "GET /login?error=callback_failed HTTP/1.1" 200 OK
+

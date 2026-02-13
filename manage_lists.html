@@ -1,44 +1,46 @@
 <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
+  var gk_isXlsx = false;
+  var gk_xlsxFileLookup = {};
+  var gk_fileData = {};
+  function filledCell(cell) {
+    return cell !== '' && cell != null;
+  }
+  function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+      try {
+        var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+        var firstSheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[firstSheetName];
 
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
+        // Convert sheet to JSON to filter blank rows
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+        // Filter out blank rows (rows where all cells are empty, null, or undefined)
+        var filteredData = jsonData.filter(row => row.some(filledCell));
 
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
+        // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+        var headerRowIndex = filteredData.findIndex((row, index) =>
+          row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+        );
+        // Fallback
+        if (headerRowIndex === -1 || headerRowIndex > 25) {
+          headerRowIndex = 0;
+        }
 
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+        // Convert filtered JSON back to CSV
+        var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+        csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+        return csv;
+      } catch (e) {
+        console.error(e);
+        return "";
+      }
+    }
+    return gk_fileData[filename] || "";
+  }
+</script>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -51,6 +53,7 @@
       background-color: #f4f7fa;
       color: #333;
     }
+
     h1 {
       text-align: center;
       background-color: #1e5bb8;
@@ -59,17 +62,20 @@
       border-radius: 8px;
       font-size: 24px;
     }
+
     .container {
       max-width: 800px;
       margin: 0 auto;
     }
+
     .section {
       background-color: white;
       padding: 15px;
       margin-bottom: 20px;
       border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
     h2 {
       background-color: #dce6ff;
       padding: 10px;
@@ -77,64 +83,107 @@
       color: #1a255b;
       font-size: 16px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 15px;
     }
-    th, td {
+
+    th,
+    td {
       padding: 10px;
       border: 1px solid #d1d9e6;
       text-align: left;
     }
+
     th {
       background-color: #e8f0ff;
     }
+
     .form-group {
       margin-bottom: 15px;
     }
+
     label {
       display: block;
       font-weight: 500;
       color: #2a3f6b;
       font-size: 14px;
     }
-    input, button {
+
+    input,
+    button {
       width: 100%;
       padding: 10px;
       font-size: 16px;
       border: 1px solid #c1cbd6;
       border-radius: 4px;
     }
+
     button {
       background-color: #1e5bb8;
       color: white;
       border: none;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #174a8e;
     }
+
     .delete-btn {
       background-color: #d32f2f;
     }
+
     .delete-btn:hover {
       background-color: #b71c1c;
     }
+
     /* Mobile Styles */
     @media (max-width: 768px) {
-      body { padding: 10px; }
-      h1 { font-size: 20px; }
-      table, thead, tbody, th, td, tr { display: block; }
-      th, td { border: none; padding: 8px; width: 100%; }
-      td:before { content: attr(data-label); font-weight: bold; display: block; }
-      .form-group { margin-bottom: 10px; }
+      body {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      th,
+      td {
+        border: none;
+        padding: 8px;
+        width: 100%;
+      }
+
+      td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+      }
+
+      .form-group {
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h1>Manage Engineers and Clients</h1>
+    <div class="flex justify-center mb-6 h-20 items-center">
+      <img src="./logo.jpeg" alt="PNJ Cleaning" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+    </div>
 
     <!-- Engineers Management -->
     <div class="section">
@@ -373,4 +422,5 @@
     </script>
   </div>
 </body>
+
 </html>

@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: pnj-cleaning-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Mount current directory for dev (optional, good for hot reload if enabled)
+      - .:/app
+      # For SQLite persistence if used:
+      - ./pnj_database.db:/app/pnj_database.db
+    restart: always

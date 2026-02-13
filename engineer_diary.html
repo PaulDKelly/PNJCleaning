@@ -1,11 +1,11 @@
 <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+        return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
         if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
             try {
                 var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
@@ -19,11 +19,11 @@
 
                 // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
                 var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
                 );
                 // Fallback
                 if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
+                    headerRowIndex = 0;
                 }
 
                 // Convert filtered JSON back to CSV
@@ -36,19 +36,22 @@
             }
         }
         return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+    }
+</script>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PNJ Extraction Services - Engineer Diary</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100 font-sans text-gray-900">
     <!-- Header -->
-    <header class="bg-blue-900 text-white text-center py-4">
-        <h1 class="text-lg font-semibold">PNJ Extraction Services - Engineer Diary</h1>
+    <header class="bg-blue-900 text-white text-center py-4 flex justify-center h-24 items-center">
+        <img src="./logo.jpeg" alt="PNJ Cleaning" class="max-h-full max-w-full object-contain">
     </header>
 
     <!-- Main Content -->
@@ -77,7 +80,8 @@
                         <td class="py-2 px-4 border-b text-sm">John Doe</td>
                         <td class="py-2 px-4 border-b text-sm">Clean ventilation system</td>
                         <td class="py-2 px-4 border-b text-sm">
-                            <a href="./pnj_extraction_report.html?job_number=JN001&client=Client%20A&address=123%20Main%20St,%20London&contact_name=John%20Doe" class="text-blue-600 hover:underline">Create Report</a>
+                            <a href="./pnj_extraction_report.html?job_number=JN001&client=Client%20A&address=123%20Main%20St,%20London&contact_name=John%20Doe"
+                                class="text-blue-600 hover:underline">Create Report</a>
                         </td>
                     </tr>
                     <tr>
@@ -88,7 +92,8 @@
                         <td class="py-2 px-4 border-b text-sm">Jane Smith</td>
                         <td class="py-2 px-4 border-b text-sm">Inspect ductwork</td>
                         <td class="py-2 px-4 border-b text-sm">
-                            <a href="./pnj_extraction_report.html?job_number=JN002&client=Client%20B&address=456%20High%20St,%20Manchester&contact_name=Jane%20Smith" class="text-blue-600 hover:underline">Create Report</a>
+                            <a href="./pnj_extraction_report.html?job_number=JN002&client=Client%20B&address=456%20High%20St,%20Manchester&contact_name=Jane%20Smith"
+                                class="text-blue-600 hover:underline">Create Report</a>
                         </td>
                     </tr>
                 </tbody>
@@ -131,4 +136,5 @@
         });
     </script>
 </body>
+
 </html>

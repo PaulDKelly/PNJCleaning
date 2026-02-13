@@ -31,10 +31,8 @@
 
     <!-- Sidebar (Desktop) -->
     <aside class="hidden md:flex flex-col w-80 bg-slate-900 h-screen sticky top-0 shadow-2xl z-50">
-        <div class="px-6 py-10 border-b border-slate-800">
-            <h1 class="text-2xl font-bold text-white tracking-tight">PNJ <span class="text-blue-500">Cleaning</span>
-            </h1>
-            <p class="text-slate-500 text-xs mt-1 uppercase tracking-widest font-semibold italic">Management System</p>
+        <div class="px-6 py-8 border-b border-slate-800">
+            <img src="/logo.jpeg" alt="PNJ Cleaning" class="h-10 w-auto">
         </div>
 
         <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-1">
@@ -95,7 +93,7 @@
 
     <!-- Mobile Header -->
     <header class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-bold">PNJ <span class="text-blue-500">Cleaning</span></h1>
+        <img src="/logo.jpeg" alt="PNJ Cleaning" class="h-8 w-auto">
         <!-- Simple Mobile Menu Toggle could be added here -->
     </header>
 

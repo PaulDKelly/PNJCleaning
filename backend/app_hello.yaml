@@ -1,0 +1,18 @@
+location: uksouth
+name: pnj-backend-web
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 80
+      transport: auto
+  template:
+    containers:
+    - image: mcr.microsoft.com/k8s/samples/helloworld:latest
+      name: pnj-backend-web
+      resources:
+        cpu: 0.5
+        memory: 1.0Gi
+    scale:
+      minReplicas: 1

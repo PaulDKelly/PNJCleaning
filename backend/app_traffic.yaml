@@ -1,0 +1,171 @@
+id: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/containerapps/pnj-cleaning-backend
+identity:
+  type: None
+location: UK South
+name: pnj-cleaning-backend
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: pnj-cleaning-backend.redbeach-d7680450.uksouth.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 8000
+      targetPortHttpScheme: null
+      traffic:
+      - revisionName: pnj-cleaning-backend--0000004
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: null
+    registries:
+    - identity: ''
+      passwordSecretRef: ca3fbe3e88bbacrazurecrio-ca3fbe3e88bbacr
+      server: ca3fbe3e88bbacr.azurecr.io
+      username: ca3fbe3e88bbacr
+    revisionTransitionThreshold: null
+    runtime: null
+    secrets:
+    - name: ca3fbe3e88bbacrazurecrio-ca3fbe3e88bbacr
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 355A5ECC938DDD6871A4EA7D0C3D7FDC208C3DFEDDB08933D3401A84701734CA
+  delegatedIdentities: []
+  environmentId: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/managedEnvironments/pnj-cleaning-backend-env
+  eventStreamEndpoint: https://uksouth.azurecontainerapps.dev/subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/containerApps/pnj-cleaning-backend/eventstream
+  latestReadyRevisionName: pnj-cleaning-backend--0000004
+  latestRevisionFqdn: pnj-cleaning-backend--0000004.redbeach-d7680450.uksouth.azurecontainerapps.io
+  latestRevisionName: pnj-cleaning-backend--0000004
+  managedEnvironmentId: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/managedEnvironments/pnj-cleaning-backend-env
+  outboundIpAddresses:
+  - 20.90.238.99
+  - 20.90.239.180
+  - 85.210.163.187
+  - 74.177.240.109
+  - 172.166.80.179
+  - 131.145.9.241
+  - 85.210.166.17
+  - 85.210.48.136
+  - 74.177.120.102
+  - 131.145.48.93
+  - 85.210.163.208
+  - 74.177.193.62
+  - 20.108.130.227
+  - 51.142.67.19
+  - 20.254.83.139
+  - 131.145.82.22
+  - 20.254.83.138
+  - 4.158.232.14
+  - 172.166.87.38
+  - 74.177.226.250
+  - 20.108.130.191
+  - 85.210.25.6
+  - 85.210.24.221
+  - 4.158.34.249
+  - 20.162.138.167
+  - 4.158.113.223
+  - 4.159.3.89
+  - 20.108.216.9
+  - 20.108.217.125
+  - 74.177.201.70
+  - 131.145.91.209
+  - 4.158.91.74
+  - 4.158.89.64
+  - 131.145.40.6
+  - 74.177.198.189
+  - 85.210.223.160
+  - 74.177.245.93
+  - 74.177.198.181
+  - 131.145.77.209
+  - 20.108.124.221
+  - 74.177.162.123
+  - 20.26.109.122
+  - 131.145.124.57
+  - 85.210.222.64
+  - 20.26.109.180
+  - 74.177.141.127
+  - 85.210.223.56
+  - 74.177.245.142
+  - 131.145.83.126
+  - 131.145.99.107
+  - 20.108.125.221
+  - 4.159.25.18
+  - 4.158.92.46
+  - 20.162.145.125
+  - 4.158.143.149
+  - 4.158.143.92
+  - 4.250.234.44
+  - 20.90.136.180
+  patchingMode: Automatic
+  provisioningState: Succeeded
+  runningStatus: Running
+  template:
+    containers:
+    - env:
+      - name: SUPABASE_URL
+        value: https://ruaseemcgxvbcjazhhfw.supabase.co
+      - name: SUPABASE_KEY
+        value: sb_publishable_dPA9xqq4yyGg6869fCuMLA_tCXIKXOu
+      - name: SECRET_KEY
+        value: supersecretkeyforpnjcleaning
+      image: ca3fbe3e88bbacr.azurecr.io/pnj-cleaning-backend:cli-containerapp-20260202091056284595
+      imageType: ContainerImage
+      name: pnj-cleaning-backend
+      probes:
+      - failureThreshold: 3
+        httpGet:
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Liveness
+      - failureThreshold: 3
+        httpGet:
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Readiness
+      - failureThreshold: 3
+        httpGet:
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Startup
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 10
+      minReplicas: 1
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes: null
+  workloadProfileName: Consumption
+resourceGroup: rg-pnj-cleaning
+systemData:
+  createdAt: '2026-01-29T11:45:57.9448708'
+  createdBy: pauldkelly@outlook.com
+  createdByType: User
+  lastModifiedAt: '2026-02-02T11:06:08.2066522'
+  lastModifiedBy: pauldkelly@outlook.com
+  lastModifiedByType: User
+type: Microsoft.App/containerApps

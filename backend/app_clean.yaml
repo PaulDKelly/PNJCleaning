@@ -1,0 +1,68 @@
+location: UK South
+name: pnj-backend-web
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: null
+      external: true
+      fqdn: null
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 8000
+      targetPortHttpScheme: null
+      traffic: null
+      transport: Auto
+    maxInactiveRevisions: 100
+    registries: null
+    revisionTransitionThreshold: null
+    runtime: null
+    secrets: null
+    service: null
+    targetLabel: null
+  environmentId: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/managedEnvironments/env-pnj-web
+  template:
+    containers:
+    - env:
+      - name: SUPABASE_URL
+        value: https://ruaseemcgxvbcjazhhfw.supabase.co
+      - name: SUPABASE_KEY
+        value: sb_publishable_dPA9xqq4yyGg6869fCuMLA_tCXIKXOu
+      - name: SECRET_KEY
+        value: supersecretkeyforpnjcleaning
+      image: ca3fbe3e88bbacr.azurecr.io/pnj-cleaning-backend:cli-containerapp-20260202091056284595
+      imageType: CloudBuild
+      name: pnj-backend-web
+      probes:
+      - failureThreshold: 3
+        httpGet: &id001
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Liveness
+      - failureThreshold: 3
+        httpGet: *id001
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Readiness
+      - failureThreshold: 3
+        httpGet: *id001
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Startup
+    initContainers: null
+    revisionSuffix: null
+    scale:
+      minReplicas: 1
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes: null

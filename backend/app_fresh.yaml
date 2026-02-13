@@ -1,0 +1,51 @@
+location: uksouth
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 8000
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: auto
+  managedEnvironmentId: ''
+  template:
+    containers:
+    - env:
+      - name: SUPABASE_URL
+        value: https://ruaseemcgxvbcjazhhfw.supabase.co
+      - name: SUPABASE_KEY
+        value: sb_publishable_dPA9xqq4yyGg6869fCuMLA_tCXIKXOu
+      - name: SECRET_KEY
+        value: supersecretkeyforpnjcleaning
+      image: ca3fbe3e88bbacr.azurecr.io/pnj-cleaning-backend:cli-containerapp-20260202091056284595
+      name: pnj-backend-web
+      probes:
+      - failureThreshold: 3
+        httpGet:
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Liveness
+      - failureThreshold: 3
+        httpGet:
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Readiness
+      - failureThreshold: 3
+        httpGet:
+          path: /login
+          port: 8000
+          scheme: HTTP
+        periodSeconds: 10
+        timeoutSeconds: 2
+        type: Startup
+    scale:
+      maxReplicas: 10
+      minReplicas: 1

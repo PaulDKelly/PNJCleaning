@@ -1,0 +1,49 @@
+<!-- Manager Leave Booking Modal -->
+<dialog id="manager_leave_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-primary">Book Leave for Staff</h3>
+        <p class="py-4 text-sm text-slate-500">Create a leave request on behalf of an engineer.</p>
+
+        <form hx-post="/admin/leave/book" hx-swap="outerHTML" hx-target="#manager-leave-feedback">
+            <div class="form-control w-full mb-4">
+                <label class="label"><span class="label-text font-bold">Engineer</span></label>
+                <select name="engineer_name" class="select select-bordered w-full" required>
+                    <option value="">Select Engineer</option>
+                    {% for eng in engineers %}
+                    <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-control w-full mb-4">
+                <label class="label"><span class="label-text font-bold">Reason</span></label>
+                <select name="reason" class="select select-bordered w-full">
+                    <option value="Holiday">Holiday</option>
+                    <option value="Sickness">Sickness</option>
+                    <option value="Personal">Personal Emergency</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">Start Date</span></label>
+                    <input type="date" name="start_date" class="input input-bordered" required />
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold">End Date</span></label>
+                    <input type="date" name="end_date" class="input input-bordered" required />
+                </div>
+            </div>
+
+            <div id="manager-leave-feedback"></div>
+
+            <div class="modal-action">
+                <button type="submit" class="btn btn-primary">Book Leave</button>
+                <form method="dialog">
+                    <button class="btn">Close</button>
+                </form>
+            </div>
+        </form>
+    </div>
+</dialog>

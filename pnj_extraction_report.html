@@ -1,11 +1,11 @@
 <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+        return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
         if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
             try {
                 var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
@@ -19,11 +19,11 @@
 
                 // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
                 var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
                 );
                 // Fallback
                 if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
+                    headerRowIndex = 0;
                 }
 
                 // Convert filtered JSON back to CSV
@@ -36,19 +36,22 @@
             }
         }
         return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+    }
+</script>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PNJ Extraction Services - Extraction Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100 font-sans text-gray-900">
     <!-- Header -->
-    <header class="bg-blue-900 text-white text-center py-4">
-        <h1 class="text-lg font-semibold">PNJ Extraction Services - Extraction Report</h1>
+    <header class="bg-blue-900 text-white text-center py-4 flex justify-center h-24 items-center">
+        <img src="./logo.jpeg" alt="PNJ Cleaning" class="max-h-full max-w-full object-contain">
     </header>
 
     <!-- Main Content -->
@@ -60,42 +63,51 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div>
                     <label for="company" class="block text-sm font-medium text-gray-700">Company</label>
-                    <input type="text" id="company" name="company" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="text" id="company" name="company"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="company-error">Please enter a company name.</p>
                 </div>
                 <div>
                     <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
-                    <input type="date" id="date" name="date" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="date" id="date" name="date"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="date-error">Please select a date.</p>
                 </div>
                 <div>
                     <label for="brand" class="block text-sm font-medium text-gray-700">Brand</label>
-                    <input type="text" id="brand" name="brand" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="text" id="brand" name="brand"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="brand-error">Please enter a brand.</p>
                 </div>
                 <div>
                     <label for="time" class="block text-sm font-medium text-gray-700">Time</label>
-                    <input type="time" id="time" name="time" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="time" id="time" name="time"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="time-error">Please select a time.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                    <input type="text" id="address" name="address" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="text" id="address" name="address"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="address-error">Please enter an address.</p>
                 </div>
                 <div>
                     <label for="job-number" class="block text-sm font-medium text-gray-700">Job Number</label>
-                    <input type="text" id="job-number" name="job-number" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="e.g., JN001">
-                    <p class="text-red-500 text-sm hidden" id="job-number-error">Please enter a valid job number (e.g., JN001).</p>
+                    <input type="text" id="job-number" name="job-number"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="e.g., JN001">
+                    <p class="text-red-500 text-sm hidden" id="job-number-error">Please enter a valid job number (e.g.,
+                        JN001).</p>
                 </div>
                 <div>
                     <label for="contact-name" class="block text-sm font-medium text-gray-700">Contact Name</label>
-                    <input type="text" id="contact-name" name="contact-name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="text" id="contact-name" name="contact-name"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="contact-name-error">Please enter a contact name.</p>
                 </div>
                 <div>
                     <label for="contact-number" class="block text-sm font-medium text-gray-700">Contact Number</label>
-                    <input type="text" id="contact-number" name="contact-number" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <input type="text" id="contact-number" name="contact-number"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
                     <p class="text-red-500 text-sm hidden" id="contact-number-error">Please enter a contact number.</p>
                 </div>
             </div>
@@ -107,145 +119,248 @@
                     <thead>
                         <tr class="bg-gray-100">
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Item</th>
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Pre-Clean Inspection</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Pre-Clean
+                                Inspection</th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Success</th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Pass</th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Fail</th>
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Work Requirement Advice</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Work
+                                Requirement Advice</th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Initial</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="VP < 250m"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="VP < 250m"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Canopy – Main"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Canopy – Main"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Canopy – Chipper"></td>
-                            <td class="py-problem px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Canopy – Chipper"></td>
+                            <td class="py-problem px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Main Ducting"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Main Ducting"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Chipper Duct"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Chipper Duct"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Extract Fan"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Extract Fan"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Attenuator/Silencers"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Attenuator/Silencers">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Duct Riser"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Duct Riser"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Electrostatic Filters"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Electrostatic Filters">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="UV Ozone"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="UV Ozone"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Carbon Filters"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Carbon Filters"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Motor Belts"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Motor Belts"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Pre Filters"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Pre Filters"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]" class="w-full p-1 border border-gray-300 rounded-md" value="Perfumer"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="inspection-item[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Perfumer"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="pre-clean[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="success[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="pass[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="fail[]" class="h-4 w-4">
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="advice[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="initial[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <button type="button" id="add-inspection-row" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mb-4">Add Inspection Row</button>
+            <button type="button" id="add-inspection-row"
+                class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mb-4">Add Inspection Row</button>
 
             <!-- Canopy Filter Details -->
             <h3 class="text-lg font-semibold text-blue-900 mb-4">Canopy Filter Details</h3>
@@ -253,8 +368,10 @@
                 <table class="min-w-full bg-white border border-gray-200">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Filter Type</th>
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Height (mm)</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Filter Type
+                            </th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Height (mm)
+                            </th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Width (mm)</th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Depth (mm)</th>
                             <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Quantity</th>
@@ -264,80 +381,127 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="Canopy"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Canopy"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]"
+                                    class="h-4 w-4"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="S/S Baffle"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="S/S Baffle"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]"
+                                    class="h-4 w-4"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="S/S Mesh"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="S/S Mesh"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]"
+                                    class="h-4 w-4"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="S/S Combo"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="S/S Combo"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]"
+                                    class="h-4 w-4"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="Al Baffle"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Al Baffle"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]"
+                                    class="h-4 w-4"></td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]" class="w-full p-1 border border-gray-300 rounded-md" value="Al Combo"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]" class="w-full p-1 border border-gray-300 rounded-md"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]" class="h-4 w-4"></td>
-                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]" class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="text" name="filter-type[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md" value="Al Combo"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="height[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="width[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="depth[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="number" name="quantity[]"
+                                    class="w-full p-1 border border-gray-300 rounded-md"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-pass[]"
+                                    class="h-4 w-4"></td>
+                            <td class="py-2 px-4 border-b text-sm"><input type="checkbox" name="filter-fail[]"
+                                    class="h-4 w-4"></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <button type="button" id="add-filter-row" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mb-4">Add Filter Row</button>
+            <button type="button" id="add-filter-row"
+                class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mb-4">Add Filter Row</button>
 
             <!-- Additional Details -->
             <h3 class="text-lg font-semibold text-blue-900 mb-4">Additional Details</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="md:col-span-2">
                     <label for="sketch-details" class="block text-sm font-medium text-gray-700">Sketch Details</label>
-                    <textarea id="sketch-details" name="sketch-details" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="4"></textarea>
+                    <textarea id="sketch-details" name="sketch-details"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="4"></textarea>
                     <p class="text-red-500 text-sm hidden" id="sketch-details-error">Please enter sketch details.</p>
                 </div>
                 <div class="md:col-span-2">
                     <label for="photos-taken" class="block text-sm font-medium text-gray-700">Photos Taken</label>
-                    <textarea id="photos-taken" name="photos-taken" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="4"></textarea>
-                    <p class="text-red-500 text-sm hidden" id="photos-taken-error">Please enter photos taken details.</p>
+                    <textarea id="photos-taken" name="photos-taken"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md" rows="4"></textarea>
+                    <p class="text-red-500 text-sm hidden" id="photos-taken-error">Please enter photos taken details.
+                    </p>
                 </div>
                 <div class="md:col-span-2">
                     <label for="photos" class="block text-sm font-medium text-gray-700">Upload Photos</label>
-                    <input type="file" id="photos" name="photos[]" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" multiple accept="image/*">
+                    <input type="file" id="photos" name="photos[]"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md" multiple accept="image/*">
                     <p class="text-red-500 text-sm hidden" id="photos-error">Please upload at least one photo.</p>
                 </div>
             </div>
@@ -346,19 +510,26 @@
             <h3 class="text-lg font-semibold text-blue-900 mb-4">Signatures</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label for="client-signature" class="block text-sm font-medium text-gray-700">Client Signature</label>
-                    <input type="text" id="client-signature" name="client-signature" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                    <p class="text-red-500 text-sm hidden" id="client-signature-error">Please enter client signature.</p>
+                    <label for="client-signature" class="block text-sm font-medium text-gray-700">Client
+                        Signature</label>
+                    <input type="text" id="client-signature" name="client-signature"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="client-signature-error">Please enter client signature.
+                    </p>
                 </div>
                 <div>
-                    <label for="engineer-signature" class="block text-sm font-medium text-gray-700">Engineer Signature</label>
-                    <input type="text" id="engineer-signature" name="engineer-signature" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
-                    <p class="text-red-500 text-sm hidden" id="engineer-signature-error">Please enter engineer signature.</p>
+                    <label for="engineer-signature" class="block text-sm font-medium text-gray-700">Engineer
+                        Signature</label>
+                    <input type="text" id="engineer-signature" name="engineer-signature"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <p class="text-red-500 text-sm hidden" id="engineer-signature-error">Please enter engineer
+                        signature.</p>
                 </div>
             </div>
 
             <div class="text-center">
-                <button type="submit" class="bg-blue-900 text-white px-6 py-2 rounded-md hover:bg-blue-800">Submit Report</button>
+                <button type="submit" class="bg-blue-900 text-white px-6 py-2 rounded-md hover:bg-blue-800">Submit
+                    Report</button>
             </div>
         </div>
     </main>
@@ -580,4 +751,5 @@
         });
     </script>
 </body>
+
 </html>

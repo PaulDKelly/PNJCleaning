@@ -1,0 +1,21 @@
+Help on method get_authorization_url in module workos.sso:
+
+get_authorization_url(*, redirect_uri: str, domain_hint: Optional[str] = None, login_hint: Optional[str] = None, state: Optional[str] = None, provider: Optional[Literal['AppleOAuth', 'GitHubOAuth', 'GoogleOAuth', 'MicrosoftOAuth', 'SalesforceOAuth']] = None, connection_id: Optional[str] = None, organization_id: Optional[str] = None) -> str method of workos.sso.SSO instance
+    Generate an OAuth 2.0 authorization URL.
+    
+    The URL generated will redirect a User to the Identity Provider configured through
+    WorkOS.
+    
+    This method is purposefully designed as synchronous as it does not make any HTTP requests.
+    
+    Kwargs:
+        redirect_uri (str) : A valid redirect URI, as specified on WorkOS
+        state (str) : An encoded string passed to WorkOS that'd be preserved through the authentication workflow, passed
+        back as a query parameter
+        provider (SSOProviderType) : Authentication service provider descriptor
+        connection_id (string) : Unique identifier for a WorkOS Connection
+        organization_id (string) : Unique identifier for a WorkOS Organization
+    
+    Returns:
+        str: URL to redirect a User to to begin the OAuth workflow with WorkOS
+

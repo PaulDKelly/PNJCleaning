@@ -1,0 +1,133 @@
+id: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/containerapps/pnj-cleaning-backend
+identity:
+  type: None
+location: UK South
+name: pnj-cleaning-backend
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    maxInactiveRevisions: null
+    registries: null
+    revisionTransitionThreshold: null
+    runtime: null
+    secrets: null
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 355A5ECC938DDD6871A4EA7D0C3D7FDC208C3DFEDDB08933D3401A84701734CA
+  delegatedIdentities: []
+  deploymentErrors: 'The following field(s) are either invalid or missing. Field ''template.containers.pnj-cleaning-backend.image''
+    is invalid with details: ''Invalid value: "ca3fbe3e88bbacr.azurecr.io/pnj-cleaning-backend:cli-containerapp-20260202091056284595":
+    GET https:?scope=repository%3Apnj-cleaning-backend%3Apull&service=ca3fbe3e88bbacr.azurecr.io:
+    UNAUTHORIZED: authentication required, visit https://aka.ms/acr/authorization
+    for more information. CorrelationId: 5b9f635f-1e21-4eb6-acca-eed547249e86'';.'
+  environmentId: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/managedEnvironments/pnj-cleaning-backend-env
+  eventStreamEndpoint: https://uksouth.azurecontainerapps.dev/subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/containerApps/pnj-cleaning-backend/eventstream
+  latestReadyRevisionName: pnj-cleaning-backend--0000001
+  latestRevisionFqdn: ''
+  latestRevisionName: pnj-cleaning-backend--0000001
+  managedEnvironmentId: /subscriptions/b14a52e2-368d-4906-a100-ce00ebf6d774/resourceGroups/rg-pnj-cleaning/providers/Microsoft.App/managedEnvironments/pnj-cleaning-backend-env
+  outboundIpAddresses:
+  - 20.90.238.99
+  - 20.90.239.180
+  - 85.210.163.187
+  - 74.177.240.109
+  - 172.166.80.179
+  - 131.145.9.241
+  - 85.210.166.17
+  - 85.210.48.136
+  - 74.177.120.102
+  - 131.145.48.93
+  - 85.210.163.208
+  - 74.177.193.62
+  - 20.108.130.227
+  - 51.142.67.19
+  - 20.254.83.139
+  - 131.145.82.22
+  - 20.254.83.138
+  - 4.158.232.14
+  - 172.166.87.38
+  - 74.177.226.250
+  - 20.108.130.191
+  - 85.210.25.6
+  - 85.210.24.221
+  - 4.158.34.249
+  - 20.162.138.167
+  - 4.158.113.223
+  - 4.159.3.89
+  - 20.108.216.9
+  - 20.108.217.125
+  - 74.177.201.70
+  - 131.145.91.209
+  - 4.158.91.74
+  - 4.158.89.64
+  - 131.145.40.6
+  - 74.177.198.189
+  - 85.210.223.160
+  - 74.177.245.93
+  - 74.177.198.181
+  - 131.145.77.209
+  - 20.108.124.221
+  - 74.177.162.123
+  - 20.26.109.122
+  - 131.145.124.57
+  - 85.210.222.64
+  - 20.26.109.180
+  - 74.177.141.127
+  - 85.210.223.56
+  - 74.177.245.142
+  - 131.145.83.126
+  - 131.145.99.107
+  - 20.108.125.221
+  - 4.159.25.18
+  - 4.158.92.46
+  - 20.162.145.125
+  - 4.158.143.149
+  - 4.158.143.92
+  - 4.250.234.44
+  - 20.90.136.180
+  patchingMode: Automatic
+  provisioningState: Failed
+  runningStatus: Running
+  template:
+    containers:
+    - command:
+      - /bin/sh
+      - -c
+      - while true; do echo hello; sleep 10; done
+      env:
+      - name: SUPABASE_URL
+        value: https://ruaseemcgxvbcjazhhfw.supabase.co
+      - name: SUPABASE_KEY
+        value: sb_publishable_dPA9xqq4yyGg6869fCuMLA_tCXIKXOu
+      - name: SECRET_KEY
+        value: supersecretkeyforpnjcleaning
+      image: ca3fbe3e88bbacr.azurecr.io/pnj-cleaning-backend:cli-containerapp-20260202091056284595
+      imageType: ContainerImage
+      name: pnj-cleaning-backend
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 10
+      minReplicas: null
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes: null
+  workloadProfileName: Consumption
+resourceGroup: rg-pnj-cleaning
+systemData:
+  createdAt: '2026-01-29T11:45:57.9448708'
+  createdBy: pauldkelly@outlook.com
+  createdByType: User
+  lastModifiedAt: '2026-02-02T09:40:19.7926702'
+  lastModifiedBy: pauldkelly@outlook.com
+  lastModifiedByType: User
+type: Microsoft.App/containerApps

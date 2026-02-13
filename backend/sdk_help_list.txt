@@ -1,0 +1,16 @@
+Help on method list_connections in module workos.sso:
+
+list_connections(*, connection_type: Optional[Literal['ADFSSAML', 'AdpOidc', 'AppleOAuth', 'Auth0SAML', 'AzureSAML', 'CasSAML', 'CloudflareSAML', 'ClassLinkSAML', 'CyberArkSAML', 'DuoSAML', 'GenericOIDC', 'GenericSAML', 'GitHubOAuth', 'GoogleOAuth', 'GoogleSAML', 'JumpCloudSAML', 'KeycloakSAML', 'LastPassSAML', 'LoginGovOidc', 'MagicLink', 'MicrosoftOAuth', 'MiniOrangeSAML', 'NetIqSAML', 'OktaSAML', 'OneLoginSAML', 'OracleSAML', 'PingFederateSAML', 'PingOneSAML', 'RipplingSAML', 'SalesforceOAuth', 'SalesforceSAML', 'ShibbolethGenericSAML', 'ShibbolethSAML', 'SimpleSamlPhpSAML', 'VMwareSAML']] = None, domain: Optional[str] = None, organization_id: Optional[str] = None, limit: int = 10, before: Optional[str] = None, after: Optional[str] = None, order: Literal['asc', 'desc'] = 'desc') -> workos.types.list_resource.WorkOSListResource[ConnectionWithDomains, ConnectionsListFilters, ListMetadata] method of workos.sso.SSO instance
+    Gets details for existing Connections.
+    
+    Kwargs:
+        connection_type (ConnectionType): Authentication service provider descriptor. (Optional)
+        domain (str): Domain of a Connection. (Optional)
+        limit (int): Maximum number of records to return. (Optional)
+        before (str): Pagination cursor to receive records before a provided Connection ID. (Optional)
+        after (str): Pagination cursor to receive records after a provided Connection ID. (Optional)
+        order (Literal["asc","desc"]): Sort records in either ascending or descending (default) order by created_at timestamp. (Optional)
+    
+    Returns:
+        ConnectionsListResource: Connections response from WorkOS.
+
