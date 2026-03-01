@@ -1,9 +1,9 @@
 $ACR_NAME = "ca3fbe3e88bbacr"
-$APP_NAME = "pnj-backend-web"
+$APP_NAME = "pnj-cleaning-backend"
 $RESOURCE_GROUP = "rg-pnj-cleaning"
 $IMAGE_NAME = "pnj-cleaning-backend"
 $TAG = "v" + (Get-Date -Format "yyyyMMdd-HHmmss")
-$FULL_IMAGE = "$ACR_NAME.azurecr.io/$IMAGE_NAME:$TAG"
+$FULL_IMAGE = "$ACR_NAME.azurecr.io/${IMAGE_NAME}:$TAG"
 
 Write-Host "Building and pushing image $FULL_IMAGE to ACR $ACR_NAME..."
 az acr build --registry $ACR_NAME --image $FULL_IMAGE .
