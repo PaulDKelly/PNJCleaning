@@ -1,5 +1,6 @@
 from datetime import datetime
 import re
+import json
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -7,7 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from .. import models
 from ..supabase_client import supabase
 from ..dependencies import templates, login_required, role_required
-from ..utils import generate_whatsapp_link
+from ..utils import generate_whatsapp_link, generate_whatsapp_app_link
 
 router = APIRouter()
 
@@ -290,8 +291,25 @@ async def allocate_job(
         job_obj = models.Job(**res_job.data[0])
         res_eng = supabase.table("engineers").select("*").eq("contact_name", engineer_name).execute()
         eng_obj = models.Engineer(**res_eng.data[0]) if res_eng.data else None
-        wa_link = generate_whatsapp_link(job_obj, eng_obj, request.url.netloc)
-        wa_btn = f"<script>window.open('{wa_link}', '_blank');</script>" if wa_link else ""
+        wa_web_link = generate_whatsapp_link(job_obj, eng_obj, request.url.netloc)
+        wa_app_link = generate_whatsapp_app_link(job_obj, eng_obj, request.url.netloc)
+
+        wa_dispatch = ""
+        if wa_web_link:
+            app_js = json.dumps(wa_app_link) if wa_app_link else "null"
+            web_js = json.dumps(wa_web_link)
+            wa_dispatch = (
+                "<script>"
+                f"const waApp = {app_js};"
+                f"const waWeb = {web_js};"
+                "if (waApp) {"
+                "  window.location.href = waApp;"
+                "  setTimeout(() => { window.open(waWeb, '_blank'); }, 1200);"
+                "} else {"
+                "  window.open(waWeb, '_blank');"
+                "}"
+                "</script>"
+            )
 
         next_job_number = _get_next_job_number()
         return HTMLResponse(content=(
@@ -302,7 +320,7 @@ async def allocate_job(
             f"const jobInput = document.getElementById('job-number-input');"
             f"if (jobInput) jobInput.value = '{next_job_number}';"
             f"</script>"
-            f"{wa_btn}"
+            f"{wa_dispatch}"
         ))
     except Exception as e:
         return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}</div>", status_code=400)
