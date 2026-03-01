@@ -24,6 +24,11 @@
                         <input id="job-number-input" type="text" name="job_number"
                             value="{{ next_job_number or 'pnj0001' }}"
                             class="input input-bordered focus:border-primary font-mono" readonly required />
+                        <label class="label cursor-pointer justify-start gap-3 py-1">
+                            <input id="job-number-override-toggle" type="checkbox" name="manual_job_override"
+                                value="1" class="checkbox checkbox-sm checkbox-primary">
+                            <span class="label-text text-slate-600">Manual override</span>
+                        </label>
                         <label class="label py-1">
                             <span class="label-text-alt text-slate-400 italic">Assigned automatically as
                                 pnj0001, pnj0002, etc.</span>
@@ -143,7 +148,21 @@
                     <script>
                         const dateInput = document.getElementById('job-date');
                         const timeInput = document.getElementById('job-time');
+                        const jobNumberInput = document.getElementById('job-number-input');
+                        const overrideToggle = document.getElementById('job-number-override-toggle');
                         const todayStr = "{{ today }}";
+
+                        if (overrideToggle && jobNumberInput) {
+                            overrideToggle.addEventListener('change', function () {
+                                if (this.checked) {
+                                    jobNumberInput.removeAttribute('readonly');
+                                    jobNumberInput.focus();
+                                    jobNumberInput.select();
+                                } else {
+                                    jobNumberInput.setAttribute('readonly', 'readonly');
+                                }
+                            });
+                        }
 
                         function updateMinTime() {
                             const now = new Date();

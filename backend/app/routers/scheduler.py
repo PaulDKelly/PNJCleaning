@@ -14,18 +14,22 @@ router = APIRouter()
 
 
 def _get_next_job_number() -> str:
-    """Generate the next sequential PNJ job number: pnj0001, pnj0002, ..."""
+    """Generate the first available PNJ number (fills gaps, starts at pnj0001)."""
     res = supabase.table("jobs").select("job_number").execute()
-    max_num = 0
+    used_nums = set()
     pattern = re.compile(r"^pnj(\d+)$", re.IGNORECASE)
 
     for row in (res.data or []):
         job_no = (row.get("job_number") or "").strip()
         match = pattern.match(job_no)
         if match:
-            max_num = max(max_num, int(match.group(1)))
+            used_nums.add(int(match.group(1)))
 
-    return f"pnj{max_num + 1:04d}"
+    next_num = 1
+    while next_num in used_nums:
+        next_num += 1
+
+    return f"pnj{next_num:04d}"
 
 @router.get("/portal/{token}", response_class=HTMLResponse)
 def engineer_portal(token: str, request: Request):
@@ -222,6 +226,8 @@ def job_allocation_page(request: Request, user: models.User = Depends(login_requ
 @router.post("/job-allocation")
 async def allocate_job(
     request: Request,
+    job_number: Optional[str] = Form(None),
+    manual_job_override: Optional[str] = Form(None),
     date: str = Form(...),
     time: str = Form(...),
     priority: str = Form(...),
@@ -258,10 +264,12 @@ async def allocate_job(
                 address_val = client.get('address')
         
         created_job_number = None
-        for _ in range(3):
-            next_job_number = _get_next_job_number()
+        manual_override_enabled = (manual_job_override == "1")
+        requested_job_number = (job_number or "").strip()
+
+        if manual_override_enabled and requested_job_number:
             job_data = {
-                "job_number": next_job_number,
+                "job_number": requested_job_number,
                 "date": date,
                 "time": time,
                 "priority": priority,
@@ -277,12 +285,40 @@ async def allocate_job(
             }
             try:
                 supabase.table("jobs").insert(job_data).execute()
-                created_job_number = next_job_number
-                break
+                created_job_number = requested_job_number
             except Exception as e:
                 if "duplicate" in str(e).lower():
-                    continue
+                    return HTMLResponse(
+                        content=f"<div class='alert alert-error'>Error: Job number {requested_job_number} already exists.</div>",
+                        status_code=400
+                    )
                 raise
+        else:
+            for _ in range(3):
+                next_job_number = _get_next_job_number()
+                job_data = {
+                    "job_number": next_job_number,
+                    "date": date,
+                    "time": time,
+                    "priority": priority,
+                    "client_name": client_name,
+                    "engineer_contact_name": engineer_name,
+                    "site_contact_name": site_contact_name,
+                    "notes": notes,
+                    "brand": brand_name,
+                    "site_name": site_name_val,
+                    "company": company_val,
+                    "address": address_val,
+                    "status": "Scheduled"
+                }
+                try:
+                    supabase.table("jobs").insert(job_data).execute()
+                    created_job_number = next_job_number
+                    break
+                except Exception as e:
+                    if "duplicate" in str(e).lower():
+                        continue
+                    raise
 
         if not created_job_number:
             raise Exception("Could not allocate a unique PNJ job number after multiple attempts.")
@@ -319,6 +355,9 @@ async def allocate_job(
             f"<script>"
             f"const jobInput = document.getElementById('job-number-input');"
             f"if (jobInput) jobInput.value = '{next_job_number}';"
+            f"const overrideToggle = document.getElementById('job-number-override-toggle');"
+            f"if (overrideToggle) overrideToggle.checked = false;"
+            f"if (jobInput) jobInput.setAttribute('readonly', 'readonly');"
             f"</script>"
             f"{wa_dispatch}"
         ))
