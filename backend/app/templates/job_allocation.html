@@ -20,9 +20,14 @@
                 <!-- Section 1: Job Identifiers -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600 uppercase text-xs">Job Number</label>
-                        <input type="text" name="job_number" placeholder="e.g. JN1001"
-                            class="input input-bordered focus:border-primary" required />
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Job Number (Auto)</label>
+                        <input id="job-number-input" type="text" name="job_number"
+                            value="{{ next_job_number or 'pnj0001' }}"
+                            class="input input-bordered focus:border-primary font-mono" readonly required />
+                        <label class="label py-1">
+                            <span class="label-text-alt text-slate-400 italic">Assigned automatically as
+                                pnj0001, pnj0002, etc.</span>
+                        </label>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">

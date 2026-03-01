@@ -1,0 +1,97 @@
+{
+    "title": "Daily Security Check",
+    "description": "Standardized security verification for site premises.",
+    "sections": [
+        {
+            "title": "Site Overview",
+            "columns": 2,
+            "fields": [
+                {
+                    "id": "site_name",
+                    "label": "Site Name",
+                    "type": "text",
+                    "required": true,
+                    "placeholder": "Enter site name"
+                },
+                {
+                    "id": "check_date",
+                    "label": "Date of Check",
+                    "type": "date",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "title": "Security Checklist",
+            "columns": 1,
+            "fields": [
+                {
+                    "id": "perimeter_secure",
+                    "label": "Is the perimeter fence intact?",
+                    "type": "select",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "yes"
+                        },
+                        {
+                            "label": "No",
+                            "value": "no"
+                        },
+                        {
+                            "label": "N/A",
+                            "value": "na"
+                        }
+                    ]
+                },
+                {
+                    "id": "cctv_functional",
+                    "label": "Are all CCTV cameras operational?",
+                    "type": "select",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "yes"
+                        },
+                        {
+                            "label": "No",
+                            "value": "no"
+                        }
+                    ]
+                },
+                {
+                    "id": "entry_points_locked",
+                    "label": "Have all entry points been verified as locked?",
+                    "type": "select",
+                    "options": [
+                        {
+                            "label": "Confirmed",
+                            "value": "confirmed"
+                        },
+                        {
+                            "label": "Issues Found",
+                            "value": "issues"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Evidence & Notes",
+            "columns": 1,
+            "fields": [
+                {
+                    "id": "security_photo",
+                    "label": "Site Photo",
+                    "type": "photo"
+                },
+                {
+                    "id": "security_notes",
+                    "label": "Additional Observations",
+                    "type": "textarea",
+                    "placeholder": "Describe any irregularities found..."
+                }
+            ]
+        }
+    ]
+}

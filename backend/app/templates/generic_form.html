@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ schema.title }} - {{ config.app_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8 pb-20">
+    <div class="text-center space-y-2">
+        <h2 class="text-4xl font-bold text-slate-800 font-outfit">{{ schema.title }}</h2>
+        <p class="text-slate-500 font-medium italic">{{ schema.description }}</p>
+    </div>
+
+    <form hx-post="/dynamic-report/{{ module_name }}" hx-encoding="multipart/form-data" hx-target="#form-feedback"
+        class="space-y-8">
+        <div id="form-feedback" class="sticky top-20 z-50"></div>
+
+        {% for section in schema.sections %}
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2 flex justify-between">
+                    {{ section.title }}
+                    <span class="text-xs uppercase tracking-widest text-slate-400">Section {{ loop.index }} of {{
+                        schema.sections|length }}</span>
+                </h3>
+
+                <div class="grid grid-cols-1 {{ 'md:grid-cols-2' if section.columns == 2 else '' }} gap-6">
+                    {% for field in section.fields %}
+                    <div class="form-control {{ 'md:col-span-2' if field.full_width else '' }}">
+                        <label class="label font-bold text-slate-600">{{ field.label }}</label>
+
+                        {% if field.type == "text" %}
+                        <input type="text" name="{{ field.id }}" placeholder="{{ field.placeholder or '' }}"
+                            class="input input-bordered focus:border-primary" {{ 'required' if field.required else ''
+                            }}>
+
+                        {% elif field.type == "textarea" %}
+                        <textarea name="{{ field.id }}" placeholder="{{ field.placeholder or '' }}"
+                            class="textarea textarea-bordered focus:border-primary h-24" {{ 'required' if field.required
+                            else '' }}></textarea>
+
+                        {% elif field.type == "select" %}
+                        <select name="{{ field.id }}" class="select select-bordered focus:border-primary" {{ 'required'
+                            if field.required else '' }}>
+                            {% for option in field.options %}
+                            <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+
+                        {% elif field.type == "number" %}
+                        <input type="number" name="{{ field.id }}" class="input input-bordered focus:border-primary"
+                            {{ 'required' if field.required else '' }}>
+
+                        {% elif field.type == "date" %}
+                        <input type="date" name="{{ field.id }}" class="input input-bordered focus:border-primary"
+                            {{ 'required' if field.required else '' }}>
+
+                        {% elif field.type == "photo" %}
+                        <input type="file" name="{{ field.id }}" accept="image/*" capture="environment"
+                            class="file-input file-input-bordered file-input-primary w-full">
+
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="flex justify-center pt-8">
+            <button type="submit"
+                class="btn btn-primary btn-lg w-full max-w-md shadow-2xl shadow-primary/40 font-bold text-lg">
+                Submit {{ schema.title }}
+                <span class="loading loading-spinner htmx-indicator"></span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

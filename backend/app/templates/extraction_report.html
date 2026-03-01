@@ -277,9 +277,22 @@
                             class="textarea textarea-bordered h-24 focus:border-primary"></textarea>
                     </div>
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600">Sketch Details</label>
-                        <textarea name="sketch_details" placeholder="Describe the system layout..."
-                            class="textarea textarea-bordered h-28 focus:border-primary"></textarea>
+                        <label class="label font-bold text-slate-600">Sketch Photo</label>
+                        <input id="engineer-sketch-photo" type="file" name="sketch_photo" accept="image/*"
+                            capture="environment" class="hidden" />
+                        <label for="engineer-sketch-photo"
+                            class="btn btn-outline btn-primary rounded-xl justify-start gap-2 w-full md:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7a2 2 0 012-2h2l1-1h8l1 1h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                            </svg>
+                            Upload Sketch Photo
+                        </label>
+                        <span class="label-text-alt text-slate-400 mt-1">Upload a photo of the hand-drawn system
+                            sketch.</span>
                     </div>
                     <div class="form-control">
                         <label class="label font-bold text-slate-600">Internal Cleaning Summary</label>
