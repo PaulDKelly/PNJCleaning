@@ -149,18 +149,25 @@ async def login(
     password: Optional[str] = Form(None)
 ):
     if not password:
+        print("LOGIN_DEBUG: missing password")
         return HTMLResponse(content="<div class='alert alert-error'>Password is required</div>", status_code=200)
     identifier = (email or "").strip()
+    print(f"LOGIN_DEBUG: attempt identifier={identifier!r}")
     user = get_user_by_email(identifier)
+    print(f"LOGIN_DEBUG: email lookup found={bool(user)}")
     if not user:
         user = get_user_by_username(identifier)
+        print(f"LOGIN_DEBUG: username lookup found={bool(user)}")
     
     if not user:
+        print(f"LOGIN_DEBUG: user not found for identifier={identifier!r}")
         return HTMLResponse(content="<div class='alert alert-error'>User not found</div>", status_code=200)
         
     if not security.verify_password(password, user.password):
+        print(f"LOGIN_DEBUG: password mismatch for user_id={user.id} email={user.email!r}")
         return HTMLResponse(content="<div class='alert alert-error'>Invalid password</div>", status_code=200)
     
+    print(f"LOGIN_DEBUG: success user_id={user.id} email={user.email!r}")
     access_token = security.create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=303)
     response.set_cookie(key="access_token", value=access_token, httponly=True)
