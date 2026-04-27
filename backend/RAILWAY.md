@@ -7,13 +7,14 @@ This backend is the only part of the repo intended for Railway. The `laravel/` a
 1. Create a Railway project and add a service from this repository.
 2. Set the service root directory to `/backend`.
 3. Railway should detect [Dockerfile](/E:/Code/Projects/PNJCleaning/backend/Dockerfile:1) automatically.
-4. The repo root includes [railway.toml](/E:/Code/Projects/PNJCleaning/railway.toml:1), which sets the Dockerfile builder, `/backend/**` watch path, and `/health` healthcheck.
+4. The safest config-as-code path is now [backend/railway.toml](/E:/Code/Projects/PNJCleaning/backend/railway.toml:1).
+5. A repo-root [railway.toml](/E:/Code/Projects/PNJCleaning/railway.toml:1) also exists and explicitly points to `/backend/Dockerfile` for cases where Railway is reading config from the repo root.
 5. In Networking, generate a Railway domain or attach your custom domain.
 
 Railway's monorepo support and root-directory behavior are documented here:
 https://docs.railway.com/guides/monorepo
 
-If Railway does not automatically pick up the root config file for your service, set the service's Config as Code path to `/railway.toml` in the dashboard. Railway also supports custom config file paths such as `/backend/railway.toml`, but this repo uses a root-level config so it is auto-discoverable.
+If Railway does not automatically pick up the backend config file for your service, set the service's Config as Code path to `/backend/railway.toml` in the dashboard. This is the recommended setting for this monorepo because Railway's config file path does not follow the service Root Directory automatically.
 
 ## Required Variables
 
