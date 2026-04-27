@@ -152,8 +152,9 @@ async def login(
         print("LOGIN_DEBUG: missing password")
         return HTMLResponse(content="<div class='alert alert-error'>Password is required</div>", status_code=200)
     identifier = (email or "").strip()
-    print(f"LOGIN_DEBUG: attempt identifier={identifier!r}")
-    user = get_user_by_email(identifier)
+    normalized_email = identifier.lower()
+    print(f"LOGIN_DEBUG: attempt identifier={identifier!r} normalized_email={normalized_email!r}")
+    user = get_user_by_email(normalized_email)
     print(f"LOGIN_DEBUG: email lookup found={bool(user)}")
     if not user:
         user = get_user_by_username(identifier)
@@ -179,7 +180,7 @@ def forgot_password_page(request: Request):
 
 @router.post("/forgot-password")
 async def handle_forgot_password(request: Request, email: str = Form(...)):
-    user = get_user_by_email(email)
+    user = get_user_by_email((email or "").strip().lower())
     if not user:
         return templates.TemplateResponse("forgot_password.html", {
             "request": request, 
