@@ -150,7 +150,10 @@ async def login(
 ):
     if not password:
         return HTMLResponse(content="<div class='alert alert-error'>Password is required</div>", status_code=200)
-    user = get_user_by_email(email)
+    identifier = (email or "").strip()
+    user = get_user_by_email(identifier)
+    if not user:
+        user = get_user_by_username(identifier)
     
     if not user:
         return HTMLResponse(content="<div class='alert alert-error'>User not found</div>", status_code=200)
