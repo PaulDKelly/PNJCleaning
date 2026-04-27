@@ -1,11 +1,14 @@
 from fastapi import Request, Depends, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from jose import jwt
+import os
+from urllib.parse import quote
 from . import models, security
 from .supabase_client import supabase
 
 # Centralized templates instance for use in routers
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
+templates.env.filters["quote_path"] = lambda value: quote(str(value or ""), safe="")
 
 # Helper to get user by email using Supabase
 def get_user_by_email(email: str):

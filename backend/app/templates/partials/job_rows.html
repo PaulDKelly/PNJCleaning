@@ -8,7 +8,8 @@
     <td>
         <div class="badge badge-primary font-mono text-[10px] mb-1 uppercase tracking-tighter">{{ job.job_number }}
         </div>
-        <div class="block">
+        <div class="flex flex-wrap gap-2 items-center">
+            <span class="badge badge-ghost badge-sm uppercase tracking-[0.1em] text-[10px]">{{ job.job_type or 'Extraction' }}</span>
             <span class="badge badge-xs font-black uppercase text-[8px] 
             {% if job.priority == 'High' %}bg-rose-100 text-rose-700 border-rose-200
             {% elif job.priority == 'Medium' %}bg-amber-100 text-amber-700 border-amber-200
@@ -31,7 +32,7 @@
                         else '?' }}</span>
                 </div>
             </div>
-            <div class="text-xs font-bold text-slate-600">{{ job.engineer_contact_name }}</div>
+            <div class="text-xs font-bold text-slate-600">{{ job.engineer_contact_name or 'Unassigned' }}</div>
         </div>
     </td>
     <td>

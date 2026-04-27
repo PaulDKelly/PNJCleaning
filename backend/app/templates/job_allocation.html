@@ -205,7 +205,7 @@
                     </script>
                 </div>
 
-                <div class="divider text-[10px] uppercase tracking-widest text-slate-400 font-black">Client & Location
+                <div class="divider text-[10px] uppercase tracking-widest text-slate-400 font-black">Company & Store
                 </div>
 
                 <!-- Section 2: Account Mapping -->
@@ -214,7 +214,7 @@
                         <label class="label font-bold text-slate-600 uppercase text-xs">Service Brand</label>
                         <select name="brand_name" class="select select-bordered focus:border-primary font-medium"
                             hx-get="/admin/clients-lookup" hx-target="#client-selector" hx-trigger="change"
-                            hx-on:change="htmx.ajax('GET', '/admin/sites-lookup', {target:'#site-selector', values:{brand_name: this.value}})">
+                            hx-on:change="window.refreshStoreSelectors()">
                             <option value="">No Specific Brand</option>
                             {% for b in brands %}
                             <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
@@ -231,28 +231,48 @@
                         </select>
                     </div>
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600 uppercase text-xs">Client Account</label>
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Job Type</label>
+                        <select name="job_type" class="select select-bordered focus:border-primary font-medium" required>
+                            <option value="Extraction" selected>Extraction / Audit Job</option>
+                            <option value="Breakdown/Callout">Breakdown / Callout Job</option>
+                        </select>
+                        <label class="label py-1">
+                            <span class="label-text-alt text-slate-400 italic">Choose the report type for this job.</span>
+                        </label>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Company</label>
                         <select name="client_name" id="client-selector"
                             class="select select-bordered focus:border-primary font-bold text-indigo-700 bg-indigo-50/20"
-                            hx-get="/admin/sites-lookup" hx-target="#site-selector" hx-trigger="change"
-                            hx-include="[name='brand_name']" required>
-                            <option value="" disabled selected>Select Client</option>
+                            hx-on:change="window.refreshStoreSelectors()" required>
+                            <option value="" disabled selected>Select Company</option>
                             {% for client in clients %}
                             <option value="{{ client.client_name }}">{{ client.client_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600 uppercase text-xs">Specific Site / Venue</label>
-                        <select name="site_id" id="site-selector"
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Specific Store</label>
+                        <select id="site-selector-name"
                             class="select select-bordered focus:border-primary font-medium">
-                            <option value="">Select a client first...</option>
+                            <option value="">Select a company first...</option>
                         </select>
                         <label class="label py-1">
                             <span class="label-text-alt text-slate-400 italic">Lookup automatically updates based on
-                                client selection.</span>
+                                company selection.</span>
                         </label>
                     </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Store ID</label>
+                        <select id="site-selector-id"
+                            class="select select-bordered focus:border-primary font-medium">
+                            <option value="">Select a company first...</option>
+                        </select>
+                        <label class="label py-1">
+                            <span class="label-text-alt text-slate-400 italic">Choose the same store by ID if that is quicker.</span>
+                        </label>
+                    </div>
+                    <input type="hidden" name="site_id" id="site-selector" value="" />
                 </div>
 
                 <div class="divider text-[10px] uppercase tracking-widest text-slate-400 font-black">Assignment & Notes
@@ -302,4 +322,40 @@
         </div>
     </div>
 </div>
+<script>
+    (() => {
+        const brandSelector = document.querySelector('select[name="brand_name"]');
+        const companySelector = document.getElementById('client-selector');
+        const storeNameSelector = document.getElementById('site-selector-name');
+        const storeIdSelector = document.getElementById('site-selector-id');
+        const storeIdValue = document.getElementById('site-selector');
+
+        function syncStoreSelection(source, target) {
+            if (!source || !target || !storeIdValue) return;
+            target.value = source.value;
+            storeIdValue.value = source.value;
+        }
+
+        if (storeNameSelector && storeIdSelector) {
+            storeNameSelector.addEventListener('change', () => syncStoreSelection(storeNameSelector, storeIdSelector));
+            storeIdSelector.addEventListener('change', () => syncStoreSelection(storeIdSelector, storeNameSelector));
+        }
+
+        window.refreshStoreSelectors = function () {
+            const clientName = companySelector ? companySelector.value : '';
+            const brandName = brandSelector ? brandSelector.value : '';
+            const values = { client_name: clientName, brand_name: brandName };
+
+            if (storeIdValue) {
+                storeIdValue.value = '';
+            }
+            if (storeNameSelector) {
+                htmx.ajax('GET', '/admin/sites-lookup', { target: '#site-selector-name', values });
+            }
+            if (storeIdSelector) {
+                htmx.ajax('GET', '/admin/sites-lookup-by-id', { target: '#site-selector-id', values });
+            }
+        };
+    })();
+</script>
 {% endblock %}

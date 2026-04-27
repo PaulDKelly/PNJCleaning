@@ -4,11 +4,12 @@ import json
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from postgrest.exceptions import APIError
 
 from .. import models
 from ..supabase_client import supabase
 from ..dependencies import templates, login_required, role_required
-from ..utils import generate_whatsapp_link, generate_whatsapp_app_link
+from ..utils import generate_whatsapp_link, generate_whatsapp_app_link, get_report_link
 
 router = APIRouter()
 
@@ -30,6 +31,23 @@ def _get_next_job_number() -> str:
         next_num += 1
 
     return f"pnj{next_num:04d}"
+
+
+def _insert_job(job_data: dict):
+    """Insert a job, retrying without job_type if the live schema cache is stale."""
+    try:
+        return supabase.table("jobs").insert(job_data).execute()
+    except APIError as exc:
+        error_text = str(exc)
+        if "Could not find the 'job_type' column of 'jobs' in the schema cache" not in error_text:
+            raise
+        fallback_job_data = dict(job_data)
+        fallback_job_data.pop("job_type", None)
+        if job_data.get("job_type") == "Breakdown/Callout":
+            existing_notes = (fallback_job_data.get("notes") or "").strip()
+            fallback_job_data["notes"] = f"[CALL OUT] {existing_notes}".strip()
+        print("Warning: jobs.job_type missing from schema cache; retrying insert without job_type")
+        return supabase.table("jobs").insert(fallback_job_data).execute()
 
 @router.get("/portal/{token}", response_class=HTMLResponse)
 def engineer_portal(token: str, request: Request):
@@ -132,11 +150,18 @@ def get_admin_events(user: models.User = Depends(login_required)):
     for j in j_res.data:
         job = models.Job(**j)
         start_dt = f"{job.date}T{job.time}"
+        # Color coding: orange for breakdown jobs, blue for regular not completed, green for completed
+        if job.job_type == "Breakdown/Callout":
+            bg_color = "#f97316"  # orange
+        elif job.status != "Completed":
+            bg_color = "#3b82f6"  # blue
+        else:
+            bg_color = "#10b981"  # green
         events.append({
             "id": job.id,
             "title": f"[{job.engineer_contact_name}] {job.client_name}",
             "start": start_dt,
-            "backgroundColor": "#3b82f6" if job.status != "Completed" else "#10b981",
+            "backgroundColor": bg_color,
             "extendedProps": { "location": job.address, "engineer": job.engineer_contact_name }
         })
     return JSONResponse(content=events)
@@ -231,6 +256,7 @@ async def allocate_job(
     date: str = Form(...),
     time: str = Form(...),
     priority: str = Form(...),
+    job_type: str = Form("Extraction"),
     client_name: str = Form(...),
     site_id: Optional[int] = Form(None),
     brand_name: Optional[str] = Form(None),
@@ -239,9 +265,12 @@ async def allocate_job(
     notes: Optional[str] = Form(None),
     user: models.User = Depends(login_required)
 ):
+    print(f"JOB ALLOCATION REQUEST: date={date}, time={time}, job_type={job_type}, client={client_name}, engineer={engineer_name}")
     try:
         requested_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        print(f"Parsed datetime: {requested_dt}")
         if requested_dt < datetime.now():
+            print("ERROR: Job in the past")
             return HTMLResponse(content=f"<div class='alert alert-error font-bold'>Error: Cannot allocate a job in the past ({requested_dt.strftime('%d/%m/%Y %H:%M')})</div>", status_code=400)
 
         site_name_val = None
@@ -252,19 +281,21 @@ async def allocate_job(
             s_res = supabase.table("client_sites").select("*").eq("id", site_id).execute()
             if s_res.data:
                 site = s_res.data[0]
-                site_name_val = site['site_name']
-                company_val = site['site_name']
-                address_val = site['address']
-        
-        if not site_name_val:
-            c_res = supabase.table("clients").select("*").eq("client_name", client_name).execute()
-            if c_res.data:
-                client = c_res.data[0]
-                company_val = client.get('company') or client['client_name']
-                address_val = client.get('address')
-        
+                site_name_val = site["site_name"]
+                address_val = site.get("address")
+
+        c_res = supabase.table("clients").select("*").eq("client_name", client_name).execute()
+        if c_res.data:
+            client = c_res.data[0]
+            company_val = client.get("company") or client["client_name"]
+            if not address_val:
+                address_val = client.get("address")
+
         created_job_number = None
         manual_override_enabled = (manual_job_override == "1")
+        allowed_job_types = {"Extraction", "Breakdown/Callout"}
+        job_type = job_type if job_type in allowed_job_types else "Extraction"
+        print(f"Job type after validation: {job_type}")
         requested_job_number = (job_number or "").strip()
 
         if manual_override_enabled and requested_job_number:
@@ -273,6 +304,7 @@ async def allocate_job(
                 "date": date,
                 "time": time,
                 "priority": priority,
+                "job_type": job_type,
                 "client_name": client_name,
                 "engineer_contact_name": engineer_name,
                 "site_contact_name": site_contact_name,
@@ -284,7 +316,9 @@ async def allocate_job(
                 "status": "Scheduled"
             }
             try:
-                supabase.table("jobs").insert(job_data).execute()
+                # Refresh schema cache
+                supabase.table("jobs").select("*").limit(1).execute()
+                result = _insert_job(job_data)
                 created_job_number = requested_job_number
             except Exception as e:
                 if "duplicate" in str(e).lower():
@@ -301,6 +335,7 @@ async def allocate_job(
                     "date": date,
                     "time": time,
                     "priority": priority,
+                    "job_type": job_type,
                     "client_name": client_name,
                     "engineer_contact_name": engineer_name,
                     "site_contact_name": site_contact_name,
@@ -312,7 +347,9 @@ async def allocate_job(
                     "status": "Scheduled"
                 }
                 try:
-                    supabase.table("jobs").insert(job_data).execute()
+                    # Refresh schema cache
+                    supabase.table("jobs").select("*").limit(1).execute()
+                    result = _insert_job(job_data)
                     created_job_number = next_job_number
                     break
                 except Exception as e:
@@ -325,15 +362,19 @@ async def allocate_job(
 
         res_job = supabase.table("jobs").select("*").eq("job_number", created_job_number).execute()
         job_obj = models.Job(**res_job.data[0])
+        job_obj.job_type = job_type
         res_eng = supabase.table("engineers").select("*").eq("contact_name", engineer_name).execute()
         eng_obj = models.Engineer(**res_eng.data[0]) if res_eng.data else None
         wa_web_link = generate_whatsapp_link(job_obj, eng_obj, request.url.netloc)
         wa_app_link = generate_whatsapp_app_link(job_obj, eng_obj, request.url.netloc)
+        report_link = get_report_link(job_obj, request.url.netloc)
 
         wa_dispatch = ""
+        wa_action_html = ""
         if wa_web_link:
             app_js = json.dumps(wa_app_link) if wa_app_link else "null"
             web_js = json.dumps(wa_web_link)
+            wa_action_html = f"<a class='btn btn-sm btn-success' href='{wa_web_link}' target='_blank' rel='noopener'>Open WhatsApp</a>"
             wa_dispatch = (
                 "<script>"
                 f"const waApp = {app_js};"
@@ -348,9 +389,14 @@ async def allocate_job(
             )
 
         next_job_number = _get_next_job_number()
+        print(f"SUCCESS: Job {created_job_number} allocated successfully")
         return HTMLResponse(content=(
             f"<div class='alert alert-success italic font-bold'>"
             f"Job {created_job_number} successfully allocated & Dispatched!"
+            f"</div>"
+            f"<div class='mt-3 flex flex-wrap gap-2'>"
+            f"<a class='btn btn-sm btn-outline btn-success' href='{report_link}' target='_blank' rel='noopener'>Open Blank Report</a>"
+            f"{wa_action_html}"
             f"</div>"
             f"<script>"
             f"const jobInput = document.getElementById('job-number-input');"
@@ -362,6 +408,9 @@ async def allocate_job(
             f"{wa_dispatch}"
         ))
     except Exception as e:
+        print(f"ERROR: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}</div>", status_code=400)
 
 @router.post("/admin/jobs/{job_number}/archive")

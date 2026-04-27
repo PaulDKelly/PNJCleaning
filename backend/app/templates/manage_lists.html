@@ -23,24 +23,24 @@
     <!-- Main Tabs -->
     <div role="tablist" class="tabs tabs-lifted flex-nowrap overflow-x-auto">
 
-        <!-- Tab 1: Clients & Sites -->
+        <!-- Tab 1: Companies & Stores -->
         <input type="radio" name="manager_tabs" role="tab" class="tab font-bold whitespace-nowrap"
-            aria-label="Clients & Sites" checked />
+            aria-label="Companies & Stores" checked />
         <div role="tabpanel" class="tab-content bg-base-100 border-base-300 rounded-box p-6 space-y-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Add Client Section -->
+                <!-- Add Company Section -->
                 <div class="card bg-white border border-slate-100 shadow-sm">
                     <div class="card-body">
-                        <h3 class="card-title text-slate-700 mb-4">Add New Client</h3>
+                        <h3 class="card-title text-slate-700 mb-4">Add New Company</h3>
                         <form action="/admin/manage/clients/add" method="POST" class="space-y-4">
                             <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Client Reference
+                                <label class="label text-xs font-bold uppercase text-slate-500">Company Reference
                                     Name</label>
                                 <input type="text" name="client_name" placeholder="e.g. Greene King"
                                     class="input input-bordered" required />
                             </div>
                             <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Full Trading
+                                <label class="label text-xs font-bold uppercase text-slate-500">Full Company
                                     Name</label>
                                 <input type="text" name="company" placeholder="Greene King Brewing & Retailing Ltd"
                                     class="input input-bordered" />
@@ -50,34 +50,56 @@
                                     Address</label>
                                 <textarea name="address" class="textarea textarea-bordered h-20"></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary w-full">Add Client</button>
+                            <button type="submit" class="btn btn-primary w-full">Add Company</button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Add Site Section -->
+                <!-- Add Store Section -->
                 <div class="card bg-white border border-slate-100 shadow-sm">
                     <div class="card-body">
-                        <h3 class="card-title text-slate-700 mb-4">Add Site to Client</h3>
+                        <h3 class="card-title text-slate-700 mb-4">Add Store to Company</h3>
                         <form action="/admin/manage/sites/add" method="POST" class="space-y-4">
                             <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Select Client</label>
+                                <label class="label text-xs font-bold uppercase text-slate-500">Select Company</label>
                                 <select name="client_name" id="add-site-client-select" class="select select-bordered"
                                     required>
-                                    <option disabled selected>Pick a client</option>
+                                    <option disabled selected>Pick a company</option>
                                     {% for c in clients %}
                                     <option value="{{ c.client_name }}">{{ c.client_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Site Name</label>
+                                <label class="label text-xs font-bold uppercase text-slate-500">Store Name</label>
                                 <input type="text" name="site_name" placeholder="e.g. The Red Lion"
                                     class="input input-bordered" required />
                             </div>
                             <div class="form-control">
-                                <label class="label text-xs font-bold uppercase text-slate-500">Site Address</label>
+                                <label class="label text-xs font-bold uppercase text-slate-500">Store Address</label>
                                 <textarea name="address" class="textarea textarea-bordered h-20" required></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">Postcode</label>
+                                    <input type="text" name="postcode" class="input input-bordered" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">Store ID Code</label>
+                                    <input type="text" name="store_id_code" class="input input-bordered" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">AC Number</label>
+                                    <input type="text" name="ac_number" class="input input-bordered" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">Frequency Number</label>
+                                    <input type="number" name="frequency_number" min="0" class="input input-bordered" />
+                                </div>
+                                <div class="form-control md:col-span-2">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">Last Clean</label>
+                                    <input type="date" name="last_clean" class="input input-bordered" />
+                                </div>
                             </div>
                             <div class="form-control">
                                 <label class="label text-xs font-bold uppercase text-slate-500">Assign Brand
@@ -89,31 +111,31 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-success text-white w-full">Add Site</button>
+                            <button type="submit" class="btn btn-success text-white w-full">Add Store</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Clients Table -->
+            <!-- Companies Table -->
             <div class="card bg-white border border-slate-100 shadow-sm">
                 <div class="card-body">
                     <!-- Filter Bar -->
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-4 gap-4">
                         <div>
-                            <h3 class="card-title text-slate-700">Client Portfolio</h3>
-                            <p class="text-xs text-slate-400">View and manage client accounts.</p>
+                            <h3 class="card-title text-slate-700">Company Portfolio</h3>
+                            <p class="text-xs text-slate-400">View and manage company accounts.</p>
                         </div>
                         <div class="flex flex-wrap gap-2 items-center">
-                            <!-- Filter by Client -->
+                            <!-- Filter by Company -->
                             <div class="form-control w-full sm:w-auto">
                                 <label class="label py-0"><span
-                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Client</span></label>
+                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Company</span></label>
                                 <select name="client_name" id="pf-client-filter"
                                     class="select select-bordered select-sm text-xs w-40"
                                     hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
                                     hx-include="#pf-brand-filter, #pf-site-filter">
-                                    <option value="">All Clients</option>
+                                    <option value="">All Companies</option>
                                     {% for c in clients %}
                                     <option value="{{ c.client_name }}">{{ c.client_name }}</option>
                                     {% endfor %}
@@ -135,16 +157,16 @@
                                 </select>
                             </div>
 
-                            <!-- Filter by Site (Dependent) -->
+                            <!-- Filter by Store (Dependent) -->
                             <div class="form-control w-full sm:w-auto">
                                 <label class="label py-0"><span
-                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Site</span></label>
+                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Store</span></label>
                                 <select name="site_id" id="pf-site-filter"
                                     class="select select-bordered select-sm text-xs w-48"
                                     hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
                                     hx-include="#pf-client-filter, #pf-brand-filter"
                                     hx-trigger="change, updateSites from:body">
-                                    <option value="">All Sites</option>
+                                    <option value="">All Stores</option>
                                     <!-- Populated via HTMX/JS -->
                                 </select>
                             </div>
@@ -159,8 +181,8 @@
                         <table class="table w-full">
                             <thead>
                                 <tr class="text-slate-400 uppercase text-[10px]">
-                                    <th>Client / Company</th>
-                                    <th>Sites Linked</th>
+                                    <th>Company</th>
+                                    <th>Stores Linked</th>
                                     <th>Portal Access</th>
                                     <th class="text-right">Action</th>
                                 </tr>
@@ -175,13 +197,13 @@
                 </div>
             </div>
 
-            <!-- Registered Venues List -->
+            <!-- Registered Stores List -->
             <div class="card bg-white border border-slate-100 shadow-sm" id="sites-card">
                 <div class="card-body">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h3 class="card-title text-slate-700">Registered Venues (Sites)</h3>
-                            <p class="text-xs text-slate-400">Manage site locations and franchise mappings.</p>
+                            <h3 class="card-title text-slate-700">Registered Stores</h3>
+                            <p class="text-xs text-slate-400">Manage store locations, IDs, and cleaning cadence.</p>
                         </div>
 
                         <!-- Filters -->
@@ -189,7 +211,7 @@
                             <select name="client_name" id="site-filter-select"
                                 class="select select-bordered select-sm text-xs" hx-get="/admin/manage/sites-table"
                                 hx-target="#sites-table-body" hx-include="[name='show_archived'], #site-filter-brand">
-                                <option value="">All Clients</option>
+                                <option value="">All Companies</option>
                                 {% for c in clients %}
                                 <option value="{{ c.client_name }}">{{ c.client_name }}</option>
                                 {% endfor %}
@@ -211,7 +233,7 @@
                     <!-- Bulk Actions Toolbar (Hidden by default) -->
                     <div id="bulk-actions"
                         class="hidden bg-slate-800 text-white p-2 rounded-lg mb-4 flex justify-between items-center shadow-lg transition-all">
-                        <span class="text-xs font-bold px-2"><span id="selected-count">0</span> sites selected</span>
+                        <span class="text-xs font-bold px-2"><span id="selected-count">0</span> stores selected</span>
                         <div class="flex gap-2">
                             <button hx-post="/admin/manage/sites/bulk-archive" hx-include="#sites-form"
                                 hx-target="#sites-table-body" class="btn btn-xs btn-error text-white">
@@ -231,8 +253,9 @@
                                                     class="checkbox checkbox-xs" />
                                             </label>
                                         </th>
-                                        <th>Client</th>
-                                        <th>Site Venue</th>
+                                        <th>Company</th>
+                                        <th>Store ID</th>
+                                        <th>Store</th>
                                         <th>Brand</th>
                                         <th class="text-right">Action</th>
                                     </tr>
@@ -261,7 +284,7 @@
                         .then(response => response.text())
                         .then(html => {
                             pfClient.innerHTML = html;
-                            // Restore selection if possible, otherwise it defaults to "All Clients" or first option.
+                            // Restore selection if possible, otherwise it defaults to "All Companies" or first option.
                             // If the previously selected client is in the new list, select it.
                             if (currentClient) {
                                 // Try to set it back

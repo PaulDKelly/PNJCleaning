@@ -2,12 +2,60 @@ import secrets
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
+from postgrest.exceptions import APIError
 
 from .. import models
 from ..supabase_client import supabase
 from ..dependencies import templates, login_required
 
 router = APIRouter()
+
+
+def _schema_safe_insert(table_name: str, payload):
+    working_payload = payload
+    while True:
+        try:
+            return supabase.table(table_name).insert(working_payload).execute()
+        except APIError as exc:
+            message = str(exc)
+            marker = "Could not find the '"
+            if marker not in message:
+                raise
+            missing_column = message.split(marker, 1)[1].split("' column", 1)[0]
+            if isinstance(working_payload, list):
+                if not any(missing_column in row for row in working_payload):
+                    raise
+                working_payload = [{k: v for k, v in row.items() if k != missing_column} for row in working_payload]
+            else:
+                if missing_column not in working_payload:
+                    raise
+                working_payload = {k: v for k, v in working_payload.items() if k != missing_column}
+            print(f"Warning: {table_name}.{missing_column} missing from schema cache; retrying insert without it")
+
+
+def _schema_safe_update(table_name: str, payload: dict, match_column: str, match_value):
+    working_payload = dict(payload)
+    while True:
+        try:
+            return supabase.table(table_name).update(working_payload).eq(match_column, match_value).execute()
+        except APIError as exc:
+            message = str(exc)
+            marker = "Could not find the '"
+            if marker not in message:
+                raise
+            missing_column = message.split(marker, 1)[1].split("' column", 1)[0]
+            if missing_column not in working_payload:
+                raise
+            working_payload.pop(missing_column, None)
+            print(f"Warning: {table_name}.{missing_column} missing from schema cache; retrying update without it")
+
+
+def _site_option_label(site: models.ClientSite) -> str:
+    return site.site_name
+
+
+def _site_id_option_label(site: models.ClientSite) -> str:
+    return site.store_id_code or "-"
 
 @router.get("/admin/sites-lookup", response_class=HTMLResponse)
 def get_sites_for_client(
@@ -22,8 +70,25 @@ def get_sites_for_client(
         query = query.eq("brand_name", brand_name)
     res = query.order("site_name").execute()
     sites = [models.ClientSite(**s) for s in res.data]
-    options = "".join([f'<option value="{s.id}">{s.site_name}</option>' for s in sites])
-    return HTMLResponse(content=f'<option value="">Select a Site (Optional)</option>{options}')
+    options = "".join([f'<option value="{s.id}">{_site_option_label(s)}</option>' for s in sites])
+    return HTMLResponse(content=f'<option value="">Select a Store (Optional)</option>{options}')
+
+
+@router.get("/admin/sites-lookup-by-id", response_class=HTMLResponse)
+def get_sites_for_client_by_id(
+    client_name: Optional[str] = None,
+    brand_name: Optional[str] = None,
+    user: models.User = Depends(login_required)
+):
+    query = supabase.table("client_sites").select("*").eq("archived", False)
+    if client_name:
+        query = query.eq("client_name", client_name)
+    if brand_name:
+        query = query.eq("brand_name", brand_name)
+    res = query.order("store_id_code").order("site_name").execute()
+    sites = [models.ClientSite(**s) for s in res.data]
+    options = "".join([f'<option value="{s.id}">{_site_id_option_label(s)}</option>' for s in sites])
+    return HTMLResponse(content=f'<option value="">Select Store ID (Optional)</option>{options}')
 
 @router.get("/admin/clients-lookup", response_class=HTMLResponse)
 def get_clients_lookup(
@@ -34,13 +99,13 @@ def get_clients_lookup(
         sites = supabase.table("client_sites").select("client_name").eq("brand_name", brand_name).execute().data
         client_names = list(set([s['client_name'] for s in sites]))
         if not client_names:
-            return HTMLResponse(content='<option value="">All Clients (None found)</option>')
+            return HTMLResponse(content='<option value="">All Companies (None found)</option>')
         res = supabase.table("clients").select("*").in_("client_name", client_names).order("client_name").execute()
     else:
         res = supabase.table("clients").select("*").order("client_name").execute()
     clients = [models.Client(**c) for c in res.data]
     options = "".join([f'<option value="{c.client_name}">{c.client_name}</option>' for c in clients])
-    return HTMLResponse(content=f'<option value="">All Clients</option>{options}')
+    return HTMLResponse(content=f'<option value="">All Companies</option>{options}')
 
 @router.get("/admin/manage/clients-table", response_class=HTMLResponse)
 def get_clients_table(
@@ -135,39 +200,71 @@ async def bulk_archive_sites(request: Request, user: models.User = Depends(login
 @router.post("/admin/manage/clients/add")
 def add_client(client_name: str = Form(...), company: str = Form(None), address: str = Form(None), user: models.User = Depends(login_required)):
     portal_token = secrets.token_urlsafe(32)
-    supabase.table("clients").insert({
+    _schema_safe_insert("clients", {
         "client_name": client_name,
         "company": company,
         "address": address,
         "portal_token": portal_token
-    }).execute()
+    })
     return RedirectResponse(url="/admin/manage", status_code=303)
 
 @router.post("/admin/manage/clients/edit/{client_name}")
 def edit_client(client_name: str, company: str = Form(None), address: str = Form(None), user: models.User = Depends(login_required)):
-    supabase.table("clients").update({
+    _schema_safe_update("clients", {
         "company": company,
         "address": address
-    }).eq("client_name", client_name).execute()
+    }, "client_name", client_name)
     return RedirectResponse(url="/admin/manage", status_code=303)
 
 @router.post("/admin/manage/sites/add")
-def add_site(client_name: str = Form(...), site_name: str = Form(...), address: str = Form(...), brand_name: str = Form(None), user: models.User = Depends(login_required)):
-    supabase.table("client_sites").insert({
+def add_site(
+    client_name: str = Form(...),
+    site_name: str = Form(...),
+    address: str = Form(...),
+    postcode: str = Form(None),
+    store_id_code: str = Form(None),
+    ac_number: str = Form(None),
+    frequency_number: int = Form(None),
+    last_clean: str = Form(None),
+    brand_name: str = Form(None),
+    user: models.User = Depends(login_required)
+):
+    _schema_safe_insert("client_sites", {
         "client_name": client_name,
         "site_name": site_name,
         "address": address,
+        "postcode": postcode if postcode else None,
+        "store_id_code": store_id_code if store_id_code else None,
+        "ac_number": ac_number if ac_number else None,
+        "frequency_number": frequency_number,
+        "last_clean": last_clean if last_clean else None,
         "brand_name": brand_name if brand_name else None
-    }).execute()
+    })
     return RedirectResponse(url="/admin/manage", status_code=303)
 
 @router.post("/admin/manage/sites/edit/{site_id}")
-def edit_site(site_id: int, site_name: str = Form(...), address: str = Form(...), brand_name: str = Form(None), user: models.User = Depends(login_required)):
-    supabase.table("client_sites").update({
+def edit_site(
+    site_id: int,
+    site_name: str = Form(...),
+    address: str = Form(...),
+    postcode: str = Form(None),
+    store_id_code: str = Form(None),
+    ac_number: str = Form(None),
+    frequency_number: int = Form(None),
+    last_clean: str = Form(None),
+    brand_name: str = Form(None),
+    user: models.User = Depends(login_required)
+):
+    _schema_safe_update("client_sites", {
         "site_name": site_name,
         "address": address,
+        "postcode": postcode if postcode else None,
+        "store_id_code": store_id_code if store_id_code else None,
+        "ac_number": ac_number if ac_number else None,
+        "frequency_number": frequency_number,
+        "last_clean": last_clean if last_clean else None,
         "brand_name": brand_name if brand_name else None
-    }).eq("id", site_id).execute()
+    }, "id", site_id)
     return RedirectResponse(url="/admin/manage", status_code=303)
 
 @router.post("/admin/manage/brands/add")

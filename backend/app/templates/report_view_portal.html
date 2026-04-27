@@ -30,7 +30,7 @@
     <!-- Breadcrumbs -->
     <div class="text-sm breadcrumbs text-slate-400">
         <ul>
-            <li><a href="/client-portal/{{ token }}">Client Portal</a></li>
+            <li><a href="{{ '/admin/portal-preview/' ~ (client.client_name|quote_path) if is_admin_preview else '/client-portal/' ~ (token|quote_path) }}">Client Portal</a></li>
             <li>Report {{ report.job_number }}</li>
         </ul>
     </div>
@@ -39,11 +39,18 @@
     <div
         class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
+            <div class="mb-4">
+                <img src="/static/images/VHR_logo_RGB.png" alt="VHR Vent Hygiene Register from BESA"
+                    class="h-16 w-auto sm:h-20">
+            </div>
             <h2 class="text-2xl font-bold text-slate-800 font-outfit">Service Report: {{ report.job_number }}</h2>
-            <p class="text-slate-500 text-sm">Completed on {{ report.date.strftime('%d %B %Y') if report.date else '-' }}</p>
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="badge badge-ghost badge-sm uppercase tracking-[0.15em]">{{ report.job_type or 'Extraction' }}</span>
+                <p class="text-slate-500 text-sm">Completed on {{ report.date.strftime('%d %B %Y') if report.date else '-' }}</p>
+            </div>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-            <a href="/client-portal/{{ token }}/pdf/{{ report.job_number }}"
+            <a href="{{ '/admin/portal-preview/' ~ (client.client_name|quote_path) ~ '/pdf/' ~ (report.job_number|quote_path) if is_admin_preview else '/client-portal/' ~ (token|quote_path) ~ '/pdf/' ~ (report.job_number|quote_path) }}"
                 class="btn btn-primary flex-1 sm:flex-initial shadow-lg shadow-primary/20">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd"
@@ -163,11 +170,22 @@
                         <div class="space-y-2 group cursor-pointer">
                             <div
                                 class="aspect-square rounded-xl overflow-hidden border border-slate-100 shadow-sm transition-transform group-hover:scale-[1.02]">
+                                {% set media_url = (photo.photo_path or '')|lower %}
+                                {% if media_url.endswith('.mp4') or media_url.endswith('.mov') or media_url.endswith('.avi') or media_url.endswith('.m4v') or media_url.endswith('.webm') or media_url.endswith('.ogg') %}
+                                <video src="{{ photo.photo_path }}" class="w-full h-full object-cover" controls preload="metadata"></video>
+                                {% elif media_url.endswith('.tif') or media_url.endswith('.tiff') %}
+                                <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-slate-100 p-4 text-center">
+                                    <span class="text-xs font-bold uppercase tracking-widest text-slate-500">TIFF File</span>
+                                    <a href="{{ photo.photo_path }}" target="_blank" rel="noopener"
+                                        class="btn btn-xs btn-outline btn-primary">Open Media</a>
+                                </div>
+                                {% else %}
                                 <img src="{{ photo.photo_path }}" class="w-full h-full object-cover"
                                     alt="Proof of service">
+                                {% endif %}
                             </div>
                             <div class="text-[8px] uppercase font-black text-slate-400 tracking-tighter text-center">
-                                {{ photo.photo_type }} / {{ photo.caption or 'Service Point' }}
+                                {{ photo.photo_type }} / {{ photo.inspection_item or photo.caption or 'Service Point' }}
                             </div>
                         </div>
                         {% endfor %}

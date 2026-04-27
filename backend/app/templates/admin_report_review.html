@@ -9,8 +9,11 @@
         <div class="space-y-1">
             <div class="text-xs uppercase tracking-[0.2em] font-bold text-slate-400">Quality Control / Report #{{
                 report.id }}</div>
-            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Curate Audit: {{ report.job_number }}</h2>
-            <p class="text-slate-500">Curation Mode: Finalize professional certificate details.</p>
+            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Curate {{ 'Breakdown / Callout' if report.job_type == 'Breakdown/Callout' else 'Extraction' }} Report: {{ report.job_number }}</h2>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="badge badge-sm badge-ghost uppercase tracking-[0.15em]">{{ report.job_type or 'Extraction' }}</span>
+                <p class="text-slate-500">Curation Mode: Finalize professional certificate details.</p>
+            </div>
         </div>
         <div class="flex gap-2">
             <div id="save-status"></div>
@@ -68,15 +71,15 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="card bg-white shadow-xl border border-slate-100">
                 <div class="card-body">
-                    <h3 class="card-title text-sm uppercase tracking-widest text-slate-400 mb-4">Site Information</h3>
+                    <h3 class="card-title text-sm uppercase tracking-widest text-slate-400 mb-4">Store Information</h3>
                     <div class="space-y-4">
                         <div class="form-control">
-                            <label class="label text-xs font-bold text-slate-400 uppercase">Client / Site Name</label>
+                            <label class="label text-xs font-bold text-slate-400 uppercase">Company / Store Name</label>
                             <input type="text" name="company" value="{{ report.company }}"
                                 class="input input-bordered font-bold text-slate-700" />
                         </div>
                         <div class="form-control">
-                            <label class="label text-xs font-bold text-slate-400 uppercase">Site Address</label>
+                            <label class="label text-xs font-bold text-slate-400 uppercase">Store Address</label>
                             <textarea name="address" class="textarea textarea-bordered text-sm text-slate-500"
                                 rows="2">{{ report.address }}</textarea>
                         </div>
@@ -261,7 +264,18 @@
                 {% for photo in photos %}
                 <div class="group relative aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm"
                     id="photo-{{ photo.id }}">
+                    {% set media_url = (photo.photo_path or '')|lower %}
+                    {% if media_url.endswith('.mp4') or media_url.endswith('.mov') or media_url.endswith('.avi') or media_url.endswith('.m4v') or media_url.endswith('.webm') or media_url.endswith('.ogg') %}
+                    <video src="{{ photo.photo_path }}" class="w-full h-full object-cover" controls preload="metadata"></video>
+                    {% elif media_url.endswith('.tif') or media_url.endswith('.tiff') %}
+                    <div class="flex h-full w-full flex-col items-center justify-center gap-3 bg-slate-900/5 p-4 text-center">
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-500">TIFF File</span>
+                        <a href="{{ photo.photo_path }}" target="_blank" rel="noopener"
+                            class="btn btn-sm btn-outline btn-primary">Open Media</a>
+                    </div>
+                    {% else %}
                     <img src="{{ photo.photo_path }}" class="w-full h-full object-cover">
+                    {% endif %}
                     <div
                         class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
                         <span class="text-[10px] font-bold text-white uppercase mb-4">{{ photo.photo_type }}</span>
@@ -304,7 +318,8 @@
             class="space-y-4">
             <div class="form-control">
                 <label class="label">Select Image</label>
-                <input type="file" name="photo_file" class="file-input file-input-bordered w-full" required />
+                <input type="file" name="photo_file" accept="image/*,.tif,.tiff,video/*,.mp4,.mov,.avi,.m4v,.webm"
+                    class="file-input file-input-bordered w-full" required />
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div class="form-control">

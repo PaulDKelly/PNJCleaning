@@ -4,6 +4,8 @@ from datetime import date as dt_date, time as dt_time, datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field
 
+CALL_OUT_MARKER = "[CALL OUT]"
+
 # Note: In Supabase, ID generation and defaults are often handled by the database (Postgres).
 # However, for Pydantic models used in FastAPI, we define what we expect to send/receive.
 
@@ -49,7 +51,12 @@ class ClientSite(BaseModel):
     client_name: str
     site_name: str
     address: Optional[str] = None
+    postcode: Optional[str] = None
     brand_name: Optional[str] = None
+    store_id_code: Optional[str] = None
+    ac_number: Optional[str] = None
+    frequency_number: Optional[int] = None
+    last_clean: Optional[dt_date] = None
     archived: bool = False
     created_at: Optional[datetime] = None
 
@@ -62,10 +69,11 @@ class Job(BaseModel):
     site_name: Optional[str] = None
     priority: str
     status: str = "Scheduled"
+    job_type: Optional[str] = "Extraction"
     client_name: str
     company: Optional[str] = None
     address: Optional[str] = None
-    engineer_contact_name: str
+    engineer_contact_name: Optional[str] = None
     engineer_email: Optional[str] = None
     engineer_phone: Optional[str] = None
     site_contact_name: Optional[str] = None
@@ -75,6 +83,12 @@ class Job(BaseModel):
     photos: Optional[str] = None
     created_at: Optional[datetime] = None
     wa_link: Optional[str] = None # Runtime helper field
+
+    def model_post_init(self, __context) -> None:
+        if (self.job_type in (None, "", "Extraction")) and self.notes and self.notes.startswith(CALL_OUT_MARKER):
+            self.job_type = "Breakdown/Callout"
+            cleaned_notes = self.notes[len(CALL_OUT_MARKER):].lstrip(" -:\n")
+            self.notes = cleaned_notes or None
 
 class EngineerDiary(BaseModel):
     id: Optional[int] = None
@@ -110,6 +124,7 @@ class ExtractionReport(BaseModel):
     address: Optional[str] = None
     contact_name: Optional[str] = None
     contact_number: Optional[str] = None
+    job_type: Optional[str] = "Extraction"
     status: str = "Draft"
     risk_pre: Optional[int] = None
     risk_post: Optional[int] = None
@@ -118,12 +133,29 @@ class ExtractionReport(BaseModel):
     cleaning_interval_current: Optional[str] = None
     cleaning_interval_recommended: Optional[str] = None
     sketch_details: Optional[str] = None
+    issue_description: Optional[str] = None
+    work_done: Optional[str] = None
+    recommendations: Optional[str] = None
     sketch_photo_path: Optional[str] = None
     photos_taken: Optional[str] = None
     photos_path: Optional[str] = None
     client_signature: Optional[str] = None
     engineer_signature: Optional[str] = None
     created_at: Optional[datetime] = None
+
+    def model_post_init(self, __context) -> None:
+        if (self.job_type in (None, "", "Extraction")) and self.sketch_details and self.sketch_details.startswith(CALL_OUT_MARKER):
+            self.job_type = "Breakdown/Callout"
+            details = self.sketch_details[len(CALL_OUT_MARKER):].lstrip(" -:\n")
+            if details.startswith("Work done:\n"):
+                details = details[len("Work done:\n"):]
+            if not self.work_done and details:
+                self.work_done = details
+        if self.job_type == "Breakdown/Callout":
+            if not self.issue_description and self.remedial_requirements:
+                self.issue_description = self.remedial_requirements
+            if not self.recommendations and self.risk_improvements:
+                self.recommendations = self.risk_improvements
 
 class ExtractionMicronReading(BaseModel):
     id: Optional[int] = None

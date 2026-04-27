@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+import os
 from .routers import auth, scheduler, crm, portal, admin, dashboard, dynamic_reports
 from .module_loader import load_modules
 
@@ -25,8 +26,12 @@ async def unauthorized_exception_handler(request: Request, exc: HTTPException):
 # Versioning and logging
 print("WEB_APP_BUILDER_ENGINE: v1.0.0-modular", flush=True)
 
+@app.get("/health")
+async def healthcheck():
+    return {"status": "ok"}
+
 # Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 
 # Include Core Engine Routers (Order matters for root routes)
 app.include_router(dashboard.router, tags=["Dashboard"])

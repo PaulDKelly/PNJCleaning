@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Breakdown / Callout Report - PNJ Extraction Services{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8 pb-20">
+    <div class="text-center space-y-2">
+        <h2 class="text-4xl font-bold text-slate-800 font-outfit">Breakdown / Callout Report</h2>
+        <p class="text-slate-500 font-medium italic">Capture fault diagnosis, corrective work carried out, and next actions.</p>
+    </div>
+
+    <form hx-post="/extraction-report" hx-encoding="multipart/form-data" hx-target="#form-feedback" class="space-y-8">
+        <div id="form-feedback" class="sticky top-20 z-50"></div>
+
+        <input type="hidden" name="job_type" value="Breakdown/Callout" />
+
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2">Job Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Job Number</label>
+                        <input type="text" name="job_number" value="{{ job.job_number if job else '' }}"
+                            class="input input-bordered focus:border-primary" required readonly />
+                    </div>
+                    <div class="form-control md:col-span-3">
+                        <label class="label font-bold text-slate-600">Company / Site</label>
+                        <input type="text" name="company" value="{{ job.company if job else '' }}"
+                            class="input input-bordered focus:border-primary" required />
+                    </div>
+                    <div class="form-control md:col-span-3">
+                        <label class="label font-bold text-slate-600">Address</label>
+                        <textarea name="address" class="textarea textarea-bordered focus:border-primary h-24">{{ job.address if job else '' }}</textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">On-Site Contact</label>
+                        <input type="text" name="contact_name" value="{{ job.contact_name if job else '' }}"
+                            class="input input-bordered focus:border-primary" />
+                        <input type="hidden" name="contact_number" value="{{ job.contact_phone }}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2">Fault Diagnosis</h3>
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Fault / Issue Description</label>
+                        <textarea name="issue_description" placeholder="Describe the breakdown or fault encountered..."
+                            class="textarea textarea-bordered focus:border-primary h-28"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Work Completed</label>
+                        <textarea name="work_done" placeholder="Describe the remedial work completed on site..."
+                            class="textarea textarea-bordered focus:border-primary h-28"></textarea>
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-600">Recommended Next Actions</label>
+                        <textarea name="recommendations" placeholder="Detail any follow-up work required, parts replacement or safety notes..."
+                            class="textarea textarea-bordered focus:border-primary h-28"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-white shadow-xl border border-slate-100">
+            <div class="card-body">
+                <h3 class="card-title text-primary font-outfit text-xl mb-4 border-b pb-2">Photo Evidence</h3>
+                <div class="form-control">
+                    <label class="label font-bold text-slate-600">Upload Photos</label>
+                    <input id="callout-media-input" type="file" name="photos" multiple
+                        accept="image/*,.tif,.tiff,video/*,.mp4,.mov,.avi,.m4v,.webm" capture="environment"
+                        class="hidden" />
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-outline btn-primary js-callout-capture-trigger"
+                            data-target="callout-media-input" data-accept="image/*" data-capture="environment">Take Photo</button>
+                        <button type="button" class="btn btn-outline btn-primary js-callout-capture-trigger"
+                            data-target="callout-media-input" data-accept="video/*" data-capture="environment">Record Video</button>
+                        <button type="button" class="btn btn-outline js-callout-capture-trigger"
+                            data-target="callout-media-input"
+                            data-accept="image/*,.tif,.tiff,video/*,.mp4,.mov,.avi,.m4v,.webm">Choose Existing</button>
+                    </div>
+                    <span class="label-text-alt text-slate-400 mt-1">Add photos or videos of the fault, repaired areas, and replacements directly from the device camera or gallery.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700 font-outfit text-lg mb-4">Client Signature</h3>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-500">Name / Signature</label>
+                        <input type="text" name="client_signature" placeholder="Print Name"
+                            class="input input-bordered focus:border-primary" />
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700 font-outfit text-lg mb-4">Engineer Completion</h3>
+                    <div class="form-control">
+                        <label class="label font-bold text-slate-500">Engineer Signature</label>
+                        <input type="text" name="engineer_signature" value="{{ user.username }}"
+                            class="input input-bordered focus:border-primary font-bold text-primary" required />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-center pt-8">
+            <button type="submit"
+                class="btn btn-primary btn-lg w-full max-w-md shadow-2xl shadow-primary/40 font-bold text-lg">
+                Complete & Submit Callout Report
+                <span class="loading loading-spinner htmx-indicator"></span>
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+    (() => {
+        document.querySelectorAll('.js-callout-capture-trigger').forEach((button) => {
+            button.addEventListener('click', () => {
+                const target = document.getElementById(button.dataset.target);
+                if (!target) return;
+                target.accept = button.dataset.accept || target.accept;
+                if (button.dataset.capture) {
+                    target.setAttribute('capture', button.dataset.capture);
+                } else {
+                    target.removeAttribute('capture');
+                }
+                target.click();
+            });
+        });
+    })();
+</script>
+{% endblock %}

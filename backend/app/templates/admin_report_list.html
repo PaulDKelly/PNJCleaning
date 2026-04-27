@@ -23,6 +23,7 @@
                             <th>Company / Site</th>
                             <th>Submitted Date</th>
                             <th>Engineer</th>
+                            <th>Job Type</th>
                             <th>Status</th>
                             <th class="text-right">Actions</th>
                         </tr>
@@ -38,6 +39,7 @@
                             </td>
                             <td class="text-sm">{{ r.created_at.strftime('%d/%m/%Y %H:%M') if r.created_at else '-' }}</td>
                             <td class="text-sm font-medium">{{ r.engineer_signature or 'Unknown' }}</td>
+                            <td class="text-xs uppercase tracking-[0.15em] font-bold text-slate-500">{{ r.job_type or 'Extraction' }}</td>
                             <td>
                                 <span class="badge badge-sm font-bold
                                     {% if r.status == 'Approved' %}badge-success

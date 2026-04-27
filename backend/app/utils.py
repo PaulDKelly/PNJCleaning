@@ -3,12 +3,33 @@ import os
 from . import models
 
 
-def _get_base_url(host: str) -> str:
-    """Resolve public base URL with optional PUBLIC_URL override."""
+def _is_local_host(host: str) -> bool:
+    host = (host or "").split(":", 1)[0].lower()
+    return host in {"localhost", "127.0.0.1", "0.0.0.0"}
+
+
+def _get_request_base_url(host: str) -> str:
+    """Resolve the base URL for the current request host."""
+    protocol = "http" if _is_local_host(host) else "https"
+    return f"{protocol}://{host}".rstrip("/")
+
+
+def _get_public_base_url(host: str) -> str:
+    """Resolve the externally reachable base URL for engineer/customer links."""
+    if _is_local_host(host):
+        base_url = os.getenv("PUBLIC_URL")
+        if base_url:
+            return base_url.rstrip("/")
+
     base_url = os.getenv("PUBLIC_URL")
     if not base_url:
-        protocol = "https" if "." in host and not host.startswith("localhost") and not host.startswith("127.0.0.1") else "http"
-        base_url = f"{protocol}://{host}"
+        redirect_uri = os.getenv("WORKOS_REDIRECT_URI")
+        if redirect_uri:
+            parsed = urllib.parse.urlparse(redirect_uri)
+            if parsed.scheme and parsed.netloc:
+                base_url = f"{parsed.scheme}://{parsed.netloc}"
+    if not base_url:
+        base_url = _get_request_base_url(host)
     return base_url.rstrip("/")
 
 
@@ -23,14 +44,25 @@ def _normalize_uk_phone(phone: str) -> str:
         return "44" + digits[1:]
     return "44" + digits
 
+
+def get_report_link(job: models.Job, host: str, public: bool = False) -> str:
+    """Return the correct blank report URL for the job type."""
+    base_url = _get_public_base_url(host) if public else _get_request_base_url(host)
+    job_type = (getattr(job, "job_type", "") or "").strip()
+    if job_type == "Breakdown/Callout":
+        return f"{base_url}/extraction-report?job_number={job.job_number}&job_type={job_type}"
+    return f"{base_url}/extraction-report?job_number={job.job_number}"
+
 def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str):
     """Return WhatsApp web URL for job dispatch."""
     if not engineer or not engineer.phone:
         return None
 
-    base_url = _get_base_url(host)
-    report_link = f"{base_url}/extraction-report?job_number={job.job_number}"
+    base_url = _get_public_base_url(host)
+    report_link = get_report_link(job, host, public=True)
     queue_link = f"{base_url}/portal/{engineer.access_token}" if engineer.access_token else f"{base_url}/portal/login"
+    is_callout = (getattr(job, "job_type", "") or "").strip().lower() == "breakdown/callout"
+    report_label = "Breakdown / Callout Report" if is_callout else "Post-Service Extraction Report"
 
     msg = (
         f"PNJ Extraction - New Job Assigned\n\n"
@@ -38,7 +70,7 @@ def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str
         f"Client: {job.client_name}\n"
         f"Site: {job.site_name or 'N/A'}\n"
         f"Address: {job.address or 'N/A'}\n\n"
-        f"Post-Service Extraction Report:\n{report_link}\n\n"
+        f"{report_label}:\n{report_link}\n\n"
         f"Your Job Queue & Portal:\n{queue_link}"
     )
 
