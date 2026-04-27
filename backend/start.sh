@@ -9,4 +9,4 @@ set -e
 echo "Starting Uvicorn server..."
 # Using --host 0.0.0.0 to allow external access within container network
 # Using --proxy-headers for running behind a proxy (e.g. Nginx/Cloud LB)
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" --proxy-headers

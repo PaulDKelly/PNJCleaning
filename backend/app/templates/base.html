@@ -56,7 +56,7 @@
 </head>
 
 <body class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-    {% if user or engineer %}
+    {% if user or engineer or client %}
     <!-- Sidebar (Desktop) - ADMIN ONLY -->
     {% if user %}
     <aside class="hidden md:flex flex-col w-80 bg-slate-900 h-screen sticky top-0 shadow-2xl z-50">
@@ -76,8 +76,8 @@
                 <span class="font-medium">Dashboard</span>
             </a>
 
-            <a href="/engineer/diary"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/engineer/diary') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+            <a href="/engineer-diary"
+                class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {{ 'bg-primary text-white shadow-lg shadow-primary/20' if (request and request.url and request.url.path == '/engineer-diary') else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -133,7 +133,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span class="font-medium">Extraction Report</span>
+                <span class="font-medium">Engineer Reports</span>
             </a>
 
             <!-- OneDrive Link -->
@@ -185,9 +185,10 @@
             </label>
             <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-slate-800 rounded-box w-52">
                 <li><a href="/">Dashboard</a></li>
-                <li><a href="/job-diary">Job Diary</a></li>
+                <li><a href="/engineer-diary">My Jobs Queue</a></li>
                 <li><a href="/job-allocation">Job Allocation</a></li>
-                <li><a href="/extraction-report">Extraction Report</a></li>
+                <li><a href="/admin/builder">Visual Module Builder</a></li>
+                <li><a href="/extraction-report">Engineer Reports</a></li>
                 <li><a href="/admin/reports">Client Reports</a></li>
                 <li><a href="{{ settings.onedrive_link if settings and settings.onedrive_link else 'https://onedrive.live.com' }}"
                         target="_blank">OneDrive Files</a></li>

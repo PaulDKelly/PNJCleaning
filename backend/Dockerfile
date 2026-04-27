@@ -1,12 +1,8 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim
+# Use Microsoft's mirrored Python image to avoid Docker Hub rate limits in ACR builds
+FROM mcr.microsoft.com/devcontainers/python:3.9-bookworm
 
 # Set the working directory in the container
 WORKDIR /app
-
-# Install system dependencies (e.g., for MySQL client if needed)
-# Install system dependencies
-RUN apt-get update && apt-get install -y build-essential libffi-dev
 
 # Copy the requirements file into the container at /app
 COPY requirements.txt .
@@ -25,6 +21,5 @@ EXPOSE 8000
 # Make the start script executable
 RUN chmod +x start.sh
 
-# Run start.sh when the container launches
-# Run the application directly to avoid CRLF issues with start.sh
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+# Run the application directly and honor Railway's injected PORT variable
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]

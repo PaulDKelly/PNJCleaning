@@ -25,12 +25,15 @@
                         <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{
                             job.time.strftime('%H:%M') }} • {{ job.date.strftime('%d %b') }}</div>
                     </div>
-                    <span class="badge badge-sm font-black 
-                        {% if job.priority == 'High' %}bg-rose-100 text-rose-700
-                        {% elif job.priority == 'Medium' %}bg-amber-100 text-amber-700
-                        {% else %}bg-emerald-100 text-emerald-700{% endif %} border-none">
-                        {{ job.priority }}
-                    </span>
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="badge badge-sm font-black 
+                            {% if job.priority == 'High' %}bg-rose-100 text-rose-700
+                            {% elif job.priority == 'Medium' %}bg-amber-100 text-amber-700
+                            {% else %}bg-emerald-100 text-emerald-700{% endif %} border-none">
+                            {{ job.priority }}
+                        </span>
+                        <span class="badge badge-ghost badge-sm text-slate-500 uppercase tracking-widest">{{ job.job_type or 'Extraction' }}</span>
+                    </div>
                 </div>
 
                 <h3 class="text-xl font-bold text-slate-800 mb-1 font-outfit">
@@ -60,7 +63,7 @@
                             class="text-primary">{{ job.status }}</span></div>
                     <a href="/extraction-report?job_number={{ job.job_number }}"
                         class="btn btn-primary btn-sm px-6 shadow-lg shadow-primary/20 font-bold">
-                        Start Audit
+                        {% if job.job_type == 'Breakdown/Callout' %}Start Callout Report{% else %}Start Audit{% endif %}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

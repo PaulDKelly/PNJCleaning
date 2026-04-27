@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Visual Module Builder - {{ config.app_name }}{% endblock %}
+
+{% block content %}
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<div class="max-w-6xl mx-auto space-y-8 pb-20" x-data="builder()">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-6">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-800 font-outfit">Visual Module Builder</h2>
+            <p class="text-slate-500">Design your application module logic and forms visually.</p>
+        </div>
+        <div class="flex gap-2">
+            <button @click="saveSchema()" class="btn btn-primary shadow-lg shadow-primary/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save Module Schema
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Sidebar: Field Library -->
+        <div class="space-y-6">
+            <div class="card bg-white shadow-xl border border-slate-100">
+                <div class="card-body">
+                    <h3 class="card-title text-sm uppercase tracking-widest text-slate-400 mb-4">Module Metadata</h3>
+                    <div class="form-control w-full">
+                        <label class="label"><span class="label-text font-bold">Module ID (Internal)</span></label>
+                        <input type="text" x-model="module_id" placeholder="e.g. fire_safety"
+                            class="input input-bordered w-full" />
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label"><span class="label-text font-bold">Display Title</span></label>
+                        <input type="text" x-model="schema.title" placeholder="e.g. Fire Safety Inspection"
+                            class="input input-bordered w-full" />
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label"><span class="label-text font-bold">Description</span></label>
+                        <textarea x-model="schema.description" class="textarea textarea-bordered"
+                            placeholder="Brief hint for users..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-slate-900 text-white shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-sm uppercase tracking-widest text-slate-400 mb-4">Field Library</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button @click="addField('text')"
+                            class="btn btn-sm btn-outline text-slate-300 hover:bg-primary border-slate-700">Short
+                            Text</button>
+                        <button @click="addField('textarea')"
+                            class="btn btn-sm btn-outline text-slate-300 hover:bg-primary border-slate-700">Long
+                            Text</button>
+                        <button @click="addField('number')"
+                            class="btn btn-sm btn-outline text-slate-300 hover:bg-primary border-slate-700">Number</button>
+                        <button @click="addField('date')"
+                            class="btn btn-sm btn-outline text-slate-300 hover:bg-primary border-slate-700">Date</button>
+                        <button @click="addField('select')"
+                            class="btn btn-sm btn-outline text-slate-300 hover:bg-primary border-slate-700">Dropdown</button>
+                        <button @click="addField('photo')"
+                            class="btn btn-sm btn-outline text-slate-300 hover:bg-primary border-slate-700">Photo
+                            Capture</button>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-800">
+                        <button @click="addSection()" class="btn btn-sm btn-secondary w-full">Add New Section</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas: Visual Editor -->
+        <div class="lg:col-span-2 space-y-6">
+            <template x-for="(section, sIndex) in schema.sections" :key="sIndex">
+                <div class="card bg-white shadow-xl border-t-4 border-primary">
+                    <div class="card-body">
+                        <div class="flex justify-between items-center mb-4">
+                            <input type="text" x-model="section.title"
+                                class="text-xl font-bold text-slate-800 border-none focus:ring-0 p-0 w-full"
+                                placeholder="Section Title..." />
+                            <button @click="removeSection(sIndex)" class="btn btn-xs btn-ghost text-error">Remove
+                                Section</button>
+                        </div>
+
+                        <div
+                            class="space-y-4 min-h-[50px] bg-slate-50/50 p-4 rounded-xl border-2 border-dashed border-slate-200">
+                            <template x-for="(field, fIndex) in section.fields" :key="fIndex">
+                                <div
+                                    class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col gap-4 relative group">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div class="form-control">
+                                                <label
+                                                    class="label-text text-[10px] font-bold text-slate-400 uppercase">Field
+                                                    Label</label>
+                                                <input type="text" x-model="field.label"
+                                                    class="input input-sm input-bordered w-full" />
+                                            </div>
+                                            <div class="form-control">
+                                                <label
+                                                    class="label-text text-[10px] font-bold text-slate-400 uppercase">Field
+                                                    ID (CSV/DB)</label>
+                                                <input type="text" x-model="field.id"
+                                                    class="input input-sm input-bordered w-full" />
+                                            </div>
+                                            <div class="form-control">
+                                                <label
+                                                    class="label-text text-[10px] font-bold text-slate-400 uppercase">Input
+                                                    Type</label>
+                                                <select x-model="field.type"
+                                                    class="select select-sm select-bordered w-full">
+                                                    <option value="text">Short Text</option>
+                                                    <option value="textarea">Long Text</option>
+                                                    <option value="number">Number</option>
+                                                    <option value="date">Date</option>
+                                                    <option value="select">Dropdown</option>
+                                                    <option value="photo">Photo Capture</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button @click="removeField(sIndex, fIndex)"
+                                            class="btn btn-xs btn-circle btn-ghost text-slate-400 hover:text-error ml-2">✕</button>
+                                    </div>
+
+                                    <!-- Conditional Settings -->
+                                    <div class="flex flex-wrap gap-4 items-center">
+                                        <label class="label cursor-pointer gap-2">
+                                            <input type="checkbox" x-model="field.required"
+                                                class="checkbox checkbox-xs checkbox-primary" />
+                                            <span class="label-text text-xs">Required</span>
+                                        </label>
+                                        <template x-if="field.type === 'select'">
+                                            <div class="flex-1">
+                                                <input type="text" placeholder="Options (comma separated)..."
+                                                    class="input input-xs input-bordered w-full"
+                                                    :value="field.options.map(o => o.label).join(', ')"
+                                                    @change="updateOptions(sIndex, fIndex, $event.target.value)" />
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="section.fields.length === 0">
+                                <div class="text-center py-4 text-slate-400 text-sm">
+                                    Click fields on the left to add items to this section.
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Section Settings -->
+                        <div class="mt-4 flex justify-end gap-4">
+                            <label class="label cursor-pointer gap-2">
+                                <span class="label-text text-xs">Cols: 1</span>
+                                <input type="radio" :name="'cols_'+sIndex" :value="1" x-model="section.columns"
+                                    class="radio radio-xs" />
+                            </label>
+                            <label class="label cursor-pointer gap-2">
+                                <span class="label-text text-xs">Cols: 2</span>
+                                <input type="radio" :name="'cols_'+sIndex" :value="2" x-model="section.columns"
+                                    class="radio radio-xs" />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script>
+    function builder() {
+        return {
+            module_id: '',
+            schema: {
+                title: 'New Application Module',
+                description: 'Custom module description...',
+                sections: [
+                    {
+                        title: 'Initial Section',
+                        columns: 2,
+                        fields: []
+                    }
+                ]
+            },
+            addSection() {
+                this.schema.sections.push({
+                    title: 'New Section',
+                    columns: 1,
+                    fields: []
+                });
+            },
+            removeSection(index) {
+                this.schema.sections.splice(index, 1);
+            },
+            addField(type) {
+                // Add to the last section by default
+                const lastSection = this.schema.sections[this.schema.sections.length - 1];
+                const newField = {
+                    id: 'field_' + Date.now(),
+                    label: 'New ' + type.charAt(0).toUpperCase() + type.slice(1),
+                    type: type,
+                    required: false,
+                    placeholder: '',
+                    options: type === 'select' ? [{ label: 'Option 1', value: 'opt1' }] : []
+                };
+                lastSection.fields.push(newField);
+            },
+            removeField(sIndex, fIndex) {
+                this.schema.sections[sIndex].fields.splice(fIndex, 1);
+            },
+            updateOptions(sIndex, fIndex, value) {
+                const options = value.split(',').map(opt => ({
+                    label: opt.trim(),
+                    value: opt.trim().toLowerCase().replace(/\s+/g, '_')
+                }));
+                this.schema.sections[sIndex].fields[fIndex].options = options;
+            },
+            async saveSchema() {
+                if (!this.module_id) {
+                    alert("Please enter a Module ID (e.g. landscaping)");
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            module_id: this.module_id,
+                            schema: this.schema
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        alert("Module '" + this.module_id + "' published successfully!\n\nYou can now view it LIVE at:\nhttp://localhost:8000/dynamic-report/" + this.module_id);
+                    } else {
+                        const err = await response.text();
+                        alert("Error saving: " + err);
+                    }
+                } catch (e) {
+                    alert("Request failed: " + e);
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Breakdown / Callout Report: {{ report.job_number }}{% endblock %}
+
+{% block content %}
+{% if is_admin_preview %}
+<div
+    class="bg-indigo-600 text-white p-3 mb-8 rounded-xl shadow-lg flex justify-between items-center px-8 border border-white/20">
+    <div class="flex items-center gap-3">
+        <div class="bg-white/20 p-2 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                    clip-rule="evenodd" />
+            </svg>
+        </div>
+        <div>
+            <span class="font-bold">MANAGER PREVIEW MODE</span>
+            <span class="text-xs text-indigo-100 hidden sm:inline ml-2">• Viewing report for {{ client.client_name }}</span>
+        </div>
+    </div>
+    <a href="/admin/portal-preview"
+        class="btn btn-xs btn-outline text-white border-white/30 hover:bg-white hover:text-indigo-600">Switch Client</a>
+</div>
+{% endif %}
+
+<div class="max-w-5xl mx-auto space-y-8 pb-32">
+    <div class="text-sm breadcrumbs text-slate-400">
+        <ul>
+            <li><a href="{{ '/admin/portal-preview/' ~ (client.client_name|quote_path) if is_admin_preview else '/client-portal/' ~ (token|quote_path) }}">Client Portal</a></li>
+            <li>Callout {{ report.job_number }}</li>
+        </ul>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-200">
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-6">
+            <div>
+                <div class="mb-4">
+                    <img src="/static/images/VHR_logo_RGB.png" alt="VHR Vent Hygiene Register from BESA"
+                        class="h-16 w-auto sm:h-20">
+                </div>
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                    <span class="badge bg-amber-100 text-amber-800 border-0 uppercase tracking-[0.15em]">Breakdown / Callout</span>
+                    <span class="text-sm text-slate-500">Service reference {{ report.job_number }}</span>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-900 font-outfit">Reactive Service Report</h2>
+                <p class="text-slate-500 mt-2 max-w-2xl">This report captures the issue found on site, the work completed, and any next actions or recommendations following the visit.</p>
+            </div>
+            <a href="{{ '/admin/portal-preview/' ~ (client.client_name|quote_path) ~ '/pdf/' ~ (report.job_number|quote_path) if is_admin_preview else '/client-portal/' ~ (token|quote_path) ~ '/pdf/' ~ (report.job_number|quote_path) }}"
+                class="btn btn-primary shadow-lg shadow-primary/20">
+                Download Official PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Client / Site</div>
+            <div class="mt-2 text-lg font-bold text-slate-800">{{ report.company or client.client_name }}</div>
+            <div class="mt-1 text-sm text-slate-500">{{ report.address or '-' }}</div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Date Completed</div>
+            <div class="mt-2 text-lg font-bold text-slate-800">{{ report.date.strftime('%d %B %Y') if report.date else '-' }}</div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Report Type</div>
+            <div class="mt-2 text-lg font-bold text-amber-700">Breakdown / Callout</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6">
+        <section class="rounded-3xl border border-rose-200 bg-rose-50/70 p-6">
+            <div class="text-xs uppercase tracking-[0.25em] font-black text-rose-500 mb-3">Issue Found</div>
+            <p class="text-slate-700 leading-relaxed whitespace-pre-line">{{ report.issue_description or report.remedial_requirements or 'No issue description was recorded for this callout.' }}</p>
+        </section>
+
+        <section class="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-6">
+            <div class="text-xs uppercase tracking-[0.25em] font-black text-emerald-600 mb-3">Work Completed</div>
+            <p class="text-slate-700 leading-relaxed whitespace-pre-line">{{ report.work_done or report.sketch_details or 'No completed work details were recorded for this visit.' }}</p>
+        </section>
+
+        <section class="rounded-3xl border border-amber-200 bg-amber-50/70 p-6">
+            <div class="text-xs uppercase tracking-[0.25em] font-black text-amber-600 mb-3">Recommended Next Actions</div>
+            <p class="text-slate-700 leading-relaxed whitespace-pre-line">{{ report.recommendations or report.risk_improvements or 'No follow-up actions were recorded.' }}</p>
+        </section>
+    </div>
+
+    {% if photos %}
+    <section class="bg-white rounded-3xl border border-slate-100 shadow-xl p-8">
+        <h3 class="text-xl font-black font-outfit text-slate-800 uppercase tracking-tight mb-6">Callout Evidence</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {% for photo in photos %}
+            <article class="rounded-2xl border border-slate-100 overflow-hidden bg-slate-50">
+                <div class="aspect-video bg-slate-100">
+                    {% set media_url = (photo.photo_path or '')|lower %}
+                    {% if media_url.endswith('.mp4') or media_url.endswith('.mov') or media_url.endswith('.avi') or media_url.endswith('.m4v') or media_url.endswith('.webm') or media_url.endswith('.ogg') %}
+                    <video src="{{ photo.photo_path }}" class="w-full h-full object-cover" controls preload="metadata"></video>
+                    {% elif media_url.endswith('.tif') or media_url.endswith('.tiff') %}
+                    <div class="flex h-full w-full flex-col items-center justify-center gap-3 p-4 text-center">
+                        <span class="text-xs font-bold uppercase tracking-widest text-slate-500">TIFF File</span>
+                        <a href="{{ photo.photo_path }}" target="_blank" rel="noopener"
+                            class="btn btn-xs btn-outline btn-primary">Open Media</a>
+                    </div>
+                    {% else %}
+                    <img src="{{ photo.photo_path }}" alt="Callout media" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <div class="text-[10px] uppercase tracking-widest font-bold text-slate-400">{{ photo.photo_type or 'Service Media' }}</div>
+                    <div class="mt-1 text-sm font-semibold text-slate-700">{{ photo.inspection_item or photo.caption or 'Callout evidence' }}</div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

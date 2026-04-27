@@ -123,9 +123,10 @@
                                 <th>Location Description</th>
                                 <th>Pre-Clean</th>
                                 <th>Post-Clean</th>
+                                <th class="text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="micron-reading-rows">
                             {% set points = [
                             ("T1", "Canopy/Extract Plenum"),
                             ("T2", "Ductwork 1m from canopy"),
@@ -136,14 +137,31 @@
                             ("T7", "Discharge downstream of fan")
                             ] %}
                             {% for id, desc in points %}
-                            <tr>
-                                <td class="p-4 font-bold text-primary">{{ id }}</td>
+                            <tr class="micron-row">
+                                <td class="p-4 font-bold text-primary">
+                                    <input type="hidden" name="micron_location[]" value="{{ id }}"
+                                        class="micron-point-value">
+                                    <span class="micron-point-label">{{ id }}</span>
+                                </td>
                                 <td><input type="text" name="micron_desc[]" value="{{ desc }}"
                                         class="input input-sm input-ghost w-full"></td>
                                 <td><input type="number" name="micron_pre[]" placeholder="0"
                                         class="input input-sm input-bordered w-24"></td>
                                 <td><input type="number" name="micron_post[]" placeholder="0"
                                         class="input input-sm input-bordered w-24"></td>
+                                <td class="text-right p-4">
+                                    <div class="flex justify-end gap-2">
+                                        <button type="button"
+                                            class="btn btn-ghost btn-xs text-primary js-add-micron-row">
+                                            Add Below
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-ghost btn-xs text-slate-300 cursor-not-allowed"
+                                            disabled>
+                                            Remove
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -277,9 +295,29 @@
                             class="textarea textarea-bordered h-24 focus:border-primary"></textarea>
                     </div>
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600">Sketch Details</label>
-                        <textarea name="sketch_details" placeholder="Describe the system layout..."
-                            class="textarea textarea-bordered h-28 focus:border-primary"></textarea>
+                        <label class="label font-bold text-slate-600">Sketch Photo</label>
+                        <input id="engineer-sketch-photo" type="file" name="sketch_photo" accept="image/*"
+                            capture="environment" class="hidden js-direct-capture-input" />
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button"
+                                class="btn btn-outline btn-primary rounded-xl justify-start gap-2 js-capture-trigger"
+                                data-target="engineer-sketch-photo" data-accept="image/*" data-capture="environment">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 7a2 2 0 012-2h2l1-1h8l1 1h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                </svg>
+                                Take Photo
+                            </button>
+                            <button type="button" class="btn btn-outline rounded-xl js-capture-trigger"
+                                data-target="engineer-sketch-photo" data-accept="image/*">
+                                Choose Existing
+                            </button>
+                        </div>
+                        <span class="label-text-alt text-slate-400 mt-1">Upload a photo of the hand-drawn system
+                            sketch.</span>
                     </div>
                     <div class="form-control">
                         <label class="label font-bold text-slate-600">Internal Cleaning Summary</label>
@@ -297,14 +335,21 @@
                     Photo Evidence (Before/After)
                     <span class="text-xs uppercase tracking-widest text-slate-400">Section 7 of 7</span>
                 </h3>
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-bold text-slate-600">Capture Site Evidence</span>
-                        <span class="label-text-alt text-slate-400">Take photos or videos of canopies, ducts, and
-                            fans.</span>
-                    </label>
-                    <input type="file" name="photos" multiple accept="image/*,video/*" capture="environment"
-                        class="file-input file-input-bordered file-input-primary w-full" />
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <div class="font-bold text-slate-700">Capture Before / After Media</div>
+                        <p class="text-sm text-slate-400">Click `Add Before / After Media` to open a guided upload
+                            dialog. Inside it, the engineer picks one `Before clean` file and one `After clean` file
+                            for the same area, then sees how the pair will look before returning to the main report.</p>
+                    </div>
+                    <button id="open-photo-modal" type="button"
+                        class="btn btn-primary rounded-xl shadow-lg shadow-primary/20">
+                        Add Before / After Media
+                    </button>
+                </div>
+                <div id="photo-row-summary" class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="text-xs uppercase tracking-widest font-bold text-slate-400 mb-2">Upload Summary</div>
+                    <p class="text-sm text-slate-500">No before / after rows added yet.</p>
                 </div>
                 <div class="alert alert-info mt-4 py-2 text-xs">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -312,7 +357,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>On mobile devices, you can snap photos directly using the camera.</span>
+                    <span>Supported media now includes images, TIFF/TIF, MP4 and common video formats. Mobile devices
+                        can still use the camera directly.</span>
                 </div>
             </div>
         </div>
@@ -349,6 +395,355 @@
                 <span class="loading loading-spinner htmx-indicator"></span>
             </button>
         </div>
+
+        <dialog id="photo-upload-dialog" class="modal">
+            <div class="modal-box max-w-6xl">
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="font-bold text-xl text-slate-800">Before / After Media</h3>
+                        <p class="text-sm text-slate-500">For each row, choose the area first, then add the `Before
+                            clean` file and the `After clean` file. The preview cards below each file input show the
+                            pair exactly as the engineer is building it.</p>
+                    </div>
+                    <button id="close-photo-modal" type="button" class="btn btn-sm btn-ghost">Close</button>
+                </div>
+
+                <div class="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-slate-600">
+                    <span class="font-bold text-indigo-700">How this works:</span> each row is one matched set. Put the
+                    dirty state in `Before clean`, the finished state in `After clean`, and use the same location name
+                    for both so the comparison is obvious in review.
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+                                <tr>
+                                    <th class="w-16 text-center">Row</th>
+                                    <th class="min-w-[180px]">Location / Area</th>
+                                    <th class="min-w-[240px]">Before Clean</th>
+                                    <th class="min-w-[240px]">After Clean</th>
+                                    <th class="w-20 text-right">Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody id="photo-upload-rows"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <p class="text-xs text-slate-400">Accepted: JPG, PNG, HEIC, WEBP, TIF, TIFF, MP4, MOV, AVI, M4V,
+                        WEBM and other common camera media.</p>
+                    <div class="flex gap-2">
+                        <button id="add-photo-row" type="button" class="btn btn-outline btn-primary">Add Row</button>
+                        <button id="done-photo-modal" type="button" class="btn btn-primary">Done</button>
+                    </div>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button>close</button>
+            </form>
+        </dialog>
     </form>
 </div>
+<script>
+    (() => {
+        const micronTbody = document.getElementById('micron-reading-rows');
+        const maxRows = 20;
+        const dialog = document.getElementById('photo-upload-dialog');
+        const openBtn = document.getElementById('open-photo-modal');
+        const closeBtn = document.getElementById('close-photo-modal');
+        const doneBtn = document.getElementById('done-photo-modal');
+        const addBtn = document.getElementById('add-photo-row');
+        const tbody = document.getElementById('photo-upload-rows');
+        const summary = document.getElementById('photo-row-summary');
+        const acceptValue = 'image/*,.tif,.tiff,video/*,.mp4,.mov,.avi,.m4v,.webm';
+        const previewableVideo = ['mp4', 'mov', 'm4v', 'webm', 'ogg'];
+        const previewableImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif'];
+
+        function splitMicronPoint(point) {
+            const [root, ...rest] = String(point || '').split('.');
+            return {
+                root,
+                suffix: rest.join('')
+            };
+        }
+
+        function findNextMicronChildPoint(parentPoint) {
+            const { root, suffix } = splitMicronPoint(parentPoint);
+            const rootDigits = (root || '').replace(/^[^\d]+/, '');
+            const branchStem = suffix || rootDigits;
+            const siblingPrefix = `${root}.${branchStem}`;
+            const existingPoints = Array.from(micronTbody.querySelectorAll('.micron-point-value'))
+                .map((input) => input.value);
+
+            let nextIndex = 1;
+            while (existingPoints.includes(`${siblingPrefix}${nextIndex}`)) {
+                nextIndex += 1;
+            }
+
+            return `${siblingPrefix}${nextIndex}`;
+        }
+
+        function bindMicronRow(row) {
+            const addButton = row.querySelector('.js-add-micron-row');
+            const removeButton = row.querySelector('.js-remove-micron-row');
+            if (addButton) {
+                addButton.addEventListener('click', () => {
+                    const pointInput = row.querySelector('.micron-point-value');
+                    const nextPoint = findNextMicronChildPoint(pointInput ? pointInput.value : '');
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'micron-row';
+                    newRow.innerHTML = `
+                        <td class="p-4 font-bold text-primary">
+                            <input type="hidden" name="micron_location[]" value="${nextPoint}" class="micron-point-value">
+                            <span class="micron-point-label">${nextPoint}</span>
+                        </td>
+                        <td><input type="text" name="micron_desc[]" placeholder="Additional test point"
+                                class="input input-sm input-ghost w-full"></td>
+                        <td><input type="number" name="micron_pre[]" placeholder="0"
+                                class="input input-sm input-bordered w-24"></td>
+                        <td><input type="number" name="micron_post[]" placeholder="0"
+                                class="input input-sm input-bordered w-24"></td>
+                        <td class="text-right p-4">
+                            <div class="flex justify-end gap-2">
+                                <button type="button" class="btn btn-ghost btn-xs text-primary js-add-micron-row">
+                                    Add Below
+                                </button>
+                                <button type="button" class="btn btn-ghost btn-xs text-rose-500 js-remove-micron-row">
+                                    Remove
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    row.insertAdjacentElement('afterend', newRow);
+                    bindMicronRow(newRow);
+                    newRow.querySelector('[name="micron_desc[]"]')?.focus();
+                });
+            }
+            if (removeButton) {
+                removeButton.addEventListener('click', () => {
+                    row.remove();
+                });
+            }
+        }
+
+        if (micronTbody) {
+            micronTbody.querySelectorAll('.micron-row').forEach(bindMicronRow);
+        }
+
+        function getExtension(fileName) {
+            return (fileName.split('.').pop() || '').toLowerCase();
+        }
+
+        function getSelectedFileName(input) {
+            if (!input || !input.files || !input.files.length) {
+                return null;
+            }
+            return input.files[0].name;
+        }
+
+        function openDialog() {
+            if (!dialog) return;
+            if (typeof dialog.showModal === 'function') {
+                dialog.showModal();
+                return;
+            }
+            dialog.setAttribute('open', 'open');
+            dialog.classList.add('modal-open');
+        }
+
+        function closeDialog() {
+            if (!dialog) return;
+            if (typeof dialog.close === 'function') {
+                dialog.close();
+            } else {
+                dialog.removeAttribute('open');
+            }
+            dialog.classList.remove('modal-open');
+        }
+
+        function buildPreviewMarkup(file, label) {
+            if (!file) {
+                return `
+                    <div class="flex h-36 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-center text-xs text-slate-400">
+                        No ${label.toLowerCase()} selected yet
+                    </div>
+                `;
+            }
+
+            const ext = getExtension(file.name);
+            const safeName = file.name.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            if (file.type.startsWith('image/') && !['tif', 'tiff'].includes(ext) || previewableImage.includes(ext)) {
+                const objectUrl = URL.createObjectURL(file);
+                return `
+                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <img src="${objectUrl}" alt="${label}" class="h-36 w-full object-cover" />
+                        <div class="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">${safeName}</div>
+                    </div>
+                `;
+            }
+
+            if (file.type.startsWith('video/') || previewableVideo.includes(ext)) {
+                const objectUrl = URL.createObjectURL(file);
+                return `
+                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <video src="${objectUrl}" class="h-36 w-full object-cover" controls preload="metadata"></video>
+                        <div class="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">${safeName}</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="flex h-36 flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-center">
+                    <div class="text-xs font-bold uppercase tracking-widest text-slate-500">${label} file ready</div>
+                    <div class="text-xs text-slate-400">${safeName}</div>
+                    <div class="text-[11px] text-slate-400">Preview not available for this format in-browser</div>
+                </div>
+            `;
+        }
+
+        function updateRowPreview(row) {
+            const beforeInput = row.querySelector('[name="before_media[]"]');
+            const afterInput = row.querySelector('[name="after_media[]"]');
+            row.querySelector('.before-preview').innerHTML = buildPreviewMarkup(beforeInput.files[0], 'Before clean');
+            row.querySelector('.after-preview').innerHTML = buildPreviewMarkup(afterInput.files[0], 'After clean');
+        }
+
+        function updateSummary() {
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            if (!rows.length) {
+                summary.innerHTML = '<div class="text-xs uppercase tracking-widest font-bold text-slate-400 mb-2">Upload Summary</div><p class="text-sm text-slate-500">No before / after rows added yet.</p>';
+                return;
+            }
+
+            const items = rows.map((row, index) => {
+                const location = row.querySelector('[name="photo_location[]"]').value.trim() || `Evidence Row ${index + 1}`;
+                const beforeName = getSelectedFileName(row.querySelector('[name="before_media[]"]')) || 'No before file';
+                const afterName = getSelectedFileName(row.querySelector('[name="after_media[]"]')) || 'No after file';
+                return `<div class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"><span class="font-bold text-slate-800">${location}</span><div class="text-xs text-slate-400">Before: ${beforeName}</div><div class="text-xs text-slate-400">After: ${afterName}</div></div>`;
+            }).join('');
+
+            summary.innerHTML = `<div class="text-xs uppercase tracking-widest font-bold text-slate-400 mb-2">Upload Summary</div><div class="grid gap-2">${items}</div>`;
+        }
+
+        function bindRow(row) {
+            row.querySelectorAll('input').forEach((input) => {
+                input.addEventListener('change', () => {
+                    updateRowPreview(row);
+                    updateSummary();
+                });
+                input.addEventListener('input', updateSummary);
+            });
+            row.querySelector('.remove-photo-row').addEventListener('click', () => {
+                row.remove();
+                renumberRows();
+                updateSummary();
+            });
+            row.querySelectorAll('.js-row-capture-trigger').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const target = row.querySelector(`[name="${button.dataset.target}"]`);
+                    if (!target) return;
+                    target.accept = button.dataset.accept || acceptValue;
+                    if (button.dataset.capture) {
+                        target.setAttribute('capture', button.dataset.capture);
+                    } else {
+                        target.removeAttribute('capture');
+                    }
+                    target.click();
+                });
+            });
+        }
+
+        function renumberRows() {
+            Array.from(tbody.querySelectorAll('tr')).forEach((row, index) => {
+                row.querySelector('.photo-row-index').textContent = index + 1;
+            });
+            addBtn.disabled = tbody.querySelectorAll('tr').length >= maxRows;
+        }
+
+        function addRow() {
+            if (tbody.querySelectorAll('tr').length >= maxRows) return;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-center font-bold text-primary photo-row-index"></td>
+                <td>
+                    <input type="text" name="photo_location[]" placeholder="Canopy 1 / Fan housing / Duct section"
+                        class="input input-bordered input-sm w-full" />
+                </td>
+                <td>
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400">Before clean</label>
+                        <input type="file" name="before_media[]" accept="${acceptValue}" capture="environment"
+                            class="hidden" />
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline btn-xs js-row-capture-trigger"
+                                data-target="before_media[]" data-accept="image/*" data-capture="environment">Take Photo</button>
+                            <button type="button" class="btn btn-outline btn-xs js-row-capture-trigger"
+                                data-target="before_media[]" data-accept="video/*" data-capture="environment">Record Video</button>
+                            <button type="button" class="btn btn-ghost btn-xs js-row-capture-trigger"
+                                data-target="before_media[]" data-accept="${acceptValue}">Choose Existing</button>
+                        </div>
+                        <div class="before-preview"></div>
+                    </div>
+                </td>
+                <td>
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400">After clean</label>
+                        <input type="file" name="after_media[]" accept="${acceptValue}" capture="environment"
+                            class="hidden" />
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline btn-xs js-row-capture-trigger"
+                                data-target="after_media[]" data-accept="image/*" data-capture="environment">Take Photo</button>
+                            <button type="button" class="btn btn-outline btn-xs js-row-capture-trigger"
+                                data-target="after_media[]" data-accept="video/*" data-capture="environment">Record Video</button>
+                            <button type="button" class="btn btn-ghost btn-xs js-row-capture-trigger"
+                                data-target="after_media[]" data-accept="${acceptValue}">Choose Existing</button>
+                        </div>
+                        <div class="after-preview"></div>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <button type="button" class="btn btn-ghost btn-sm text-rose-500 remove-photo-row">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            bindRow(row);
+            updateRowPreview(row);
+            renumberRows();
+            updateSummary();
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener('click', () => {
+                if (!tbody.querySelector('tr')) addRow();
+                openDialog();
+            });
+        }
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeDialog);
+        }
+        if (doneBtn) {
+            doneBtn.addEventListener('click', closeDialog);
+        }
+        if (addBtn) {
+            addBtn.addEventListener('click', addRow);
+        }
+        document.querySelectorAll('.js-capture-trigger').forEach((button) => {
+            button.addEventListener('click', () => {
+                const target = document.getElementById(button.dataset.target);
+                if (!target) return;
+                target.accept = button.dataset.accept || target.accept;
+                if (button.dataset.capture) {
+                    target.setAttribute('capture', button.dataset.capture);
+                } else {
+                    target.removeAttribute('capture');
+                }
+                target.click();
+            });
+        });
+        updateSummary();
+    })();
+</script>
 {% endblock %}

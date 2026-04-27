@@ -7,24 +7,31 @@ class PNJReport(FPDF):
         super().__init__(*args, **kwargs)
         self.pnj_blue = (2, 132, 199)
         self.dark_blue = (15, 23, 42)
-        self.logo_path = r"E:\Code\Projects\PNJCleaning\backend\app\static\images\image_1.png"
-        self.fsb_logo = r"E:\Code\Projects\PNJCleaning\backend\app\static\images\image_2.png"
-        self.bics_logo = r"E:\Code\Projects\PNJCleaning\backend\app\static\images\image_23.png"
+        
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.logo_path = os.path.join(base_dir, "static", "images", "image_1.png")
+        self.fsb_logo = os.path.join(base_dir, "static", "images", "image_2.png")
+        self.bics_logo = os.path.join(base_dir, "static", "images", "image_23.png")
+        self.vhr_logo_path = os.path.join(base_dir, "static", "images", "VHR_logo_RGB.png")
 
     def header(self):
         if self.page_no() == 1:
             if os.path.exists(self.logo_path):
                 self.image(self.logo_path, 10, 10, 60)
-            self.set_y(15)
+            self.set_xy(0, 12)
             self.set_font('helvetica', 'B', 28)
             self.set_text_color(2, 132, 199)
             self.cell(0, 15, 'CERTIFICATE', ln=True, align='R')
-            self.ln(25)
+            if os.path.exists(self.vhr_logo_path):
+                self.image(self.vhr_logo_path, 138, 28, 52)
+            self.ln(34)
         else:
             self.set_fill_color(15, 23, 42)
             self.rect(0, 0, 210, 25, 'F')
             if os.path.exists(self.logo_path):
                 self.image(self.logo_path, 10, 5, 25)
+            if os.path.exists(self.vhr_logo_path):
+                self.image(self.vhr_logo_path, 150, 4, 42)
             self.set_y(5)
             self.set_text_color(255, 255, 255)
             self.set_font('helvetica', 'B', 14)
@@ -94,49 +101,76 @@ def generate_client_pdf(report, micron_readings, inspection_items, filter_items,
     pdf.set_font('helvetica', 'B', 10)
     pdf.cell(95, 8, 'Authorized Representative:', border='T')
     pdf.cell(95, 8, 'Date of Certification:', border='T', align='R', ln=True)
+    cert_date = report.date.strftime('%d %B %Y') if getattr(report, 'date', None) else 'Date not recorded'
     pdf.set_font('helvetica', '', 10)
     pdf.cell(95, 5, "Gary Kelly (Director)", ln=False)
-    pdf.cell(95, 5, report.date.strftime('%d %B %Y'), align='R', ln=True)
+    pdf.cell(95, 5, cert_date, align='R', ln=True)
+
+    is_callout = (getattr(report, 'job_type', '') or '').lower() == 'breakdown/callout'
+    if is_callout:
+        pdf.add_page()
+        pdf.set_font('helvetica', 'B', 16)
+        pdf.cell(0, 10, 'Breakdown / Callout Service Report', ln=True)
+        pdf.ln(8)
+
+        pdf.set_font('helvetica', 'B', 11)
+        pdf.cell(0, 8, 'Client / Site', ln=True)
+        pdf.set_font('helvetica', '', 10)
+        client_text = f"{report.company or ''} - {report.address or ''}".strip(' -')
+        pdf.multi_cell(0, 7, client_text)
+        pdf.ln(4)
+
+        pdf.set_font('helvetica', 'B', 11)
+        pdf.cell(0, 8, 'Fault / Issue Description', ln=True)
+        pdf.set_font('helvetica', '', 10)
+        pdf.multi_cell(0, 7, report.issue_description or 'No issue description provided.')
+        pdf.ln(4)
+
+        pdf.set_font('helvetica', 'B', 11)
+        pdf.cell(0, 8, 'Work Completed', ln=True)
+        pdf.set_font('helvetica', '', 10)
+        pdf.multi_cell(0, 7, report.work_done or 'No work details provided.')
+        pdf.ln(4)
+
+        pdf.set_font('helvetica', 'B', 11)
+        pdf.cell(0, 8, 'Recommended Next Actions', ln=True)
+        pdf.set_font('helvetica', '', 10)
+        pdf.multi_cell(0, 7, report.recommendations or 'No further action recorded.')
+        pdf.ln(5)
+
+        if photos:
+            pdf.add_page()
+            pdf.set_font('helvetica', 'B', 14)
+            pdf.cell(0, 10, 'Photographic Evidence', ln=True)
+            pdf.ln(5)
+            img_w = 85
+            img_h = 55
+            start_x = pdf.l_margin + 5
+            start_y = pdf.get_y()
+            for i, photo in enumerate(photos):
+                page_idx = i % 4
+                if i > 0 and page_idx == 0:
+                    pdf.add_page()
+                    start_y = 30
+                col = page_idx % 2
+                row = page_idx // 2
+                x = start_x + (img_w + 10) * col
+                y = start_y + (img_h + 15) * row
+                if os.path.exists(photo.photo_path):
+                    pdf.image(photo.photo_path, x, y, img_w, img_h)
+                else:
+                    pdf.rect(x, y, img_w, img_h)
+                    pdf.set_xy(x, y + img_h/2)
+                    pdf.cell(img_w, 10, '[Image Missing]', align='C')
+                pdf.set_xy(x, y + img_h + 2)
+                pdf.set_font('helvetica', 'B', 8)
+                pdf.cell(img_w, 5, f"{photo.photo_type}: {photo.inspection_item or 'Service Photo'}", align='C')
+
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        pdf.output(output_path)
+        return output_path
 
     # --- PAGE 2: INTRODUCTION & AUDIT STANDARDS ---
-    pdf.add_page()
-    pdf.set_font('helvetica', 'B', 16)
-    pdf.cell(0, 10, 'Post Clean Inspection Report', ln=True)
-    pdf.set_font('helvetica', 'I', 12)
-    pdf.cell(0, 8, 'Kitchen Extract System Audit', ln=True)
-    pdf.ln(5)
-    
-    pdf.set_font('helvetica', 'B', 11)
-    pdf.cell(0, 8, 'Introduction', ln=True)
-    pdf.set_font('helvetica', '', 9)
-    intro_txt = (
-        f"This report follows an inspection and system clean carried out by PNJ Cleaners Limited on behalf of {report.company}. "
-        "The survey was conducted in accordance with recommendations set out in the following documents:\n\n"
-        "- BS EN 15780:2011 Ventilation for Buildings - Ductwork - Cleanliness of Ventilation Systems\n"
-        "- BESA TR19 Grease Guide to Good Practice Internal Cleanliness of Ventilation Systems\n"
-        "- RC44 Recommendations for fire risk assessment of catering extract ventilation\n"
-        "- HVCA DW/172: Specification for Kitchen Ventilation Systems (2005)\n"
-        "- Health & Safety Act at Work 1974\n"
-        "- The Regulatory Reform (Fire) Safety Order 2005\n\n"
-        "The intention is to provide complete management and traceability of the Kitchen Extract Systems. "
-        "Observations supported by photographs and Wet Film Thickness Test (WFTT) measurements taken provide an objective account of the "
-        "condition of each extract installation."
-    )
-    pdf.multi_cell(0, 5, intro_txt)
-    
-    pdf.ln(5)
-    pdf.set_font('helvetica', 'B', 11)
-    pdf.cell(0, 8, 'Purpose & Fire Hazard', ln=True)
-    pdf.set_font('helvetica', '', 9)
-    purpose_txt = (
-        "Kitchen extract systems present particular hazards. As well as removing odours and steam, the extract system "
-        "removes greasy vapours which are an ignition source. Accumulated grease forms a hidden combustion load. "
-        "Spontaneous ignition occurs at 310-360 deg C. Grease extract ductwork cleansing therefore helps reduce the "
-        "flammable materials that build up within the system."
-    )
-    pdf.multi_cell(0, 5, purpose_txt)
-
-    # --- PAGE 3: GUIDE TO GOOD PRACTICE SUMMARY ---
     pdf.add_page()
     pdf.set_font('helvetica', 'B', 14)
     pdf.cell(0, 10, 'Guide to Good Practice Summary', ln=True)

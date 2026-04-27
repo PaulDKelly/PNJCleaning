@@ -39,6 +39,7 @@ CREATE TABLE jobs (
   date DATE NOT NULL,
   time TIME NOT NULL,
   priority ENUM('Low', 'Medium', 'High') NOT NULL,
+  job_type ENUM('Extraction', 'Breakdown/Callout') NOT NULL DEFAULT 'Extraction',
   client_name VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
   company VARCHAR(255),
   address TEXT,

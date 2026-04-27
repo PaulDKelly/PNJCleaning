@@ -6,7 +6,7 @@
     </td>
     <td>
         {% set site_count = sites | selectattr('client_name', 'equalto', c.client_name) | list | length %}
-        <span class="badge badge-ghost">{{ site_count }} sites</span>
+        <span class="badge badge-ghost">{{ site_count }} stores</span>
     </td>
     <td>
         <div class="flex items-center gap-2">
@@ -25,8 +25,8 @@
 
             {% if not c.archived %}
             <button hx-post="/admin/manage/clients/{{ c.client_name }}/archive" hx-target="closest tr" hx-swap="none"
-                hx-confirm="Archive this client? Linked sites will remain but this client will be hidden from new allocations."
-                class="btn btn-ghost btn-xs text-warning" title="Archive Client">
+                hx-confirm="Archive this company? Linked stores will remain but this company will be hidden from new allocations."
+                class="btn btn-ghost btn-xs text-warning" title="Archive Company">
                 Archive
             </button>
             {% else %}
@@ -39,10 +39,10 @@
         <input type="checkbox" id="edit-client-{{ c.client_name|replace(' ', '-') }}" class="modal-toggle" />
         <div class="modal text-left">
             <div class="modal-box">
-                <h3 class="font-bold text-lg">Edit Client: {{ c.client_name }}</h3>
+                <h3 class="font-bold text-lg">Edit Company: {{ c.client_name }}</h3>
                 <form action="/admin/manage/clients/edit/{{ c.client_name }}" method="POST" class="space-y-4 mt-4">
                     <div class="form-control">
-                        <label class="label text-xs font-bold uppercase text-slate-400">Trading Name</label>
+                        <label class="label text-xs font-bold uppercase text-slate-400">Company Name</label>
                         <input type="text" name="company" value="{{ c.company or '' }}" class="input input-bordered" />
                     </div>
                     <div class="form-control">
@@ -63,6 +63,6 @@
 {% endfor %}
 {% if not clients %}
 <tr>
-    <td colspan="4" class="text-center py-8 text-slate-400 italic">No clients found.</td>
+    <td colspan="4" class="text-center py-8 text-slate-400 italic">No companies found.</td>
 </tr>
 {% endif %}

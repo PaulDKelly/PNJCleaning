@@ -1,0 +1,20 @@
+{
+    "title": "Test Module",
+    "description": "Test",
+    "sections": [
+        {
+            "title": "Initial Section",
+            "columns": 2,
+            "fields": [
+                {
+                    "id": "field_1771238990814",
+                    "label": "New Text",
+                    "type": "text",
+                    "required": false,
+                    "placeholder": "",
+                    "options": []
+                }
+            ]
+        }
+    ]
+}

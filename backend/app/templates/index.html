@@ -150,7 +150,10 @@
                     <tbody>
                         {% for job in recent_jobs %}
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="p-4 font-semibold text-primary">{{ job.job_number }}</td>
+                            <td class="p-4 font-semibold text-primary">
+                                {{ job.job_number }}
+                                <div class="text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mt-1">{{ job.job_type or 'Extraction' }}</div>
+                            </td>
                             <td class="font-medium">{{ job.client_name }}</td>
                             <td class="text-slate-500">{{ job.date }}</td>
                             <td>
@@ -162,7 +165,7 @@
                                     {{ job.status }}
                                 </span>
                             </td>
-                            <td class="text-sm italic text-slate-500">{{ job.engineer_contact_name }}</td>
+                            <td class="text-sm italic text-slate-500">{{ job.engineer_contact_name or 'Unassigned' }}</td>
                             <td class="text-right">
                                 <a href="/extraction-report?job_number={{ job.job_number }}"
                                     class="btn btn-ghost btn-xs text-emerald-600 font-bold">Report</a>
