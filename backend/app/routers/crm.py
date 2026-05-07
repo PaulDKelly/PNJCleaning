@@ -127,7 +127,7 @@ def get_subcontractors_lookup(
     except Exception:
         sub_contractors = []
     options = "".join([f'<option value="{s.id}">{_subcontractor_option_label(s)}</option>' for s in sub_contractors])
-    return HTMLResponse(content=f'<option value="">No proxy / direct client billing</option>{options}')
+    return HTMLResponse(content=f'<option value="">No sub-contractor / direct client billing</option>{options}')
 
 @router.get("/admin/manage/clients-table", response_class=HTMLResponse)
 def get_clients_table(
