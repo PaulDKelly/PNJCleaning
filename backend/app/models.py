@@ -18,6 +18,18 @@ class Client(BaseModel):
     archived: bool = False
     created_at: Optional[datetime] = None
 
+class SubContractor(BaseModel):
+    id: Optional[int] = None
+    client_name: str
+    sub_contractor_name: str
+    company: Optional[str] = None
+    address: Optional[str] = None
+    contact_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    archived: bool = False
+    created_at: Optional[datetime] = None
+
 class Engineer(BaseModel):
     contact_name: str
     email: Optional[str] = None
@@ -73,6 +85,8 @@ class Job(BaseModel):
     client_name: str
     company: Optional[str] = None
     address: Optional[str] = None
+    proxy_sub_contractor_id: Optional[int] = None
+    proxy_sub_contractor_name: Optional[str] = None
     engineer_contact_name: Optional[str] = None
     engineer_email: Optional[str] = None
     engineer_phone: Optional[str] = None

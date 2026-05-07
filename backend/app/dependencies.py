@@ -12,7 +12,10 @@ templates.env.filters["quote_path"] = lambda value: quote(str(value or ""), safe
 
 # Helper to get user by email using Supabase
 def get_user_by_email(email: str):
-    res = supabase.table("users").select("*").eq("email", email).execute()
+    normalized_email = (email or "").strip()
+    if not normalized_email:
+        return None
+    res = supabase.table("users").select("*").ilike("email", normalized_email).limit(1).execute()
     if res.data:
         return models.User(**res.data[0])
     return None

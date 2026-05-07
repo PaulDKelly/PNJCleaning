@@ -90,7 +90,7 @@ async def auth_callback(request: Request, code: str):
         print(f"DEBUG: Profile exchange successful")
         
         profile = profile_and_token.profile
-        email = profile.email
+        email = (profile.email or "").strip().lower()
         print(f"DEBUG: Authenticated email: {email}")
         
         if not email:
@@ -193,7 +193,7 @@ async def handle_forgot_password(request: Request, email: str = Form(...)):
     supabase.table("users").update({
         "reset_token": token,
         "reset_expires": expires.isoformat()
-    }).eq("email", email).execute()
+    }).eq("id", user.id).execute()
     
     reset_link = f"{request.url.scheme}://{request.url.netloc}/reset-password/{token}"
     print(f"PASSWORD RESET LINK: {reset_link}")

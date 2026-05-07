@@ -18,6 +18,20 @@ CREATE TABLE clients (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE sub_contractors (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  client_name VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+  sub_contractor_name VARCHAR(255) NOT NULL,
+  company VARCHAR(255),
+  address TEXT,
+  contact_name VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(255),
+  archived BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (client_name) REFERENCES clients(client_name) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE engineers (
   contact_name VARCHAR(255) PRIMARY KEY COLLATE utf8mb4_unicode_ci,
   email VARCHAR(255),
@@ -43,6 +57,8 @@ CREATE TABLE jobs (
   client_name VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
   company VARCHAR(255),
   address TEXT,
+  proxy_sub_contractor_id INT,
+  proxy_sub_contractor_name VARCHAR(255),
   engineer_contact_name VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
   engineer_email VARCHAR(255),
   engineer_phone VARCHAR(255),

@@ -22,6 +22,12 @@ def admin_manage(request: Request, user: models.User = Depends(role_required(["A
     
     engineers_res = supabase.table("engineers").select("*").execute()
     engineers = [models.Engineer(**e) for e in engineers_res.data] if engineers_res.data else []
+
+    try:
+        sub_contractors_res = supabase.table("sub_contractors").select("*").order("client_name").order("sub_contractor_name").execute()
+        sub_contractors = [models.SubContractor(**s) for s in sub_contractors_res.data] if sub_contractors_res.data else []
+    except Exception:
+        sub_contractors = []
     
     admins_res = supabase.table("users").select("*").execute()
     admins = [models.User(**a) for a in admins_res.data] if admins_res.data else []
@@ -41,6 +47,7 @@ def admin_manage(request: Request, user: models.User = Depends(role_required(["A
         "sites": sites,
         "brands": brands,
         "engineers": engineers,
+        "sub_contractors": sub_contractors,
         "admins": admins,
         "settings": settings
     })
@@ -66,14 +73,15 @@ async def add_user(
 ):
     if user.role != "Admin":
         raise HTTPException(status_code=403, detail="Access denied")
-    existing = get_user_by_email(email)
+    normalized_email = (email or "").strip().lower()
+    existing = get_user_by_email(normalized_email)
     if existing:
         return RedirectResponse(url="/admin/manage?error=email_exists", status_code=303)
     
     hashed_password = security.get_password_hash(password)
     supabase.table("users").insert({
         "username": username,
-        "email": email,
+        "email": normalized_email,
         "password": hashed_password,
         "role": role
     }).execute()
@@ -90,7 +98,7 @@ async def edit_user(
 ):
     if user.role != "Admin":
         raise HTTPException(status_code=403, detail="Access denied")
-    update_data = {"username": username, "email": email, "role": role}
+    update_data = {"username": username, "email": (email or "").strip().lower(), "role": role}
     if password:
         update_data["password"] = security.get_password_hash(password)
     supabase.table("users").update(update_data).eq("id", user_id).execute()

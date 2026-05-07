@@ -252,6 +252,16 @@
                         </select>
                     </div>
                     <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Reporting / Invoice Proxy</label>
+                        <select name="sub_contractor_id" id="subcontractor-selector"
+                            class="select select-bordered focus:border-primary font-medium">
+                            <option value="">No proxy / direct client billing</option>
+                        </select>
+                        <label class="label py-1">
+                            <span class="label-text-alt text-slate-400 italic">Optional subcontractor appointed by the client for reporting and invoicing.</span>
+                        </label>
+                    </div>
+                    <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Specific Store</label>
                         <select id="site-selector-name"
                             class="select select-bordered focus:border-primary font-medium">
@@ -326,6 +336,7 @@
     (() => {
         const brandSelector = document.querySelector('select[name="brand_name"]');
         const companySelector = document.getElementById('client-selector');
+        const subcontractorSelector = document.getElementById('subcontractor-selector');
         const storeNameSelector = document.getElementById('site-selector-name');
         const storeIdSelector = document.getElementById('site-selector-id');
         const storeIdValue = document.getElementById('site-selector');
@@ -354,6 +365,9 @@
             }
             if (storeIdSelector) {
                 htmx.ajax('GET', '/admin/sites-lookup-by-id', { target: '#site-selector-id', values });
+            }
+            if (subcontractorSelector) {
+                htmx.ajax('GET', '/admin/subcontractors-lookup', { target: '#subcontractor-selector', values: { client_name: clientName } });
             }
         };
     })();

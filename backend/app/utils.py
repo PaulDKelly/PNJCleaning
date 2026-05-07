@@ -16,21 +16,20 @@ def _get_request_base_url(host: str) -> str:
 
 def _get_public_base_url(host: str) -> str:
     """Resolve the externally reachable base URL for engineer/customer links."""
-    if _is_local_host(host):
-        base_url = os.getenv("PUBLIC_URL")
-        if base_url:
-            return base_url.rstrip("/")
+    if host and not _is_local_host(host):
+        return _get_request_base_url(host)
 
     base_url = os.getenv("PUBLIC_URL")
-    if not base_url:
-        redirect_uri = os.getenv("WORKOS_REDIRECT_URI")
-        if redirect_uri:
-            parsed = urllib.parse.urlparse(redirect_uri)
-            if parsed.scheme and parsed.netloc:
-                base_url = f"{parsed.scheme}://{parsed.netloc}"
-    if not base_url:
-        base_url = _get_request_base_url(host)
-    return base_url.rstrip("/")
+    if base_url:
+        return base_url.rstrip("/")
+
+    redirect_uri = os.getenv("WORKOS_REDIRECT_URI")
+    if redirect_uri:
+        parsed = urllib.parse.urlparse(redirect_uri)
+        if parsed.scheme and parsed.netloc:
+            return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+
+    return _get_request_base_url(host)
 
 
 def _normalize_uk_phone(phone: str) -> str:

@@ -57,6 +57,11 @@ def _site_option_label(site: models.ClientSite) -> str:
 def _site_id_option_label(site: models.ClientSite) -> str:
     return site.store_id_code or "-"
 
+
+def _subcontractor_option_label(subcontractor: models.SubContractor) -> str:
+    company = subcontractor.company or subcontractor.sub_contractor_name
+    return f"{subcontractor.sub_contractor_name} ({company})"
+
 @router.get("/admin/sites-lookup", response_class=HTMLResponse)
 def get_sites_for_client(
     client_name: Optional[str] = None, 
@@ -106,6 +111,23 @@ def get_clients_lookup(
     clients = [models.Client(**c) for c in res.data]
     options = "".join([f'<option value="{c.client_name}">{c.client_name}</option>' for c in clients])
     return HTMLResponse(content=f'<option value="">All Companies</option>{options}')
+
+
+@router.get("/admin/subcontractors-lookup", response_class=HTMLResponse)
+def get_subcontractors_lookup(
+    client_name: Optional[str] = None,
+    user: models.User = Depends(login_required)
+):
+    try:
+        query = supabase.table("sub_contractors").select("*").eq("archived", False)
+        if client_name:
+            query = query.eq("client_name", client_name)
+        res = query.order("sub_contractor_name").execute()
+        sub_contractors = [models.SubContractor(**s) for s in res.data] if res.data else []
+    except Exception:
+        sub_contractors = []
+    options = "".join([f'<option value="{s.id}">{_subcontractor_option_label(s)}</option>' for s in sub_contractors])
+    return HTMLResponse(content=f'<option value="">No proxy / direct client billing</option>{options}')
 
 @router.get("/admin/manage/clients-table", response_class=HTMLResponse)
 def get_clients_table(
@@ -214,6 +236,63 @@ def edit_client(client_name: str, company: str = Form(None), address: str = Form
         "company": company,
         "address": address
     }, "client_name", client_name)
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+
+@router.post("/admin/manage/subcontractors/add")
+def add_subcontractor(
+    client_name: str = Form(...),
+    sub_contractor_name: str = Form(...),
+    company: str = Form(None),
+    address: str = Form(None),
+    contact_name: str = Form(None),
+    email: str = Form(None),
+    phone: str = Form(None),
+    user: models.User = Depends(login_required)
+):
+    _schema_safe_insert("sub_contractors", {
+        "client_name": client_name,
+        "sub_contractor_name": sub_contractor_name,
+        "company": company,
+        "address": address,
+        "contact_name": contact_name,
+        "email": (email or "").strip().lower() or None,
+        "phone": phone
+    })
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+
+@router.post("/admin/manage/subcontractors/edit/{subcontractor_id}")
+def edit_subcontractor(
+    subcontractor_id: int,
+    sub_contractor_name: str = Form(...),
+    company: str = Form(None),
+    address: str = Form(None),
+    contact_name: str = Form(None),
+    email: str = Form(None),
+    phone: str = Form(None),
+    user: models.User = Depends(login_required)
+):
+    _schema_safe_update("sub_contractors", {
+        "sub_contractor_name": sub_contractor_name,
+        "company": company,
+        "address": address,
+        "contact_name": contact_name,
+        "email": (email or "").strip().lower() or None,
+        "phone": phone
+    }, "id", subcontractor_id)
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+
+@router.post("/admin/manage/subcontractors/{subcontractor_id}/archive")
+def archive_subcontractor(subcontractor_id: int, user: models.User = Depends(login_required)):
+    supabase.table("sub_contractors").update({"archived": True}).eq("id", subcontractor_id).execute()
+    return RedirectResponse(url="/admin/manage", status_code=303)
+
+
+@router.post("/admin/manage/subcontractors/{subcontractor_id}/restore")
+def restore_subcontractor(subcontractor_id: int, user: models.User = Depends(login_required)):
+    supabase.table("sub_contractors").update({"archived": False}).eq("id", subcontractor_id).execute()
     return RedirectResponse(url="/admin/manage", status_code=303)
 
 @router.post("/admin/manage/sites/add")

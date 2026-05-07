@@ -117,6 +117,152 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="card bg-white border border-slate-100 shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-slate-700 mb-4">Add Subcontractor Proxy</h3>
+                        <form action="/admin/manage/subcontractors/add" method="POST" class="space-y-4">
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Appointed By Company</label>
+                                <select name="client_name" class="select select-bordered" required>
+                                    <option disabled selected>Pick a company</option>
+                                    {% for c in clients %}
+                                    <option value="{{ c.client_name }}">{{ c.client_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Subcontractor Reference</label>
+                                <input type="text" name="sub_contractor_name" class="input input-bordered" placeholder="e.g. Northern Service Partner" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Company Name</label>
+                                <input type="text" name="company" class="input input-bordered" placeholder="Legal / invoice company name" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Contact Name</label>
+                                <input type="text" name="contact_name" class="input input-bordered" />
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">Email</label>
+                                    <input type="email" name="email" class="input input-bordered" />
+                                </div>
+                                <div class="form-control">
+                                    <label class="label text-xs font-bold uppercase text-slate-500">Phone</label>
+                                    <input type="text" name="phone" class="input input-bordered" />
+                                </div>
+                            </div>
+                            <div class="form-control">
+                                <label class="label text-xs font-bold uppercase text-slate-500">Address</label>
+                                <textarea name="address" class="textarea textarea-bordered h-24"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-secondary w-full">Add Subcontractor</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 card bg-white border border-slate-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="card-title text-slate-700">Subcontractor Proxy Directory</h3>
+                                <p class="text-xs text-slate-400">Assign reporting and invoicing proxies to client accounts.</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="table w-full">
+                                <thead>
+                                    <tr class="text-slate-400 uppercase text-[10px]">
+                                        <th>Company</th>
+                                        <th>Proxy</th>
+                                        <th>Contact</th>
+                                        <th class="text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in sub_contractors %}
+                                    <tr class="{% if s.archived %}opacity-60 bg-slate-50{% endif %}">
+                                        <td>
+                                            <div class="font-bold text-slate-700">{{ s.client_name }}</div>
+                                            <div class="text-[10px] text-slate-400">{{ s.company or '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="font-bold text-slate-800">{{ s.sub_contractor_name }}</div>
+                                            <div class="text-[10px] text-slate-400 truncate max-w-xs">{{ s.address or '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="text-sm text-slate-600">{{ s.contact_name or '-' }}</div>
+                                            <div class="text-[10px] text-slate-400">{{ s.email or '-' }}</div>
+                                            <div class="text-[10px] text-slate-400">{{ s.phone or '-' }}</div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="flex justify-end gap-1">
+                                                <label for="edit-subcontractor-{{ s.id }}" class="btn btn-ghost btn-xs text-primary">Edit</label>
+                                                {% if not s.archived %}
+                                                <form action="/admin/manage/subcontractors/{{ s.id }}/archive" method="POST">
+                                                    <button type="submit" class="btn btn-ghost btn-xs text-warning">Archive</button>
+                                                </form>
+                                                {% else %}
+                                                <form action="/admin/manage/subcontractors/{{ s.id }}/restore" method="POST">
+                                                    <button type="submit" class="btn btn-ghost btn-xs text-success">Restore</button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+
+                                            <input type="checkbox" id="edit-subcontractor-{{ s.id }}" class="modal-toggle" />
+                                            <div class="modal text-left">
+                                                <div class="modal-box">
+                                                    <h3 class="font-bold text-lg">Edit Subcontractor Proxy</h3>
+                                                    <form action="/admin/manage/subcontractors/edit/{{ s.id }}" method="POST" class="space-y-4 mt-4">
+                                                        <div class="form-control">
+                                                            <label class="label text-xs font-bold uppercase text-slate-500">Reference</label>
+                                                            <input type="text" name="sub_contractor_name" value="{{ s.sub_contractor_name }}" class="input input-bordered" required />
+                                                        </div>
+                                                        <div class="form-control">
+                                                            <label class="label text-xs font-bold uppercase text-slate-500">Company Name</label>
+                                                            <input type="text" name="company" value="{{ s.company or '' }}" class="input input-bordered" />
+                                                        </div>
+                                                        <div class="form-control">
+                                                            <label class="label text-xs font-bold uppercase text-slate-500">Contact Name</label>
+                                                            <input type="text" name="contact_name" value="{{ s.contact_name or '' }}" class="input input-bordered" />
+                                                        </div>
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div class="form-control">
+                                                                <label class="label text-xs font-bold uppercase text-slate-500">Email</label>
+                                                                <input type="email" name="email" value="{{ s.email or '' }}" class="input input-bordered" />
+                                                            </div>
+                                                            <div class="form-control">
+                                                                <label class="label text-xs font-bold uppercase text-slate-500">Phone</label>
+                                                                <input type="text" name="phone" value="{{ s.phone or '' }}" class="input input-bordered" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-control">
+                                                            <label class="label text-xs font-bold uppercase text-slate-500">Address</label>
+                                                            <textarea name="address" class="textarea textarea-bordered h-24">{{ s.address or '' }}</textarea>
+                                                        </div>
+                                                        <div class="modal-action">
+                                                            <label for="edit-subcontractor-{{ s.id }}" class="btn btn-ghost">Cancel</label>
+                                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not sub_contractors %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8 text-slate-400 italic">No subcontractor proxies registered yet.</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Companies Table -->
             <div class="card bg-white border border-slate-100 shadow-sm">
                 <div class="card-body">
