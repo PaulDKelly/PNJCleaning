@@ -233,6 +233,12 @@ def job_allocation_page(request: Request, user: models.User = Depends(login_requ
     
     contacts_res = supabase.table("site_contacts").select("*").order("contact_name").execute()
     site_contacts = contacts_res.data if contacts_res.data else []
+
+    try:
+        sub_contractors_res = supabase.table("sub_contractors").select("*").eq("archived", False).order("client_name").order("sub_contractor_name").execute()
+        sub_contractors = sub_contractors_res.data if sub_contractors_res.data else []
+    except Exception:
+        sub_contractors = []
     
     today_str = datetime.now().strftime('%Y-%m-%d')
     next_job_number = _get_next_job_number()
@@ -244,6 +250,7 @@ def job_allocation_page(request: Request, user: models.User = Depends(login_requ
         "clients": clients,
         "engineers": engineers,
         "site_contacts": site_contacts,
+        "sub_contractors": sub_contractors,
         "today": today_str,
         "next_job_number": next_job_number
     })
@@ -258,6 +265,7 @@ async def allocate_job(
     priority: str = Form(...),
     job_type: str = Form("Extraction"),
     client_name: str = Form(...),
+    sub_contractor_id: Optional[int] = Form(None),
     site_id: Optional[int] = Form(None),
     brand_name: Optional[str] = Form(None),
     engineer_name: str = Form(...),
@@ -276,6 +284,8 @@ async def allocate_job(
         site_name_val = None
         company_val = None
         address_val = None
+        proxy_sub_contractor_id_val = None
+        proxy_sub_contractor_name_val = None
         
         if site_id:
             s_res = supabase.table("client_sites").select("*").eq("id", site_id).execute()
@@ -290,6 +300,17 @@ async def allocate_job(
             company_val = client.get("company") or client["client_name"]
             if not address_val:
                 address_val = client.get("address")
+
+        if sub_contractor_id:
+            try:
+                sub_res = supabase.table("sub_contractors").select("*").eq("id", sub_contractor_id).eq("archived", False).execute()
+                if sub_res.data:
+                    subcontractor = sub_res.data[0]
+                    proxy_sub_contractor_id_val = subcontractor.get("id")
+                    proxy_sub_contractor_name_val = subcontractor.get("sub_contractor_name")
+                    company_val = subcontractor.get("company") or subcontractor.get("sub_contractor_name") or company_val
+            except Exception:
+                print("Warning: sub_contractors lookup unavailable; proceeding without proxy")
 
         created_job_number = None
         manual_override_enabled = (manual_job_override == "1")
@@ -313,6 +334,8 @@ async def allocate_job(
                 "site_name": site_name_val,
                 "company": company_val,
                 "address": address_val,
+                "proxy_sub_contractor_id": proxy_sub_contractor_id_val,
+                "proxy_sub_contractor_name": proxy_sub_contractor_name_val,
                 "status": "Scheduled"
             }
             try:
@@ -344,6 +367,8 @@ async def allocate_job(
                     "site_name": site_name_val,
                     "company": company_val,
                     "address": address_val,
+                    "proxy_sub_contractor_id": proxy_sub_contractor_id_val,
+                    "proxy_sub_contractor_name": proxy_sub_contractor_name_val,
                     "status": "Scheduled"
                 }
                 try:
