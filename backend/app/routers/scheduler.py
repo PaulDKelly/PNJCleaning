@@ -310,7 +310,7 @@ async def allocate_job(
                     proxy_sub_contractor_name_val = subcontractor.get("sub_contractor_name")
                     company_val = subcontractor.get("company") or subcontractor.get("sub_contractor_name") or company_val
             except Exception:
-                print("Warning: sub_contractors lookup unavailable; proceeding without proxy")
+                print("Warning: sub_contractors lookup unavailable; proceeding without sub-contractor")
 
         created_job_number = None
         manual_override_enabled = (manual_job_override == "1")

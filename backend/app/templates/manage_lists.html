@@ -120,7 +120,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="card bg-white border border-slate-100 shadow-sm">
                     <div class="card-body">
-                        <h3 class="card-title text-slate-700 mb-4">Add Subcontractor Proxy</h3>
+                        <h3 class="card-title text-slate-700 mb-4">Add Sub-contractor</h3>
                         <form action="/admin/manage/subcontractors/add" method="POST" class="space-y-4">
                             <div class="form-control">
                                 <label class="label text-xs font-bold uppercase text-slate-500">Appointed By Company</label>
@@ -166,8 +166,8 @@
                     <div class="card-body">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <h3 class="card-title text-slate-700">Subcontractor Proxy Directory</h3>
-                                <p class="text-xs text-slate-400">Assign reporting and invoicing proxies to client accounts.</p>
+                                <h3 class="card-title text-slate-700">Sub-contractor Directory</h3>
+                                <p class="text-xs text-slate-400">Assign reporting and invoicing sub-contractors to client accounts.</p>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -213,7 +213,7 @@
                                             <input type="checkbox" id="edit-subcontractor-{{ s.id }}" class="modal-toggle" />
                                             <div class="modal text-left">
                                                 <div class="modal-box">
-                                                    <h3 class="font-bold text-lg">Edit Subcontractor Proxy</h3>
+                                                    <h3 class="font-bold text-lg">Edit Sub-contractor</h3>
                                                     <form action="/admin/manage/subcontractors/edit/{{ s.id }}" method="POST" class="space-y-4 mt-4">
                                                         <div class="form-control">
                                                             <label class="label text-xs font-bold uppercase text-slate-500">Reference</label>
@@ -253,7 +253,7 @@
                                     {% endfor %}
                                     {% if not sub_contractors %}
                                     <tr>
-                                        <td colspan="4" class="text-center py-8 text-slate-400 italic">No subcontractor proxies registered yet.</td>
+                                        <td colspan="4" class="text-center py-8 text-slate-400 italic">No sub-contractors registered yet.</td>
                                     </tr>
                                     {% endif %}
                                 </tbody>
