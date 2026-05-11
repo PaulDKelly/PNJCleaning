@@ -1,9 +1,12 @@
 import io
+import json
 import os
+import smtplib
 import tempfile
 import zipfile
 import requests
 import re
+from email.message import EmailMessage
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
@@ -12,12 +15,115 @@ from postgrest.exceptions import APIError
 
 from ... import models
 from ...supabase_client import supabase
-from ...dependencies import templates, login_required, role_required
+from ...dependencies import templates, login_required, role_required, get_current_user
 from ... import supabase_storage
+from ...utils import _normalize_uk_phone
 
 router = APIRouter()
 
 MEDIA_ROW_LIMIT = 20
+
+
+def _get_engineer_by_token(token: Optional[str]):
+    if not token:
+        return None
+    res = supabase.table("engineers").select("*").eq("access_token", token).execute()
+    if res.data:
+        return models.Engineer(**res.data[0])
+    return None
+
+
+def _engineer_can_access_job(engineer: Optional[models.Engineer], job_number: Optional[str]) -> bool:
+    if not engineer or not job_number:
+        return True
+    res = supabase.table("jobs").select("engineer_contact_name").eq("job_number", job_number).execute()
+    if not res.data:
+        return False
+    return (res.data[0].get("engineer_contact_name") or "") == engineer.contact_name
+
+
+def _send_report_email(to_email: str, subject: str, body: str):
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_from = os.getenv("SMTP_FROM") or os.getenv("SMTP_USERNAME")
+    if not smtp_host or not smtp_from or not to_email:
+        print(f"Report email notification skipped for {to_email}: SMTP_HOST/SMTP_FROM not configured")
+        return False
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = smtp_from
+    message["To"] = to_email
+    message.set_content(body)
+
+    port = int(os.getenv("SMTP_PORT", "587"))
+    username = os.getenv("SMTP_USERNAME")
+    password = os.getenv("SMTP_PASSWORD")
+    use_ssl = os.getenv("SMTP_SSL", "").lower() in {"1", "true", "yes"}
+
+    if use_ssl:
+        with smtplib.SMTP_SSL(smtp_host, port) as smtp:
+            if username and password:
+                smtp.login(username, password)
+            smtp.send_message(message)
+    else:
+        with smtplib.SMTP(smtp_host, port) as smtp:
+            if os.getenv("SMTP_STARTTLS", "1").lower() not in {"0", "false", "no"}:
+                smtp.starttls()
+            if username and password:
+                smtp.login(username, password)
+            smtp.send_message(message)
+    return True
+
+
+def _send_report_whatsapp(phone: str, message: str):
+    webhook_url = os.getenv("WHATSAPP_NOTIFY_WEBHOOK_URL")
+    normalized_phone = _normalize_uk_phone(phone)
+    if not webhook_url or not normalized_phone:
+        print(f"Report WhatsApp notification skipped for {phone}: WHATSAPP_NOTIFY_WEBHOOK_URL/phone not configured")
+        return False
+    response = requests.post(webhook_url, json={"to": normalized_phone, "message": message}, timeout=10)
+    response.raise_for_status()
+    return True
+
+
+def _notify_report_submitted(report_data: dict, report_id: int, host: str):
+    settings_res = supabase.table("system_settings").select("value").eq("key", "report_notification_recipients").execute()
+    if not settings_res.data:
+        return
+    try:
+        preferences = json.loads(settings_res.data[0].get("value") or "[]")
+    except json.JSONDecodeError:
+        return
+    user_ids = [int(item["user_id"]) for item in preferences if str(item.get("user_id", "")).isdigit()]
+    if not user_ids:
+        return
+
+    admins_res = supabase.table("users").select("*").in_("id", user_ids).execute()
+    admins_by_id = {int(admin["id"]): admin for admin in admins_res.data or [] if admin.get("id") is not None}
+    protocol = "http" if host.split(":", 1)[0] in {"localhost", "127.0.0.1", "0.0.0.0"} else "https"
+    report_url = f"{protocol}://{host}/admin/reports/{report_id}"
+    job_number = report_data.get("job_number") or "Unknown job"
+    company = report_data.get("company") or "Unknown company"
+    subject = f"PNJ report submitted: {job_number}"
+    body = (
+        f"A report has been submitted.\n\n"
+        f"Job: {job_number}\n"
+        f"Company: {company}\n"
+        f"Type: {report_data.get('job_type') or 'Extraction'}\n"
+        f"Review: {report_url}"
+    )
+
+    for preference in preferences:
+        admin = admins_by_id.get(int(preference.get("user_id", 0)))
+        if not admin:
+            continue
+        try:
+            if preference.get("email"):
+                _send_report_email(admin.get("email"), subject, body)
+            if preference.get("whatsapp"):
+                _send_report_whatsapp(preference.get("whatsapp_number"), body)
+        except Exception as exc:
+            print(f"Report notification failed for admin {admin.get('id')}: {exc}")
 
 
 def _insert_with_schema_fallback(table_name: str, payload: dict):
@@ -112,20 +218,33 @@ async def _build_media_entries(report_id: int, form_data, report_jn: str):
     return photos
 
 @router.post("/extraction-report/start")
-async def start_extraction_report(request: Request, user: models.User = Depends(login_required)):
+async def start_extraction_report(request: Request, user: models.User = Depends(get_current_user)):
     form_data = await request.form()
     job_number = form_data.get("job_number")
+    portal_token = form_data.get("portal_token")
+    engineer = _get_engineer_by_token(portal_token)
+    if not user and not engineer:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     if not job_number:
         raise HTTPException(status_code=400, detail="Job number is required")
-    return RedirectResponse(url=f"/extraction-report?job_number={job_number}", status_code=303)
+    if engineer and not _engineer_can_access_job(engineer, job_number):
+        raise HTTPException(status_code=403, detail="This job is not assigned to this engineer")
+    suffix = f"&portal_token={portal_token}" if portal_token else ""
+    return RedirectResponse(url=f"/extraction-report?job_number={job_number}{suffix}", status_code=303)
 
 @router.get("/extraction-report", response_class=HTMLResponse)
 def extraction_report(
     request: Request,
     job_number: Optional[str] = None,
     job_type: Optional[str] = None,
-    user: models.User = Depends(login_required)
+    portal_token: Optional[str] = None,
+    user: models.User = Depends(get_current_user)
 ):
+    engineer = _get_engineer_by_token(portal_token)
+    if not user and not engineer:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if engineer and not _engineer_can_access_job(engineer, job_number):
+        raise HTTPException(status_code=403, detail="This job is not assigned to this engineer")
     job_info = {
         "job_number": job_number or "",
         "company": "",
@@ -159,15 +278,23 @@ def extraction_report(
         "request": request, 
         "title": report_title, 
         "user": user,
+        "engineer": engineer,
+        "portal_token": portal_token,
         "job": job_info
     })
 
 @router.post("/extraction-report")
-async def submit_extraction_report(request: Request, user: models.User = Depends(login_required)):
+async def submit_extraction_report(request: Request, user: models.User = Depends(get_current_user)):
     try:
         form_data = await request.form()
         report_jn = form_data.get("job_number")
         job_type = form_data.get("job_type") or "Extraction"
+        portal_token = form_data.get("portal_token")
+        engineer = _get_engineer_by_token(portal_token)
+        if not user and not engineer:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        if engineer and not _engineer_can_access_job(engineer, report_jn):
+            raise HTTPException(status_code=403, detail="This job is not assigned to this engineer")
         
         # Handle Sketch Photo
         sketch_photo = form_data.get("sketch_photo")
@@ -272,8 +399,19 @@ async def submit_extraction_report(request: Request, user: models.User = Depends
         photos = await _build_media_entries(report_id, form_data, report_jn)
         if photos:
             supabase.table("extraction_photos").insert(photos).execute()
-        
-        return HTMLResponse(content="<div class='alert alert-success'>Professional report submitted with photos!</div>")
+
+        try:
+            _notify_report_submitted(report_data, report_id, request.url.netloc)
+        except Exception as notify_exc:
+            print(f"Report notification dispatch failed: {notify_exc}")
+
+        redirect_url = f"/portal/{portal_token}" if portal_token else "/engineer-diary"
+        return HTMLResponse(content=(
+            "<div class='alert alert-success font-bold'>Report submitted successfully. Returning to your portal...</div>"
+            f"<script>setTimeout(() => {{ window.location.href = {json.dumps(redirect_url)}; }}, 1400);</script>"
+        ))
+    except HTTPException:
+        raise
     except Exception as e:
         return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}</div>", status_code=400)
 

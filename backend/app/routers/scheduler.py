@@ -287,12 +287,14 @@ async def allocate_job(
         proxy_sub_contractor_id_val = None
         proxy_sub_contractor_name_val = None
         
+        brand_name_val = (brand_name or "").strip() or None
         if site_id:
             s_res = supabase.table("client_sites").select("*").eq("id", site_id).execute()
             if s_res.data:
                 site = s_res.data[0]
                 site_name_val = site["site_name"]
                 address_val = site.get("address")
+                brand_name_val = site.get("brand_name")
 
         c_res = supabase.table("clients").select("*").eq("client_name", client_name).execute()
         if c_res.data:
@@ -330,7 +332,7 @@ async def allocate_job(
                 "engineer_contact_name": engineer_name,
                 "site_contact_name": site_contact_name,
                 "notes": notes,
-                "brand": brand_name,
+                "brand": brand_name_val,
                 "site_name": site_name_val,
                 "company": company_val,
                 "address": address_val,
@@ -363,7 +365,7 @@ async def allocate_job(
                     "engineer_contact_name": engineer_name,
                     "site_contact_name": site_contact_name,
                     "notes": notes,
-                    "brand": brand_name,
+                    "brand": brand_name_val,
                     "site_name": site_name_val,
                     "company": company_val,
                     "address": address_val,

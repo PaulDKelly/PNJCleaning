@@ -280,25 +280,10 @@
                                 <select name="client_name" id="pf-client-filter"
                                     class="select select-bordered select-sm text-xs w-40"
                                     hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
-                                    hx-include="#pf-brand-filter, #pf-site-filter">
+                                    hx-include="#pf-site-filter">
                                     <option value="">All Companies</option>
                                     {% for c in clients %}
                                     <option value="{{ c.client_name }}">{{ c.client_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Filter by Brand -->
-                            <div class="form-control w-full sm:w-auto">
-                                <label class="label py-0"><span
-                                        class="label-text-alt text-[10px] font-bold uppercase text-slate-400">Brand</span></label>
-                                <select name="brand_name" id="pf-brand-filter"
-                                    class="select select-bordered select-sm text-xs w-32"
-                                    hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
-                                    hx-include="#pf-client-filter, #pf-site-filter">
-                                    <option value="">All Brands</option>
-                                    {% for b in brands %}
-                                    <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -310,7 +295,7 @@
                                 <select name="site_id" id="pf-site-filter"
                                     class="select select-bordered select-sm text-xs w-48"
                                     hx-get="/admin/manage/clients-table" hx-target="#clients-table-body"
-                                    hx-include="#pf-client-filter, #pf-brand-filter"
+                                    hx-include="#pf-client-filter"
                                     hx-trigger="change, updateSites from:body">
                                     <option value="">All Stores</option>
                                     <!-- Populated via HTMX/JS -->
@@ -318,7 +303,7 @@
                             </div>
 
                             <button class="btn btn-sm btn-ghost text-slate-400"
-                                onclick="document.getElementById('pf-client-filter').value=''; document.getElementById('pf-brand-filter').value=''; document.getElementById('pf-site-filter').value=''; htmx.trigger('#pf-client-filter', 'change');">
+                                onclick="document.getElementById('pf-client-filter').value=''; document.getElementById('pf-site-filter').value=''; htmx.trigger('#pf-client-filter', 'change');">
                                 Clear
                             </button>
                         </div>
@@ -356,22 +341,19 @@
                         <div class="flex gap-2 items-center">
                             <select name="client_name" id="site-filter-select"
                                 class="select select-bordered select-sm text-xs" hx-get="/admin/manage/sites-table"
-                                hx-target="#sites-table-body" hx-include="[name='show_archived'], #site-filter-brand">
+                                hx-target="#sites-table-body" hx-include="[name='show_archived']">
                                 <option value="">All Companies</option>
                                 {% for c in clients %}
                                 <option value="{{ c.client_name }}">{{ c.client_name }}</option>
                                 {% endfor %}
                             </select>
 
-                            <!-- Hidden Brand Filter (Synced from Portfolio) -->
-                            <input type="hidden" name="brand_name" id="site-filter-brand" value="">
-
                             <label class="label cursor-pointer gap-2 border rounded-lg px-2 py-1 hover:bg-slate-50">
                                 <span class="label-text text-xs font-bold text-slate-500">Show Archived</span>
                                 <input type="checkbox" name="show_archived"
                                     class="checkbox checkbox-xs checkbox-primary" hx-get="/admin/manage/sites-table"
                                     hx-target="#sites-table-body"
-                                    hx-include="#site-filter-select, #site-filter-brand" />
+                                    hx-include="#site-filter-select" />
                             </label>
                         </div>
                     </div>
@@ -419,56 +401,22 @@
             <script>
                 // Portfolio Filter Logic
                 const pfClient = document.getElementById('pf-client-filter');
-                const pfBrand = document.getElementById('pf-brand-filter');
                 const pfSite = document.getElementById('pf-site-filter');
-
-                function updatePortfolioClients() {
-                    const brand = pfBrand.value;
-                    const currentClient = pfClient.value;
-
-                    fetch(`/admin/clients-lookup?brand_name=${encodeURIComponent(brand)}`)
-                        .then(response => response.text())
-                        .then(html => {
-                            pfClient.innerHTML = html;
-                            // Restore selection if possible, otherwise it defaults to "All Companies" or first option.
-                            // If the previously selected client is in the new list, select it.
-                            if (currentClient) {
-                                // Try to set it back
-                                pfClient.value = currentClient;
-                                // If value didn't stick (because option is gone), we might want to trigger change?
-                                // If client is no longer valid for this brand, we effectively clear the client filter.
-                                if (pfClient.value !== currentClient) {
-                                    // Client filter cleared automatically. 
-                                    // We should probably trigger change to update table and sites?
-                                    // But updatePortfolioSites() handles the sites update based on current DOM values.
-                                    // If we trigger change here, it might cause a loop or double fetch.
-                                    // Let's just update sites now.
-                                    updatePortfolioSites();
-                                    htmx.trigger(pfClient, 'change'); // Trigger HTMX to update table
-                                }
-                            }
-                        });
-                }
 
                 function updatePortfolioSites() {
                     const client = pfClient.value;
-                    const brand = pfBrand.value;
 
-                    // 1. Update dependent Site dropdown in Portfolio
-                    fetch(`/admin/sites-lookup?client_name=${encodeURIComponent(client)}&brand_name=${encodeURIComponent(brand)}`)
+                    fetch(`/admin/sites-lookup?client_name=${encodeURIComponent(client)}`)
                         .then(response => response.text())
                         .then(html => {
                             pfSite.innerHTML = html;
                         });
 
-                    // 2. Sync with "Registered Venues" table filter
                     const registeredVenuesFilter = document.getElementById('site-filter-select');
-                    const registeredVenuesBrandFilter = document.getElementById('site-filter-brand');
 
                     if (registeredVenuesFilter) {
                         let changed = false;
 
-                        // Sync Client Filter
                         if (client) {
                             if (registeredVenuesFilter.value !== client) {
                                 registeredVenuesFilter.value = client;
@@ -481,26 +429,14 @@
                             }
                         }
 
-                        // Sync Brand Filter
-                        if (registeredVenuesBrandFilter) {
-                            if (registeredVenuesBrandFilter.value !== brand) {
-                                registeredVenuesBrandFilter.value = brand;
-                                changed = true;
-                            }
-                        }
-
                         if (changed) {
                             htmx.trigger(registeredVenuesFilter, 'change');
                         }
                     }
                 }
 
-                if (pfClient && pfBrand && pfSite) {
+                if (pfClient && pfSite) {
                     pfClient.addEventListener('change', updatePortfolioSites);
-                    pfBrand.addEventListener('change', function () {
-                        updatePortfolioSites();
-                        updatePortfolioClients();
-                    });
                 }
 
                 // Sync Dropdowns (Existing Logic - Updated to point to new filters if needed, or keep separate)
@@ -895,6 +831,63 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="card bg-white border border-slate-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-slate-700">Report Submission Notifications</h3>
+                    <p class="text-xs text-slate-400 mb-4">Choose which administrators are notified when an engineer submits a report. Email uses the administrator email address; WhatsApp uses the number entered below.</p>
+                    <form action="/admin/manage/notification-settings" method="POST" class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead>
+                                <tr class="text-slate-400 uppercase text-[10px]">
+                                    <th>Notify</th>
+                                    <th>Administrator</th>
+                                    <th>Email</th>
+                                    <th>WhatsApp</th>
+                                    <th>WhatsApp Number</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in admins %}
+                                {% set pref = settings.report_notifications.get(a.id) if a.id else none %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="notify_user_id" value="{{ a.id }}"
+                                            class="checkbox checkbox-primary checkbox-sm" {% if pref %}checked{% endif %} />
+                                    </td>
+                                    <td>
+                                        <div class="font-bold text-slate-700">{{ a.username }}</div>
+                                        <div class="text-[10px] text-slate-400">{{ a.role }}</div>
+                                    </td>
+                                    <td>
+                                        <label class="label cursor-pointer justify-start gap-2">
+                                            <input type="checkbox" name="notify_email_{{ a.id }}" value="1"
+                                                class="checkbox checkbox-sm" {% if pref and pref.email %}checked{% endif %} />
+                                            <span class="label-text text-xs">{{ a.email or 'No email' }}</span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <label class="label cursor-pointer justify-start gap-2">
+                                            <input type="checkbox" name="notify_whatsapp_{{ a.id }}" value="1"
+                                                class="checkbox checkbox-sm" {% if pref and pref.whatsapp %}checked{% endif %} />
+                                            <span class="label-text text-xs">WhatsApp</span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="notify_whatsapp_number_{{ a.id }}"
+                                            value="{{ pref.whatsapp_number if pref else '' }}"
+                                            placeholder="e.g. 07585 127242" class="input input-bordered input-sm w-full" />
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="mt-4 flex justify-end">
+                            <button type="submit" class="btn btn-primary">Save Notification Choices</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

@@ -35,12 +35,13 @@
             {% endif %}
 
             <!-- Form 1: Standard Password Login -->
-            <form action="/login" method="POST" class="space-y-4">
+            <form action="/login" method="POST" class="space-y-4 js-login-remember-form">
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-semibold text-slate-300">Email Address</span>
                     </label>
-                    <input type="email" name="email" placeholder="admin@pnjcleaning.co.uk"
+                    <input id="password-login-email" type="email" name="email" placeholder="admin@pnjcleaning.co.uk"
+                        value="{{ last_login_email or '' }}" autocomplete="username email"
                         class="input input-bordered bg-slate-800 border-slate-700 text-white focus:border-primary"
                         required />
                 </div>
@@ -49,7 +50,7 @@
                     <label class="label">
                         <span class="label-text font-semibold text-slate-300">Password</span>
                     </label>
-                    <input type="password" name="password" placeholder="••••••••"
+                    <input type="password" name="password" placeholder="Password" autocomplete="current-password"
                         class="input input-bordered bg-slate-800 border-slate-700 text-white focus:border-primary"
                         required />
                     <label class="label justify-end">
@@ -66,12 +67,13 @@
             <div class="divider text-xs uppercase text-slate-500 font-bold my-8 italic">OR</div>
 
             <!-- Form 2: WorkOS SSO -->
-            <form action="/auth/workos" method="POST" class="space-y-4">
+            <form action="/auth/workos" method="POST" class="space-y-4 js-login-remember-form">
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-semibold text-slate-300">Work Email</span>
                     </label>
-                    <input type="email" name="email" placeholder="you@company.com"
+                    <input id="sso-login-email" type="email" name="email" placeholder="you@company.com"
+                        value="{{ last_login_email or '' }}" autocomplete="username email"
                         class="input input-bordered bg-slate-800 border-slate-700 text-white focus:border-secondary"
                         required />
                 </div>
@@ -108,4 +110,24 @@
         </div>
     </div>
 </div>
+<script>
+    (() => {
+        const storageKey = 'pnj_last_login_email';
+        const rememberedEmail = localStorage.getItem(storageKey);
+        document.querySelectorAll('input[name="email"]').forEach((input) => {
+            if (!input.value && rememberedEmail) {
+                input.value = rememberedEmail;
+            }
+        });
+        document.querySelectorAll('.js-login-remember-form').forEach((form) => {
+            form.addEventListener('submit', () => {
+                const emailInput = form.querySelector('input[name="email"]');
+                const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+                if (email) {
+                    localStorage.setItem(storageKey, email);
+                }
+            });
+        });
+    })();
+</script>
 {% endblock %}

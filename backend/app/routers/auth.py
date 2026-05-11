@@ -26,7 +26,12 @@ wos = WorkOSClient(api_key=workos_api_key, client_id=workos_client_id)
 def login_page(request: Request, user: models.User = Depends(get_current_user)):
     if user:
         return RedirectResponse(url="/")
-    return templates.TemplateResponse("login.html", {"request": request, "user": user})
+    last_login_email = request.cookies.get("last_login_email", "")
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "user": user,
+        "last_login_email": last_login_email
+    })
 
 @router.get("/auth/workos")
 async def auth_workos_get():
@@ -43,7 +48,9 @@ async def auth_workos(email: str = Form(...)):
         connections = wos.sso.list_connections(domain=domain)
         if not connections.data:
             print(f"DEBUG: No connection found for domain '{domain}'")
-            return RedirectResponse(url=f"/login?error=unknown_domain&domain={domain}", status_code=303)
+            response = RedirectResponse(url=f"/login?error=unknown_domain&domain={domain}", status_code=303)
+            response.set_cookie(key="last_login_email", value=(email or "").strip().lower(), max_age=60 * 60 * 24 * 365)
+            return response
         
         connection_id = connections.data[0].id
         print(f"DEBUG: Found connection {connection_id}. Redirecting...")
@@ -53,7 +60,9 @@ async def auth_workos(email: str = Form(...)):
             redirect_uri=workos_redirect_uri,
             state="workos_auth",  # state must be a string in v4+
         )
-        return RedirectResponse(url=authorization_url, status_code=303)
+        response = RedirectResponse(url=authorization_url, status_code=303)
+        response.set_cookie(key="last_login_email", value=(email or "").strip().lower(), max_age=60 * 60 * 24 * 365)
+        return response
     except Exception as e:
         import traceback
         print(f"WorkOS Auth Error: {e}")
@@ -134,6 +143,7 @@ async def auth_callback(request: Request, code: str):
         access_token = security.create_access_token(data={"sub": user.email})
         response = RedirectResponse(url="/", status_code=303)
         response.set_cookie(key="access_token", value=access_token, httponly=True)
+        response.set_cookie(key="last_login_email", value=user.email or email, max_age=60 * 60 * 24 * 365)
         return response
         
     except Exception as e:
@@ -172,6 +182,7 @@ async def login(
     access_token = security.create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=303)
     response.set_cookie(key="access_token", value=access_token, httponly=True)
+    response.set_cookie(key="last_login_email", value=user.email or normalized_email, max_age=60 * 60 * 24 * 365)
     return response
 
 @router.get("/forgot-password", response_class=HTMLResponse)
