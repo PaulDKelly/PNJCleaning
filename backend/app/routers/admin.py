@@ -110,8 +110,7 @@ async def test_email_notification(
     to_email = (test_email or user.email or "").strip()
     if not to_email:
         return HTMLResponse(
-            "<div class='alert alert-error text-sm'>Enter an email address for the test.</div>",
-            status_code=400
+            "<div class='alert alert-error text-sm'>Enter an email address for the test.</div>"
         )
 
     smtp_host = os.getenv("SMTP_HOST") or "not set"
@@ -142,8 +141,7 @@ async def test_email_notification(
                 f"From: {html.escape(smtp_from)} | Password set: {'yes' if password_set else 'no'}</div>"
                 "</div>"
                 "</div>"
-            ),
-            status_code=400
+            )
         )
 
     return HTMLResponse(

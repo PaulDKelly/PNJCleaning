@@ -847,7 +847,10 @@
                             <input type="email" name="test_email" value="{{ user.email or 'admin@pnjcleaning.co.uk' }}"
                                 class="input input-bordered input-sm w-full" required />
                         </label>
-                        <button type="submit" class="btn btn-secondary btn-sm">Send Test Email</button>
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            Send Test Email
+                            <span class="htmx-indicator loading loading-spinner loading-xs ml-2"></span>
+                        </button>
                     </form>
                     <div id="test-email-feedback" class="mb-4"></div>
                     <form action="/admin/manage/notification-settings" method="POST" class="overflow-x-auto">
