@@ -3,6 +3,7 @@ import json
 import os
 import smtplib
 import tempfile
+import threading
 import zipfile
 import requests
 import re
@@ -56,17 +57,18 @@ def _send_report_email(to_email: str, subject: str, body: str):
     message.set_content(body)
 
     port = int(os.getenv("SMTP_PORT", "587"))
+    timeout = int(os.getenv("SMTP_TIMEOUT", "8"))
     username = os.getenv("SMTP_USERNAME")
     password = os.getenv("SMTP_PASSWORD")
     use_ssl = os.getenv("SMTP_SSL", "").lower() in {"1", "true", "yes"}
 
     if use_ssl:
-        with smtplib.SMTP_SSL(smtp_host, port) as smtp:
+        with smtplib.SMTP_SSL(smtp_host, port, timeout=timeout) as smtp:
             if username and password:
                 smtp.login(username, password)
             smtp.send_message(message)
     else:
-        with smtplib.SMTP(smtp_host, port) as smtp:
+        with smtplib.SMTP(smtp_host, port, timeout=timeout) as smtp:
             if os.getenv("SMTP_STARTTLS", "1").lower() not in {"0", "false", "no"}:
                 smtp.starttls()
             if username and password:
@@ -124,6 +126,16 @@ def _notify_report_submitted(report_data: dict, report_id: int, host: str):
                 _send_report_whatsapp(preference.get("whatsapp_number"), body)
         except Exception as exc:
             print(f"Report notification failed for admin {admin.get('id')}: {exc}")
+
+
+def _notify_report_submitted_async(report_data: dict, report_id: int, host: str):
+    """Send report notifications in the background so report submission can finish."""
+    thread = threading.Thread(
+        target=_notify_report_submitted,
+        args=(dict(report_data), report_id, host),
+        daemon=True
+    )
+    thread.start()
 
 
 def _insert_with_schema_fallback(table_name: str, payload: dict):
@@ -400,10 +412,7 @@ async def submit_extraction_report(request: Request, user: models.User = Depends
         if photos:
             supabase.table("extraction_photos").insert(photos).execute()
 
-        try:
-            _notify_report_submitted(report_data, report_id, request.url.netloc)
-        except Exception as notify_exc:
-            print(f"Report notification dispatch failed: {notify_exc}")
+        _notify_report_submitted_async(report_data, report_id, request.url.netloc)
 
         redirect_url = f"/portal/{portal_token}" if portal_token else "/engineer-diary"
         return HTMLResponse(content=(
