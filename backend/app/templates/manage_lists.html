@@ -838,6 +838,18 @@
                 <div class="card-body">
                     <h3 class="card-title text-slate-700">Report Submission Notifications</h3>
                     <p class="text-xs text-slate-400 mb-4">Choose which administrators are notified when an engineer submits a report. Email uses the administrator email address; WhatsApp uses the number entered below.</p>
+                    <form hx-post="/admin/manage/test-email-notification" hx-target="#test-email-feedback"
+                        hx-swap="innerHTML" class="mb-5 flex flex-col md:flex-row gap-3 md:items-end">
+                        <label class="form-control flex-1">
+                            <div class="label">
+                                <span class="label-text text-xs font-bold text-slate-500">SMTP Test Email</span>
+                            </div>
+                            <input type="email" name="test_email" value="{{ user.email or 'admin@pnjcleaning.co.uk' }}"
+                                class="input input-bordered input-sm w-full" required />
+                        </label>
+                        <button type="submit" class="btn btn-secondary btn-sm">Send Test Email</button>
+                    </form>
+                    <div id="test-email-feedback" class="mb-4"></div>
                     <form action="/admin/manage/notification-settings" method="POST" class="overflow-x-auto">
                         <table class="table w-full">
                             <thead>

@@ -1,4 +1,6 @@
 import json
+import os
+import html
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -98,6 +100,59 @@ async def update_notification_settings(request: Request, user: models.User = Dep
         supabase.table("system_settings").insert({"key": "report_notification_recipients", "value": payload}).execute()
 
     return RedirectResponse(url="/admin/manage?success=notifications_updated", status_code=303)
+
+
+@router.post("/admin/manage/test-email-notification", response_class=HTMLResponse)
+async def test_email_notification(
+    test_email: str = Form(""),
+    user: models.User = Depends(role_required(["Admin"]))
+):
+    to_email = (test_email or user.email or "").strip()
+    if not to_email:
+        return HTMLResponse(
+            "<div class='alert alert-error text-sm'>Enter an email address for the test.</div>",
+            status_code=400
+        )
+
+    smtp_host = os.getenv("SMTP_HOST") or "not set"
+    smtp_port = os.getenv("SMTP_PORT", "587")
+    smtp_from = os.getenv("SMTP_FROM") or os.getenv("SMTP_USERNAME") or "not set"
+    password_set = bool(os.getenv("SMTP_PASSWORD"))
+
+    try:
+        from ..modules.extraction.router import _send_report_email
+
+        _send_report_email(
+            to_email,
+            "PNJ test report notification",
+            (
+                "This is a test email from the PNJ Cleaning report notification setup.\n\n"
+                "If this arrived, Railway can connect to the SMTP account and send mail."
+            )
+        )
+    except Exception as exc:
+        error = html.escape(str(exc))
+        return HTMLResponse(
+            (
+                "<div class='alert alert-error text-sm'>"
+                "<div>"
+                "<div class='font-bold'>Test email failed.</div>"
+                f"<div>{error}</div>"
+                f"<div class='mt-2 text-xs'>Host: {html.escape(smtp_host)} | Port: {html.escape(smtp_port)} | "
+                f"From: {html.escape(smtp_from)} | Password set: {'yes' if password_set else 'no'}</div>"
+                "</div>"
+                "</div>"
+            ),
+            status_code=400
+        )
+
+    return HTMLResponse(
+        (
+            "<div class='alert alert-success text-sm'>"
+            f"Test email sent to {html.escape(to_email)}. Check the inbox and spam folder."
+            "</div>"
+        )
+    )
 
 @router.post("/admin/manage/users/add")
 async def add_user(

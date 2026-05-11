@@ -61,6 +61,14 @@ def _send_report_email(to_email: str, subject: str, body: str):
     username = os.getenv("SMTP_USERNAME")
     password = os.getenv("SMTP_PASSWORD")
     use_ssl = os.getenv("SMTP_SSL", "").lower() in {"1", "true", "yes"}
+    use_starttls = os.getenv("SMTP_STARTTLS", "1").lower() not in {"0", "false", "no"}
+
+    print(
+        "Report email notification sending "
+        f"to={to_email} host={smtp_host} port={port} "
+        f"from={smtp_from} username_set={bool(username)} password_set={bool(password)} "
+        f"ssl={use_ssl} starttls={use_starttls}"
+    )
 
     if use_ssl:
         with smtplib.SMTP_SSL(smtp_host, port, timeout=timeout) as smtp:
@@ -69,11 +77,12 @@ def _send_report_email(to_email: str, subject: str, body: str):
             smtp.send_message(message)
     else:
         with smtplib.SMTP(smtp_host, port, timeout=timeout) as smtp:
-            if os.getenv("SMTP_STARTTLS", "1").lower() not in {"0", "false", "no"}:
+            if use_starttls:
                 smtp.starttls()
             if username and password:
                 smtp.login(username, password)
             smtp.send_message(message)
+    print(f"Report email notification sent to={to_email}")
     return True
 
 
@@ -91,17 +100,21 @@ def _send_report_whatsapp(phone: str, message: str):
 def _notify_report_submitted(report_data: dict, report_id: int, host: str):
     settings_res = supabase.table("system_settings").select("value").eq("key", "report_notification_recipients").execute()
     if not settings_res.data:
+        print("Report notification skipped: no report_notification_recipients setting found")
         return
     try:
         preferences = json.loads(settings_res.data[0].get("value") or "[]")
     except json.JSONDecodeError:
+        print("Report notification skipped: report_notification_recipients is not valid JSON")
         return
     user_ids = [int(item["user_id"]) for item in preferences if str(item.get("user_id", "")).isdigit()]
     if not user_ids:
+        print("Report notification skipped: no selected administrator recipients")
         return
 
     admins_res = supabase.table("users").select("*").in_("id", user_ids).execute()
     admins_by_id = {int(admin["id"]): admin for admin in admins_res.data or [] if admin.get("id") is not None}
+    print(f"Report notification loaded {len(preferences)} preferences and {len(admins_by_id)} matching users")
     protocol = "http" if host.split(":", 1)[0] in {"localhost", "127.0.0.1", "0.0.0.0"} else "https"
     report_url = f"{protocol}://{host}/admin/reports/{report_id}"
     job_number = report_data.get("job_number") or "Unknown job"
@@ -118,6 +131,7 @@ def _notify_report_submitted(report_data: dict, report_id: int, host: str):
     for preference in preferences:
         admin = admins_by_id.get(int(preference.get("user_id", 0)))
         if not admin:
+            print(f"Report notification skipped preference with missing user_id={preference.get('user_id')}")
             continue
         try:
             if preference.get("email"):
