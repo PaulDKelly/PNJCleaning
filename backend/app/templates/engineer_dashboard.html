@@ -83,6 +83,7 @@
                     {% if job.status == 'Scheduled' %}
                     <form method="POST" action="/extraction-report/start">
                         <input type="hidden" name="job_number" value="{{ job.job_number }}">
+                        <input type="hidden" name="portal_token" value="{{ token }}">
                         <button class="btn btn-primary btn-sm">Start Job</button>
                     </form>
                     {% else %}

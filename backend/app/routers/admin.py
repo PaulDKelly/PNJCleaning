@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -35,8 +36,17 @@ def admin_manage(request: Request, user: models.User = Depends(role_required(["A
     settings_res = supabase.table("system_settings").select("*").execute()
     settings_dict = {s['key']: s['value'] for s in settings_res.data} if settings_res.data else {}
     
+    try:
+        report_notification_settings = json.loads(settings_dict.get("report_notification_recipients", "[]"))
+    except json.JSONDecodeError:
+        report_notification_settings = []
+    notification_by_user_id = {
+        int(item.get("user_id")): item for item in report_notification_settings if str(item.get("user_id", "")).isdigit()
+    }
+
     settings = {
-        "onedrive_link": settings_dict.get("onedrive_link", "https://onedrive.live.com")
+        "onedrive_link": settings_dict.get("onedrive_link", "https://onedrive.live.com"),
+        "report_notifications": notification_by_user_id
     }
     
     return templates.TemplateResponse("manage_lists.html", {
@@ -62,6 +72,32 @@ async def update_settings(request: Request, user: models.User = Depends(role_req
         else:
             supabase.table("system_settings").insert({"key": key, "value": value}).execute()
     return RedirectResponse(url="/admin/manage", status_code=303)
+
+
+@router.post("/admin/manage/notification-settings")
+async def update_notification_settings(request: Request, user: models.User = Depends(role_required(["Admin"]))):
+    form_data = await request.form()
+    selected_user_ids = set(form_data.getlist("notify_user_id"))
+    recipients = []
+
+    for raw_user_id in selected_user_ids:
+        if not str(raw_user_id).isdigit():
+            continue
+        recipients.append({
+            "user_id": int(raw_user_id),
+            "email": form_data.get(f"notify_email_{raw_user_id}") == "1",
+            "whatsapp": form_data.get(f"notify_whatsapp_{raw_user_id}") == "1",
+            "whatsapp_number": (form_data.get(f"notify_whatsapp_number_{raw_user_id}") or "").strip()
+        })
+
+    payload = json.dumps(recipients)
+    check_res = supabase.table("system_settings").select("*").eq("key", "report_notification_recipients").execute()
+    if check_res.data:
+        supabase.table("system_settings").update({"value": payload}).eq("key", "report_notification_recipients").execute()
+    else:
+        supabase.table("system_settings").insert({"key": "report_notification_recipients", "value": payload}).execute()
+
+    return RedirectResponse(url="/admin/manage?success=notifications_updated", status_code=303)
 
 @router.post("/admin/manage/users/add")
 async def add_user(

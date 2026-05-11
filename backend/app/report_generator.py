@@ -1,6 +1,8 @@
 from fpdf import FPDF
 from datetime import datetime
+import base64
 import os
+import tempfile
 
 class PNJReport(FPDF):
     def __init__(self, *args, **kwargs):
@@ -51,6 +53,45 @@ class PNJReport(FPDF):
         self.cell(0, 10, f'Page {self.page_no()} | CONFIDENTIAL | PNJ Cleaners Limited', align='C')
         self.set_y(-15)
         self.cell(0, 10, 'Email: gary@pnjcleaning.co.uk | Office: +44 1283 791 953 | Mob: +44 758 512 7242', align='C')
+
+
+def _signature_image_path(signature_value):
+    if not signature_value or not str(signature_value).startswith("data:image/"):
+        return None
+    try:
+        header, encoded = str(signature_value).split(",", 1)
+        suffix = ".png" if "png" in header else ".jpg"
+        handle = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        handle.write(base64.b64decode(encoded))
+        handle.close()
+        return handle.name
+    except Exception:
+        return None
+
+
+def _draw_signatures(pdf, report):
+    pdf.ln(8)
+    pdf.set_font('helvetica', 'B', 11)
+    pdf.cell(0, 8, 'Signatures', ln=True)
+    y = pdf.get_y()
+    pdf.set_font('helvetica', 'B', 9)
+    pdf.cell(95, 8, ' Client Signature', border=1)
+    pdf.cell(95, 8, ' Engineer Signature', border=1, ln=True)
+    pdf.rect(pdf.l_margin, pdf.get_y(), 95, 30)
+    pdf.rect(pdf.l_margin + 95, pdf.get_y(), 95, 30)
+
+    client_sig_path = _signature_image_path(getattr(report, "client_signature", None))
+    if client_sig_path:
+        pdf.image(client_sig_path, pdf.l_margin + 4, pdf.get_y() + 3, 87, 22)
+    else:
+        pdf.set_xy(pdf.l_margin + 4, pdf.get_y() + 10)
+        pdf.set_font('helvetica', '', 9)
+        pdf.cell(87, 6, str(getattr(report, "client_signature", "") or "-"))
+
+    pdf.set_xy(pdf.l_margin + 99, y + 18)
+    pdf.set_font('helvetica', '', 9)
+    pdf.cell(87, 6, str(getattr(report, "engineer_signature", "") or "-"))
+    pdf.set_y(y + 38)
 
 def generate_client_pdf(report, micron_readings, inspection_items, filter_items, photos, output_path):
     pdf = PNJReport()
@@ -137,6 +178,7 @@ def generate_client_pdf(report, micron_readings, inspection_items, filter_items,
         pdf.set_font('helvetica', '', 10)
         pdf.multi_cell(0, 7, report.recommendations or 'No further action recorded.')
         pdf.ln(5)
+        _draw_signatures(pdf, report)
 
         if photos:
             pdf.add_page()
@@ -392,6 +434,7 @@ def generate_client_pdf(report, micron_readings, inspection_items, filter_items,
     pdf.cell(0, 10, ' Chemicals used (attach DATA sheets):', border=1, fill=True, ln=True)
     pdf.set_font('helvetica', 'I', 10)
     pdf.cell(0, 10, ' Evans Lift A054 (MSDS attached)', border=1, ln=True)
+    _draw_signatures(pdf, report)
 
     # --- PAGE 8: SCHEMATIC DRAWING REFERENCE ---
     pdf.add_page()

@@ -53,12 +53,15 @@ def _get_google_maps_link(address: str) -> str:
     return f"https://www.google.com/maps/search/?api=1&query={encoded_address}"
 
 
-def get_report_link(job: models.Job, host: str, public: bool = False) -> str:
+def get_report_link(job: models.Job, host: str, public: bool = False, engineer_token: str = None) -> str:
     """Return the correct blank report URL for the job type."""
     base_url = _get_public_base_url(host) if public else _get_request_base_url(host)
     job_type = (getattr(job, "job_type", "") or "").strip()
+    token_qs = f"&portal_token={urllib.parse.quote(str(engineer_token))}" if engineer_token else ""
     if job_type == "Breakdown/Callout":
-        return f"{base_url}/extraction-report?job_number={job.job_number}&job_type={job_type}"
+        return f"{base_url}/extraction-report?job_number={job.job_number}&job_type={urllib.parse.quote(job_type)}{token_qs}"
+    if engineer_token:
+        return f"{base_url}/extraction-report?job_number={job.job_number}{token_qs}"
     return f"{base_url}/extraction-report?job_number={job.job_number}"
 
 def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str):
@@ -67,7 +70,7 @@ def generate_whatsapp_link(job: models.Job, engineer: models.Engineer, host: str
         return None
 
     base_url = _get_public_base_url(host)
-    report_link = get_report_link(job, host, public=True)
+    report_link = get_report_link(job, host, public=True, engineer_token=engineer.access_token)
     queue_link = f"{base_url}/portal/{engineer.access_token}" if engineer.access_token else f"{base_url}/portal/login"
     maps_link = _get_google_maps_link(job.address)
     is_callout = (getattr(job, "job_type", "") or "").strip().lower() == "breakdown/callout"

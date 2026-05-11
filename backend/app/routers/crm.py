@@ -1,7 +1,8 @@
 import secrets
+import html
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from postgrest.exceptions import APIError
 
 from .. import models
@@ -71,11 +72,12 @@ def get_sites_for_client(
     query = supabase.table("client_sites").select("*").eq("archived", False)
     if client_name:
         query = query.eq("client_name", client_name)
-    if brand_name:
-        query = query.eq("brand_name", brand_name)
     res = query.order("site_name").execute()
     sites = [models.ClientSite(**s) for s in res.data]
-    options = "".join([f'<option value="{s.id}">{_site_option_label(s)}</option>' for s in sites])
+    options = "".join([
+        f'<option value="{s.id}" data-brand="{html.escape(s.brand_name or "", quote=True)}">{html.escape(_site_option_label(s), quote=True)}</option>'
+        for s in sites
+    ])
     return HTMLResponse(content=f'<option value="">Select a Store (Optional)</option>{options}')
 
 
@@ -88,12 +90,42 @@ def get_sites_for_client_by_id(
     query = supabase.table("client_sites").select("*").eq("archived", False)
     if client_name:
         query = query.eq("client_name", client_name)
-    if brand_name:
-        query = query.eq("brand_name", brand_name)
     res = query.order("store_id_code").order("site_name").execute()
     sites = [models.ClientSite(**s) for s in res.data]
-    options = "".join([f'<option value="{s.id}">{_site_id_option_label(s)}</option>' for s in sites])
+    options = "".join([
+        f'<option value="{s.id}" data-brand="{html.escape(s.brand_name or "", quote=True)}">{html.escape(_site_id_option_label(s), quote=True)}</option>'
+        for s in sites
+    ])
     return HTMLResponse(content=f'<option value="">Select Store ID (Optional)</option>{options}')
+
+
+@router.get("/admin/client-brand-lookup")
+def get_brand_for_client(
+    client_name: Optional[str] = None,
+    user: models.User = Depends(login_required)
+):
+    if not client_name:
+        return JSONResponse(content={"brand": "", "label": ""})
+
+    res = (
+        supabase.table("client_sites")
+        .select("brand_name")
+        .eq("client_name", client_name)
+        .eq("archived", False)
+        .execute()
+    )
+    brands = sorted({
+        (site.get("brand_name") or "").strip()
+        for site in (res.data or [])
+        if (site.get("brand_name") or "").strip()
+    })
+
+    if len(brands) == 1:
+        return JSONResponse(content={"brand": brands[0], "label": brands[0]})
+    if len(brands) > 1:
+        return JSONResponse(content={"brand": "", "label": "Multiple brands - select a store"})
+    return JSONResponse(content={"brand": "", "label": "No brand assigned"})
+
 
 @router.get("/admin/clients-lookup", response_class=HTMLResponse)
 def get_clients_lookup(
@@ -109,7 +141,7 @@ def get_clients_lookup(
     else:
         res = supabase.table("clients").select("*").order("client_name").execute()
     clients = [models.Client(**c) for c in res.data]
-    options = "".join([f'<option value="{c.client_name}">{c.client_name}</option>' for c in clients])
+    options = "".join([f'<option value="{html.escape(c.client_name, quote=True)}">{html.escape(c.client_name)}</option>' for c in clients])
     return HTMLResponse(content=f'<option value="">All Companies</option>{options}')
 
 
@@ -126,7 +158,7 @@ def get_subcontractors_lookup(
         sub_contractors = [models.SubContractor(**s) for s in res.data] if res.data else []
     except Exception:
         sub_contractors = []
-    options = "".join([f'<option value="{s.id}">{_subcontractor_option_label(s)}</option>' for s in sub_contractors])
+    options = "".join([f'<option value="{s.id}">{html.escape(_subcontractor_option_label(s))}</option>' for s in sub_contractors])
     return HTMLResponse(content=f'<option value="">No sub-contractor / direct client billing</option>{options}')
 
 @router.get("/admin/manage/clients-table", response_class=HTMLResponse)
@@ -142,10 +174,6 @@ def get_clients_table(
         site_res = supabase.table("client_sites").select("client_name").eq("id", int(site_id)).execute()
         if site_res.data:
             target_client_names = [site_res.data[0]['client_name']]
-    elif brand_name:
-        sites = supabase.table("client_sites").select("client_name").eq("brand_name", brand_name).execute().data
-        target_client_names = list(set([s['client_name'] for s in sites]))
-        
     query = supabase.table("clients").select("*")
     if client_name:
         query = query.eq("client_name", client_name)
@@ -174,8 +202,6 @@ def get_sites_table(
     query = supabase.table("client_sites").select("*")
     if client_name:
         query = query.eq("client_name", client_name)
-    if brand_name:
-        query = query.eq("brand_name", brand_name)
     if not show_archived:
         query = query.eq("archived", False)
         

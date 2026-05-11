@@ -13,6 +13,7 @@
         <div id="form-feedback" class="sticky top-20 z-50"></div>
 
         <input type="hidden" name="job_type" value="Breakdown/Callout" />
+        <input type="hidden" name="portal_token" value="{{ portal_token or '' }}" />
 
         <div class="card bg-white shadow-xl border border-slate-100">
             <div class="card-body">
@@ -92,9 +93,15 @@
                 <div class="card-body">
                     <h3 class="card-title text-slate-700 font-outfit text-lg mb-4">Client Signature</h3>
                     <div class="form-control">
-                        <label class="label font-bold text-slate-500">Name / Signature</label>
-                        <input type="text" name="client_signature" placeholder="Print Name"
-                            class="input input-bordered focus:border-primary" />
+                        <label class="label font-bold text-slate-500">Client Signature</label>
+                        <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                            <canvas class="js-signature-pad h-40 w-full touch-none bg-white" data-target="client-signature-value"></canvas>
+                        </div>
+                        <input type="hidden" id="client-signature-value" name="client_signature" required />
+                        <div class="mt-2 flex justify-between items-center gap-3">
+                            <span class="text-xs text-slate-400">Client must draw their signature before submission.</span>
+                            <button type="button" class="btn btn-ghost btn-xs js-clear-signature">Clear</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -103,7 +110,7 @@
                     <h3 class="card-title text-slate-700 font-outfit text-lg mb-4">Engineer Completion</h3>
                     <div class="form-control">
                         <label class="label font-bold text-slate-500">Engineer Signature</label>
-                        <input type="text" name="engineer_signature" value="{{ user.username }}"
+                        <input type="text" name="engineer_signature" value="{{ user.username if user else engineer.contact_name }}"
                             class="input input-bordered focus:border-primary font-bold text-primary" required />
                     </div>
                 </div>
@@ -121,6 +128,84 @@
 </div>
 <script>
     (() => {
+        function initialiseSignaturePad(canvas) {
+            const target = document.getElementById(canvas.dataset.target);
+            const clearButton = canvas.closest('.form-control')?.querySelector('.js-clear-signature');
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+            let hasSignature = false;
+
+            function resizeCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                const image = hasSignature ? canvas.toDataURL('image/png') : null;
+                canvas.width = Math.max(1, Math.floor(rect.width * window.devicePixelRatio));
+                canvas.height = Math.max(1, Math.floor(rect.height * window.devicePixelRatio));
+                ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = '#0f172a';
+                if (image) {
+                    const img = new Image();
+                    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                    img.src = image;
+                }
+            }
+
+            function point(event) {
+                const rect = canvas.getBoundingClientRect();
+                const touch = event.touches ? event.touches[0] : event;
+                return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+            }
+
+            function start(event) {
+                event.preventDefault();
+                drawing = true;
+                const p = point(event);
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+            }
+
+            function move(event) {
+                if (!drawing) return;
+                event.preventDefault();
+                const p = point(event);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+                hasSignature = true;
+                if (target) target.value = canvas.toDataURL('image/png');
+            }
+
+            function stop() {
+                drawing = false;
+                if (hasSignature && target) target.value = canvas.toDataURL('image/png');
+            }
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start, { passive: false });
+            canvas.addEventListener('touchmove', move, { passive: false });
+            canvas.addEventListener('touchend', stop);
+            clearButton?.addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                hasSignature = false;
+                if (target) target.value = '';
+            });
+        }
+
+        document.querySelectorAll('.js-signature-pad').forEach(initialiseSignaturePad);
+        document.querySelector('form[hx-post="/extraction-report"]')?.addEventListener('submit', (event) => {
+            const signature = document.getElementById('client-signature-value');
+            if (signature && !signature.value) {
+                event.preventDefault();
+                document.getElementById('form-feedback').innerHTML = '<div class="alert alert-error font-bold">Please ask the client to draw their signature before submitting.</div>';
+                signature.closest('.form-control')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+
         document.querySelectorAll('.js-callout-capture-trigger').forEach((button) => {
             button.addEventListener('click', () => {
                 const target = document.getElementById(button.dataset.target);

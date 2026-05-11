@@ -211,15 +211,11 @@
                 <!-- Section 2: Account Mapping -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600 uppercase text-xs">Service Brand</label>
-                        <select name="brand_name" class="select select-bordered focus:border-primary font-medium"
-                            hx-get="/admin/clients-lookup" hx-target="#client-selector" hx-trigger="change"
-                            hx-on:change="window.refreshStoreSelectors()">
-                            <option value="">No Specific Brand</option>
-                            {% for b in brands %}
-                            <option value="{{ b.brand_name }}">{{ b.brand_name }}</option>
-                            {% endfor %}
-                        </select>
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Brand</label>
+                        <input id="brand-display" type="text"
+                            class="input input-bordered bg-slate-50 text-slate-500 font-medium"
+                            placeholder="Select a company to show its brand" readonly />
+                        <input type="hidden" name="brand_name" id="brand-value" value="" />
                     </div>
                     <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Priority Level</label>
@@ -334,17 +330,47 @@
 </div>
 <script>
     (() => {
-        const brandSelector = document.querySelector('select[name="brand_name"]');
         const companySelector = document.getElementById('client-selector');
         const subcontractorSelector = document.getElementById('subcontractor-selector');
         const storeNameSelector = document.getElementById('site-selector-name');
         const storeIdSelector = document.getElementById('site-selector-id');
         const storeIdValue = document.getElementById('site-selector');
+        const brandDisplay = document.getElementById('brand-display');
+        const brandValue = document.getElementById('brand-value');
+
+        function updateBrandFromSelectedStore(select) {
+            const option = select && select.selectedOptions ? select.selectedOptions[0] : null;
+            const brand = option ? (option.dataset.brand || '') : '';
+            if (option && option.value) {
+                if (brandDisplay) brandDisplay.value = brand || 'No brand assigned';
+                if (brandValue) brandValue.value = brand;
+            }
+        }
+
+        function updateBrandFromCompany(clientName) {
+            if (!clientName) {
+                if (brandDisplay) brandDisplay.value = '';
+                if (brandValue) brandValue.value = '';
+                return;
+            }
+
+            fetch(`/admin/client-brand-lookup?client_name=${encodeURIComponent(clientName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (brandDisplay) brandDisplay.value = data.label || '';
+                    if (brandValue) brandValue.value = data.brand || '';
+                })
+                .catch(() => {
+                    if (brandDisplay) brandDisplay.value = 'Brand unavailable';
+                    if (brandValue) brandValue.value = '';
+                });
+        }
 
         function syncStoreSelection(source, target) {
             if (!source || !target || !storeIdValue) return;
             target.value = source.value;
             storeIdValue.value = source.value;
+            updateBrandFromSelectedStore(source);
         }
 
         if (storeNameSelector && storeIdSelector) {
@@ -354,12 +380,14 @@
 
         window.refreshStoreSelectors = function () {
             const clientName = companySelector ? companySelector.value : '';
-            const brandName = brandSelector ? brandSelector.value : '';
-            const values = { client_name: clientName, brand_name: brandName };
+            const values = { client_name: clientName };
 
             if (storeIdValue) {
                 storeIdValue.value = '';
             }
+            if (brandDisplay) brandDisplay.value = '';
+            if (brandValue) brandValue.value = '';
+            updateBrandFromCompany(clientName);
             if (storeNameSelector) {
                 htmx.ajax('GET', '/admin/sites-lookup', { target: '#site-selector-name', values });
             }
