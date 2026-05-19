@@ -804,7 +804,7 @@ async def edit_job(job_number: str, request: Request, user: models.User = Depend
 @router.post("/admin/jobs/{job_number}/archive")
 def archive_job(job_number: str, user: models.User = Depends(role_required(["Admin", "Manager"]))):
     supabase.table("jobs").update({"status": "Archived"}).eq("job_number", job_number).execute()
-    return HTMLResponse(content="<span class='badge badge-ghost font-bold italic'>Archived</span>")
+    return HTMLResponse(content="")
 
 @router.get("/admin/jobs/archive/search", response_class=HTMLResponse)
 def search_archive(q: str = "", user: models.User = Depends(login_required)):

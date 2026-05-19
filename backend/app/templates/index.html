@@ -149,7 +149,7 @@
                     </thead>
                     <tbody>
                         {% for job in recent_jobs %}
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr id="dashboard-job-{{ job.job_number }}" class="hover:bg-slate-50 transition-colors">
                             <td class="p-4 font-semibold text-primary">
                                 {{ job.job_number }}
                                 <div class="text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mt-1">{{ job.job_type or 'Extraction' }}</div>
@@ -167,13 +167,23 @@
                             </td>
                             <td class="text-sm italic text-slate-500">{{ job.engineer_contact_name or 'Unassigned' }}</td>
                             <td class="text-right">
+                                <div class="flex justify-end gap-2">
                                 {% if job.status == 'Submitted' or job.status == 'Completed' %}
                                 <a href="/admin/reports/job/{{ job.job_number }}"
                                     class="btn btn-success btn-xs text-white font-bold">Curate Report</a>
+                                <form hx-post="/admin/jobs/{{ job.job_number }}/archive"
+                                    hx-target="#dashboard-job-{{ job.job_number }}" hx-swap="outerHTML"
+                                    hx-confirm="Archive this completed job?">
+                                    <button type="submit"
+                                        class="btn btn-ghost btn-xs text-slate-500 hover:text-indigo-600 border border-slate-200">
+                                        Archive
+                                    </button>
+                                </form>
                                 {% else %}
                                 <a href="/job-allocation/{{ job.job_number }}/edit"
                                     class="btn btn-ghost btn-xs text-primary font-bold">Open Job</a>
                                 {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% else %}
