@@ -120,13 +120,15 @@ def _sync_job_engineers(
         })
 
     if not assignments:
-        return
+        return True
 
     try:
         supabase.table("job_engineers").delete().eq("job_number", job_number).execute()
         supabase.table("job_engineers").insert(assignments).execute()
+        return True
     except Exception as exc:
         print(f"Warning: job_engineers sync unavailable; job remains assigned to lead only: {exc}")
+        return False
 
 
 def _get_engineers_by_name(names: List[str]):
@@ -648,7 +650,13 @@ async def allocate_job(
         res_job = supabase.table("jobs").select("*").eq("job_number", created_job_number).execute()
         job_obj = models.Job(**res_job.data[0])
         job_obj.job_type = job_type
-        _sync_job_engineers(created_job_number, engineer_name, contributing_engineer_names, supervisor_name)
+        if not _sync_job_engineers(created_job_number, engineer_name, contributing_engineer_names, supervisor_name):
+            return HTMLResponse(
+                "<div class='alert alert-error font-bold'>"
+                "The job was created, but the engineer team could not be saved. "
+                "Please run the job assignment database migration, then edit this job and save the team again."
+                "</div>"
+            )
         assigned_engineer_names = [engineer_name] + contributing_engineer_names
         dispatch_recipient_names = assigned_engineer_names + ([supervisor_name] if supervisor_name else [])
         assigned_engineers = _get_engineers_by_name(dispatch_recipient_names)
@@ -785,7 +793,13 @@ async def edit_job(job_number: str, request: Request, user: models.User = Depend
         "engineer_contact_name": engineer_name,
         "notes": notes
     }).eq("job_number", job_number).execute()
-    _sync_job_engineers(job_number, engineer_name, contributing_engineer_names, supervisor_name)
+    if not _sync_job_engineers(job_number, engineer_name, contributing_engineer_names, supervisor_name):
+        return HTMLResponse(
+            "<div class='alert alert-error text-sm'>"
+            "The job details were updated, but the engineer team could not be saved. "
+            "Please run the job assignment database migration, then save again."
+            "</div>"
+        )
 
     return HTMLResponse(
         "<div class='alert alert-success text-sm font-bold'>Job updated.</div>"

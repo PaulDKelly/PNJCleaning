@@ -19,6 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_job_contributions_engineer_contact_name
     ON job_contributions (engineer_contact_name);
 
 ALTER TABLE IF EXISTS job_contributions
-    ENABLE ROW LEVEL SECURITY;
+    DISABLE ROW LEVEL SECURITY;
 
 NOTIFY pgrst, 'reload schema';
