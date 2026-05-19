@@ -806,6 +806,33 @@ def archive_job(job_number: str, user: models.User = Depends(role_required(["Adm
     supabase.table("jobs").update({"status": "Archived"}).eq("job_number", job_number).execute()
     return HTMLResponse(content="")
 
+
+@router.delete("/admin/jobs/{job_number}", response_class=HTMLResponse)
+def delete_job(job_number: str, user: models.User = Depends(role_required(["Admin"]))):
+    job_res = supabase.table("jobs").select("*").eq("job_number", job_number).execute()
+    if not job_res.data:
+        return HTMLResponse("<div class='alert alert-error text-sm'>Job not found.</div>")
+
+    job = models.Job(**job_res.data[0])
+    if job.status in {"Submitted", "Completed", "Archived"}:
+        return HTMLResponse("<div class='alert alert-error text-sm'>Submitted, completed, or archived jobs cannot be deleted. Archive them instead.</div>")
+
+    reports_res = supabase.table("extraction_reports").select("id").eq("job_number", job_number).limit(1).execute()
+    if reports_res.data:
+        return HTMLResponse("<div class='alert alert-error text-sm'>This job already has report evidence and cannot be deleted. Archive it instead.</div>")
+
+    try:
+        supabase.table("job_engineers").delete().eq("job_number", job_number).execute()
+    except Exception as exc:
+        print(f"Warning: job_engineers cleanup failed during job delete: {exc}")
+    try:
+        supabase.table("job_contributions").delete().eq("job_number", job_number).execute()
+    except Exception as exc:
+        print(f"Warning: job_contributions cleanup failed during job delete: {exc}")
+
+    supabase.table("jobs").delete().eq("job_number", job_number).execute()
+    return HTMLResponse(content="")
+
 @router.get("/admin/jobs/archive/search", response_class=HTMLResponse)
 def search_archive(q: str = "", user: models.User = Depends(login_required)):
     query = supabase.table("jobs").select("*").eq("status", "Archived")

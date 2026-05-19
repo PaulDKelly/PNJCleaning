@@ -182,6 +182,14 @@
                                 {% else %}
                                 <a href="/job-allocation/{{ job.job_number }}/edit"
                                     class="btn btn-ghost btn-xs text-primary font-bold">Open Job</a>
+                                {% if user and user.role == 'Admin' %}
+                                <button hx-delete="/admin/jobs/{{ job.job_number }}"
+                                    hx-target="#dashboard-job-{{ job.job_number }}" hx-swap="outerHTML"
+                                    hx-confirm="Permanently delete this scheduled job? This cannot be undone."
+                                    class="btn btn-ghost btn-xs text-rose-500 hover:text-rose-700 border border-rose-100">
+                                    Delete
+                                </button>
+                                {% endif %}
                                 {% endif %}
                                 </div>
                             </td>
