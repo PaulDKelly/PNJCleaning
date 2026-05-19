@@ -171,8 +171,8 @@
                                 <a href="/admin/reports/job/{{ job.job_number }}"
                                     class="btn btn-success btn-xs text-white font-bold">Curate Report</a>
                                 {% else %}
-                                <a href="/extraction-report?job_number={{ job.job_number }}"
-                                    class="btn btn-ghost btn-xs text-emerald-600 font-bold">Open Report</a>
+                                <a href="/job-allocation/{{ job.job_number }}/edit"
+                                    class="btn btn-ghost btn-xs text-primary font-bold">Open Job</a>
                                 {% endif %}
                             </td>
                         </tr>

@@ -6,24 +6,30 @@
 <div class="flex flex-col gap-8 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="text-center space-y-2">
-        <h2 class="text-4xl font-extrabold text-slate-800 font-outfit tracking-tight">Job Allocation</h2>
-        <p class="text-slate-500 font-medium">Assign engineers to jobs and manage site contacts.</p>
+        <h2 class="text-4xl font-extrabold text-slate-800 font-outfit tracking-tight">
+            {{ 'Edit Job Allocation' if editing_job else 'Job Allocation' }}
+        </h2>
+        <p class="text-slate-500 font-medium">
+            {{ 'Update the scheduled job before it is completed.' if editing_job else 'Assign engineers to jobs and manage site contacts.' }}
+        </p>
     </div>
 
     <!-- Allocation Form -->
     <div class="card bg-white shadow-2xl border border-slate-100 overflow-hidden">
         <div class="card-body p-8 lg:p-12">
-            <form hx-post="/job-allocation" hx-target="#allocation-result" hx-swap="innerHTML"
+            <form hx-post="{{ '/admin/jobs/' ~ editing_job.job_number ~ '/edit' if editing_job else '/job-allocation' }}"
+                hx-target="#allocation-result" hx-swap="innerHTML"
                 hx-on::after-request="document.getElementById('allocation-result-dialog')?.showModal()"
                 class="space-y-8">
 
                 <!-- Section 1: Job Identifiers -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-control">
-                        <label class="label font-bold text-slate-600 uppercase text-xs">Job Number (Auto)</label>
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Job Number</label>
                         <input id="job-number-input" type="text" name="job_number"
-                            value="{{ next_job_number or 'pnj0001' }}"
+                            value="{{ editing_job.job_number if editing_job else (next_job_number or 'pnj0001') }}"
                             class="input input-bordered focus:border-primary font-mono" readonly required />
+                        {% if not editing_job %}
                         <label class="label cursor-pointer justify-start gap-3 py-1">
                             <input id="job-number-override-toggle" type="checkbox" name="manual_job_override"
                                 value="1" class="checkbox checkbox-sm checkbox-primary">
@@ -33,16 +39,23 @@
                             <span class="label-text-alt text-slate-400 italic">Assigned automatically as
                                 pnj0001, pnj0002, etc.</span>
                         </label>
+                        {% else %}
+                        <label class="label py-1">
+                            <span class="label-text-alt text-slate-400 italic">Existing job allocation.</span>
+                        </label>
+                        {% endif %}
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">
                             <label class="label font-bold text-slate-600 uppercase text-xs">Date</label>
-                            <input type="date" name="date" id="job-date" min="{{ today }}" value="{{ today }}"
+                            <input type="date" name="date" id="job-date" {% if not editing_job %}min="{{ today }}"{% endif %}
+                                value="{{ editing_job.date.strftime('%Y-%m-%d') if editing_job else today }}"
                                 class="input input-bordered focus:border-primary" required />
                         </div>
                         <div class="form-control">
                             <label class="label font-bold text-slate-600 uppercase text-xs">Time</label>
                             <input type="time" name="time" id="job-time" step="900" list="time-slots"
+                                value="{{ editing_job.time.strftime('%H:%M') if editing_job else '' }}"
                                 class="input input-bordered focus:border-primary" required />
                             <datalist id="time-slots">
                                 <option value="00:00"></option>
@@ -151,6 +164,7 @@
                         const jobNumberInput = document.getElementById('job-number-input');
                         const overrideToggle = document.getElementById('job-number-override-toggle');
                         const todayStr = "{{ today }}";
+                        const isEditingJob = {{ 'true' if editing_job else 'false' }};
 
                         if (overrideToggle && jobNumberInput) {
                             overrideToggle.addEventListener('change', function () {
@@ -168,7 +182,7 @@
                             const now = new Date();
                             const selectedDate = dateInput.value;
 
-                            if (selectedDate === todayStr) {
+                            if (!isEditingJob && selectedDate === todayStr) {
                                 // Round current time UP to the next 15-minute mark for the 'min' constraint
                                 let h = now.getHours();
                                 let m = Math.ceil(now.getMinutes() / 15) * 15;
@@ -199,9 +213,9 @@
                             }
                         });
 
-                        dateInput.addEventListener('change', updateMinTime);
+                        if (dateInput && timeInput) dateInput.addEventListener('change', updateMinTime);
                         // Initial check
-                        updateMinTime();
+                        if (dateInput && timeInput) updateMinTime();
                     </script>
                 </div>
 
@@ -214,23 +228,24 @@
                         <label class="label font-bold text-slate-600 uppercase text-xs">Brand</label>
                         <input id="brand-display" type="text"
                             class="input input-bordered bg-slate-50 text-slate-500 font-medium"
-                            placeholder="Select a company to show its brand" readonly />
-                        <input type="hidden" name="brand_name" id="brand-value" value="" />
+                            placeholder="Select a company to show its brand"
+                            value="{{ editing_job.brand if editing_job else '' }}" readonly />
+                        <input type="hidden" name="brand_name" id="brand-value" value="{{ editing_job.brand if editing_job else '' }}" />
                     </div>
                     <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Priority Level</label>
                         <select name="priority" class="select select-bordered focus:border-primary font-medium"
                             required>
-                            <option value="Low">Low</option>
-                            <option value="Medium" selected>Medium</option>
-                            <option value="High">High</option>
+                            <option value="Low" {% if editing_job and editing_job.priority == 'Low' %}selected{% endif %}>Low</option>
+                            <option value="Medium" {% if not editing_job or editing_job.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="High" {% if editing_job and editing_job.priority == 'High' %}selected{% endif %}>High</option>
                         </select>
                     </div>
                     <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Job Type</label>
                         <select name="job_type" class="select select-bordered focus:border-primary font-medium" required>
-                            <option value="Extraction" selected>Extraction / Audit Job</option>
-                            <option value="Breakdown/Callout">Breakdown / Callout Job</option>
+                            <option value="Extraction" {% if not editing_job or editing_job.job_type != 'Breakdown/Callout' %}selected{% endif %}>Extraction / Audit Job</option>
+                            <option value="Breakdown/Callout" {% if editing_job and editing_job.job_type == 'Breakdown/Callout' %}selected{% endif %}>Breakdown / Callout Job</option>
                         </select>
                         <label class="label py-1">
                             <span class="label-text-alt text-slate-400 italic">Choose the report type for this job.</span>
@@ -243,7 +258,7 @@
                             hx-on:change="window.refreshStoreSelectors()" required>
                             <option value="" disabled selected>Select Company</option>
                             {% for client in clients %}
-                            <option value="{{ client.client_name }}">{{ client.client_name }}</option>
+                            <option value="{{ client.client_name }}" {% if editing_job and client.client_name == editing_job.client_name %}selected{% endif %}>{{ client.client_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -293,7 +308,7 @@
                             required>
                             <option value="" disabled selected>Select Engineer</option>
                             {% for eng in engineers %}
-                            <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                            <option value="{{ eng.contact_name }}" {% if editing_job and eng.contact_name == editing_job.engineer_contact_name %}selected{% endif %}>{{ eng.contact_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -303,24 +318,25 @@
                             class="select select-bordered font-medium">
                             <option value="">No supervisor</option>
                             {% for eng in engineers %}
-                            <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                            <option value="{{ eng.contact_name }}" {% if editing_job and eng.contact_name == editing_job.supervisor_name %}selected{% endif %}>{{ eng.contact_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-control md:col-span-2">
                         <label class="label cursor-pointer justify-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                             <input id="additional-engineers-toggle" type="checkbox"
+                                {% if editing_job and editing_job.contributing_engineer_names %}checked{% endif %}
                                 class="checkbox checkbox-sm checkbox-primary" />
                             <span class="label-text font-bold text-slate-700">Add contributing engineers</span>
                         </label>
-                        <div id="additional-engineers-panel" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                        <div id="additional-engineers-panel" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 {% if not editing_job or not editing_job.contributing_engineer_names %}hidden{% endif %}">
                             <div class="form-control">
                                 <label class="label font-bold text-slate-600 uppercase text-xs">Contributing Engineer 1</label>
                                 <select name="contributing_engineer_names"
                                     class="select select-bordered font-medium js-contributor-select">
                                     <option value="">None</option>
                                     {% for eng in engineers %}
-                                    <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                                    <option value="{{ eng.contact_name }}" {% if editing_job and editing_job.contributing_engineer_names and eng.contact_name == editing_job.contributing_engineer_names[0] %}selected{% endif %}>{{ eng.contact_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -330,7 +346,7 @@
                                     class="select select-bordered font-medium js-contributor-select">
                                     <option value="">None</option>
                                     {% for eng in engineers %}
-                                    <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                                    <option value="{{ eng.contact_name }}" {% if editing_job and editing_job.contributing_engineer_names and editing_job.contributing_engineer_names|length > 1 and eng.contact_name == editing_job.contributing_engineer_names[1] %}selected{% endif %}>{{ eng.contact_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -341,7 +357,7 @@
                         <select name="site_contact_name" class="select select-bordered font-medium">
                             <option value="">None / New Contact</option>
                             {% for contact in site_contacts %}
-                            <option value="{{ contact.contact_name }}">{{ contact.contact_name }}</option>
+                            <option value="{{ contact.contact_name }}" {% if editing_job and contact.contact_name == editing_job.site_contact_name %}selected{% endif %}>{{ contact.contact_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -353,13 +369,13 @@
                         Introduction)</label>
                     <textarea name="notes"
                         placeholder="Enter any specific requirements or site access information... These will appear on the final report if not curated."
-                        class="textarea textarea-bordered h-28 focus:border-primary"></textarea>
+                        class="textarea textarea-bordered h-28 focus:border-primary">{{ editing_job.notes if editing_job else '' }}</textarea>
                 </div>
 
                 <div class="card-actions justify-center pt-8">
                     <button type="submit"
                         class="btn btn-primary btn-lg w-full max-w-sm shadow-xl shadow-primary/30 font-bold text-lg">
-                        Confirm Allocation
+                        {{ 'Save Job Changes' if editing_job else 'Confirm Allocation' }}
                         <span class="loading loading-spinner htmx-indicator"></span>
                     </button>
                 </div>

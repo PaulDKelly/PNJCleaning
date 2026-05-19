@@ -452,7 +452,11 @@ def engineer_diary_redirect():
 
 @router.get("/job-allocation", response_class=HTMLResponse)
 def job_allocation_page(request: Request, user: models.User = Depends(login_required)):
-    # Fetch data for dropdowns
+    context = _get_job_allocation_context(request, user)
+    return templates.TemplateResponse("job_allocation.html", context)
+
+
+def _get_job_allocation_context(request: Request, user: models.User, editing_job: Optional[models.Job] = None):
     brands_res = supabase.table("brands").select("*").execute()
     brands = brands_res.data if brands_res.data else []
     
@@ -474,7 +478,7 @@ def job_allocation_page(request: Request, user: models.User = Depends(login_requ
     today_str = datetime.now().strftime('%Y-%m-%d')
     next_job_number = _get_next_job_number()
     
-    return templates.TemplateResponse("job_allocation.html", {
+    return {
         "request": request, 
         "user": user,
         "brands": brands,
@@ -483,8 +487,21 @@ def job_allocation_page(request: Request, user: models.User = Depends(login_requ
         "site_contacts": site_contacts,
         "sub_contractors": sub_contractors,
         "today": today_str,
-        "next_job_number": next_job_number
-    })
+        "next_job_number": next_job_number,
+        "editing_job": editing_job
+    }
+
+
+@router.get("/job-allocation/{job_number}/edit", response_class=HTMLResponse)
+def edit_job_allocation_page(job_number: str, request: Request, user: models.User = Depends(role_required(["Admin", "Manager"]))):
+    job_res = supabase.table("jobs").select("*").eq("job_number", job_number).execute()
+    if not job_res.data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = _attach_engineer_team([models.Job(**job_res.data[0])])[0]
+    if job.status in {"Submitted", "Completed", "Archived"}:
+        return RedirectResponse(url=f"/admin/reports/job/{job_number}", status_code=303)
+    context = _get_job_allocation_context(request, user, editing_job=job)
+    return templates.TemplateResponse("job_allocation.html", context)
 
 @router.post("/job-allocation")
 async def allocate_job(
@@ -774,9 +791,11 @@ async def edit_job(job_number: str, request: Request, user: models.User = Depend
         "<div class='alert alert-success text-sm font-bold'>Job updated.</div>"
         "<script>"
         "setTimeout(() => {"
-        "  htmx.ajax('GET', '/admin/jobs/filter', { target: '#job-rows' });"
-        "  const dialog = document.currentScript?.closest('dialog');"
-        "  if (dialog) dialog.close();"
+        "  if (document.getElementById('job-rows')) {"
+        "    htmx.ajax('GET', '/admin/jobs/filter', { target: '#job-rows' });"
+        "    const dialog = document.currentScript?.closest('dialog');"
+        "    if (dialog) dialog.close();"
+        "  }"
         "}, 500);"
         "</script>"
     )
