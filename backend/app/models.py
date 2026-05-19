@@ -191,6 +191,17 @@ class ExtractionPhoto(BaseModel):
     caption: Optional[str] = None
     inspection_item: Optional[str] = None
 
+class JobContribution(BaseModel):
+    id: Optional[int] = None
+    job_number: str
+    engineer_contact_name: str
+    engineer_role: str = "Contributing"
+    note: Optional[str] = None
+    media_path: Optional[str] = None
+    media_type: Optional[str] = None
+    original_filename: Optional[str] = None
+    created_at: Optional[datetime] = None
+
 class ExtractionInspectionItem(BaseModel):
     id: Optional[int] = None
     report_id: int

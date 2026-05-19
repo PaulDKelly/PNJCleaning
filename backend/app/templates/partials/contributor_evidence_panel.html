@@ -1,0 +1,71 @@
+{% if can_contribute %}
+<div class="card bg-white shadow-xl border border-indigo-100">
+    <div class="card-body">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+            <div>
+                <h3 class="card-title text-indigo-700 font-outfit text-xl">Your Job Evidence</h3>
+                <p class="text-sm text-slate-500">
+                    Add photos, videos, or notes for your own work. These are tagged to {{ engineer.contact_name }}
+                    as {{ engineer_role or 'Contributing' }} evidence and shown to admin during report review.
+                </p>
+            </div>
+            <span class="badge badge-primary">{{ engineer_role or 'Contributing' }}</span>
+        </div>
+
+        <form hx-post="/extraction-report/contribute" hx-encoding="multipart/form-data"
+            hx-target="#contribution-feedback" hx-swap="innerHTML" class="mt-5 space-y-4">
+            <input type="hidden" name="job_number" value="{{ job.job_number if job else '' }}" />
+            <input type="hidden" name="portal_token" value="{{ portal_token or '' }}" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label font-bold text-slate-600">Contributor Note</label>
+                    <textarea name="contribution_note" class="textarea textarea-bordered h-28"
+                        placeholder="Briefly describe the area worked on, findings, or anything the lead/admin should know."></textarea>
+                </div>
+                <div class="form-control">
+                    <label class="label font-bold text-slate-600">Photos / Videos</label>
+                    <input type="file" name="contribution_media" multiple
+                        accept="image/*,.tif,.tiff,video/*,.mp4,.mov,.avi,.m4v,.webm"
+                        class="file-input file-input-bordered w-full" />
+                    <span class="label-text-alt text-slate-400 mt-2">
+                        You can save a note only, media only, or both together.
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div id="contribution-feedback"></div>
+                <button type="submit" class="btn btn-secondary">
+                    Save My Evidence
+                    <span class="loading loading-spinner htmx-indicator"></span>
+                </button>
+            </div>
+        </form>
+
+        {% if contributions %}
+        <div class="divider text-[10px] uppercase tracking-widest text-slate-400 font-black">Saved Contributions</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {% for contribution in contributions %}
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="font-bold text-sm text-slate-700">{{ contribution.engineer_contact_name }}</div>
+                    <span class="badge badge-xs badge-ghost">{{ contribution.engineer_role }}</span>
+                </div>
+                {% if contribution.note %}
+                <p class="mt-2 text-sm text-slate-600 whitespace-pre-line">{{ contribution.note }}</p>
+                {% endif %}
+                {% if contribution.media_path %}
+                <a href="{{ contribution.media_path }}" target="_blank" rel="noopener"
+                    class="btn btn-xs btn-outline btn-primary mt-3">Open Media</a>
+                {% endif %}
+                {% if contribution.created_at %}
+                <div class="mt-2 text-[10px] text-slate-400">{{ contribution.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

@@ -244,6 +244,57 @@
         </div>
     </form>
 
+    {% if contributions %}
+    <div class="card bg-white shadow-xl border border-indigo-100">
+        <div class="card-body">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+                <div>
+                    <h3 class="card-title font-outfit text-lg text-indigo-700">Engineer Contributions</h3>
+                    <p class="text-sm text-slate-500">Evidence added by lead, contributing engineers, or supervisors outside the main report fields.</p>
+                </div>
+                <span class="badge badge-primary">{{ contributions|length }} item{{ 's' if contributions|length != 1 else '' }}</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for contribution in contributions %}
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <div class="font-bold text-slate-700">{{ contribution.engineer_contact_name }}</div>
+                            {% if contribution.created_at %}
+                            <div class="text-[10px] uppercase tracking-widest text-slate-400">
+                                {{ contribution.created_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <span class="badge badge-sm badge-ghost">{{ contribution.engineer_role }}</span>
+                    </div>
+                    {% if contribution.note %}
+                    <p class="mt-3 text-sm text-slate-600 whitespace-pre-line">{{ contribution.note }}</p>
+                    {% endif %}
+                    {% if contribution.media_path %}
+                    <div class="mt-3 rounded-lg overflow-hidden border border-slate-200 bg-white">
+                        {% set contribution_url = (contribution.media_path or '')|lower %}
+                        {% if contribution_url.endswith('.mp4') or contribution_url.endswith('.mov') or contribution_url.endswith('.avi') or contribution_url.endswith('.m4v') or contribution_url.endswith('.webm') or contribution_url.endswith('.ogg') %}
+                        <video src="{{ contribution.media_path }}" class="w-full max-h-64 object-cover" controls preload="metadata"></video>
+                        {% elif contribution_url.endswith('.tif') or contribution_url.endswith('.tiff') %}
+                        <div class="flex min-h-32 flex-col items-center justify-center gap-3 p-4 text-center">
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">TIFF File</span>
+                            <a href="{{ contribution.media_path }}" target="_blank" rel="noopener"
+                                class="btn btn-sm btn-outline btn-primary">Open Media</a>
+                        </div>
+                        {% else %}
+                        <img src="{{ contribution.media_path }}" class="w-full max-h-64 object-cover">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Photo Curation -->
     <div class="card bg-white shadow-xl border border-slate-100">
         <div class="card-body">

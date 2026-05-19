@@ -7,6 +7,7 @@ import threading
 import zipfile
 import requests
 import re
+import html
 from email.message import EmailMessage
 from datetime import datetime
 from typing import Optional
@@ -55,6 +56,45 @@ def _engineer_can_access_job(engineer: Optional[models.Engineer], job_number: Op
     except Exception as exc:
         print(f"Warning: job_engineers access lookup unavailable: {exc}")
         return False
+
+
+def _get_engineer_role_for_job(engineer: Optional[models.Engineer], job_number: Optional[str]) -> Optional[str]:
+    if not engineer or not job_number:
+        return None
+    res = supabase.table("jobs").select("engineer_contact_name").eq("job_number", job_number).execute()
+    if res.data and (res.data[0].get("engineer_contact_name") or "") == engineer.contact_name:
+        return "Lead"
+    try:
+        assignment_res = (
+            supabase.table("job_engineers")
+            .select("engineer_role")
+            .eq("job_number", job_number)
+            .eq("engineer_contact_name", engineer.contact_name)
+            .limit(1)
+            .execute()
+        )
+        if assignment_res.data:
+            return assignment_res.data[0].get("engineer_role") or "Contributing"
+    except Exception as exc:
+        print(f"Warning: job_engineers role lookup unavailable: {exc}")
+    return None
+
+
+def _get_job_contributions(job_number: Optional[str]) -> list:
+    if not job_number:
+        return []
+    try:
+        res = (
+            supabase.table("job_contributions")
+            .select("*")
+            .eq("job_number", job_number)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return [models.JobContribution(**row) for row in (res.data or [])]
+    except Exception as exc:
+        print(f"Warning: job_contributions lookup unavailable: {exc}")
+        return []
 
 
 def _send_report_email(to_email: str, subject: str, body: str):
@@ -314,14 +354,83 @@ def extraction_report(
     
     report_template = "extraction_report.html" if job_info["job_type"] == "Extraction" else "callout_report.html"
     report_title = "Extraction Report" if job_info["job_type"] == "Extraction" else "Breakdown / Callout Report"
+    engineer_role = _get_engineer_role_for_job(engineer, job_number) if engineer else None
+    contributions = _get_job_contributions(job_number)
     return templates.TemplateResponse(report_template, {
         "request": request, 
         "title": report_title, 
         "user": user,
         "engineer": engineer,
+        "engineer_role": engineer_role,
+        "can_contribute": bool(engineer and engineer_role),
+        "can_submit_report": bool(user or not engineer or engineer_role == "Lead"),
+        "contributions": contributions,
         "portal_token": portal_token,
         "job": job_info
     })
+
+
+@router.post("/extraction-report/contribute", response_class=HTMLResponse)
+async def submit_job_contribution(request: Request, user: models.User = Depends(get_current_user)):
+    form_data = await request.form()
+    job_number = (form_data.get("job_number") or "").strip()
+    portal_token = form_data.get("portal_token")
+    note = (form_data.get("contribution_note") or "").strip()
+    engineer = _get_engineer_by_token(portal_token)
+
+    if not engineer:
+        raise HTTPException(status_code=401, detail="Engineer portal token is required")
+    if not job_number:
+        return HTMLResponse("<div class='alert alert-error text-sm'>Job number is required.</div>")
+    if not _engineer_can_access_job(engineer, job_number):
+        raise HTTPException(status_code=403, detail="This job is not assigned to this engineer")
+
+    engineer_role = _get_engineer_role_for_job(engineer, job_number) or "Contributing"
+    uploads = [
+        upload for upload in form_data.getlist("contribution_media")
+        if hasattr(upload, "filename") and upload.filename
+    ]
+
+    if not note and not uploads:
+        return HTMLResponse("<div class='alert alert-error text-sm'>Add a note or at least one photo/video.</div>")
+
+    rows = []
+    if note and not uploads:
+        rows.append({
+            "job_number": job_number,
+            "engineer_contact_name": engineer.contact_name,
+            "engineer_role": engineer_role,
+            "note": note,
+            "media_type": "Note"
+        })
+
+    for upload in uploads:
+        safe_filename = re.sub(r"[^A-Za-z0-9_.-]+", "_", upload.filename or "evidence")
+        filename = f"contribution_{job_number}_{datetime.now().timestamp()}_{safe_filename}"
+        storage_path = f"reports/{job_number}/contributions/{filename}"
+        file_content = await upload.read()
+        media_url = supabase_storage.upload_file(file_content, storage_path)
+        rows.append({
+            "job_number": job_number,
+            "engineer_contact_name": engineer.contact_name,
+            "engineer_role": engineer_role,
+            "note": note,
+            "media_path": media_url,
+            "media_type": upload.content_type or "Evidence",
+            "original_filename": upload.filename
+        })
+
+    try:
+        supabase.table("job_contributions").insert(rows).execute()
+    except Exception as exc:
+        return HTMLResponse(f"<div class='alert alert-error text-sm'>Could not save contribution: {html.escape(str(exc))}</div>")
+
+    count_label = f"{len(rows)} contribution{'s' if len(rows) != 1 else ''}"
+    return HTMLResponse(
+        "<div class='alert alert-success text-sm font-bold'>"
+        f"Saved {count_label} for {html.escape(engineer.contact_name)}."
+        "</div>"
+    )
 
 @router.post("/extraction-report")
 async def submit_extraction_report(request: Request, user: models.User = Depends(get_current_user)):
@@ -335,6 +444,12 @@ async def submit_extraction_report(request: Request, user: models.User = Depends
             raise HTTPException(status_code=401, detail="Not authenticated")
         if engineer and not _engineer_can_access_job(engineer, report_jn):
             raise HTTPException(status_code=403, detail="This job is not assigned to this engineer")
+        engineer_role = _get_engineer_role_for_job(engineer, report_jn) if engineer else None
+        if engineer and engineer_role != "Lead":
+            return HTMLResponse(
+                "<div class='alert alert-error font-bold'>Only the lead engineer can submit the final report. "
+                "Your photos and notes should be added in the Your Job Evidence panel.</div>"
+            )
         
         # Handle Sketch Photo
         sketch_photo = form_data.get("sketch_photo")
@@ -488,6 +603,7 @@ def review_report(report_id: int, request: Request, user: models.User = Depends(
     inspection_items = [models.ExtractionInspectionItem(**i) for i in supabase.table("extraction_inspection_items").select("*").eq("report_id", report_id).execute().data]
     filter_items = [models.ExtractionFilterItem(**f) for f in supabase.table("extraction_filter_items").select("*").eq("report_id", report_id).execute().data]
     photos = [models.ExtractionPhoto(**p) for p in supabase.table("extraction_photos").select("*").eq("report_id", report_id).execute().data]
+    contributions = _get_job_contributions(report.job_number)
     
     job = None
     j_res = supabase.table("jobs").select("*").eq("job_number", report.job_number).execute()
@@ -503,6 +619,7 @@ def review_report(report_id: int, request: Request, user: models.User = Depends(
         "inspection_items": inspection_items,
         "filter_items": filter_items,
         "photos": photos,
+        "contributions": contributions,
         "job": job
     })
 
