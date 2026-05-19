@@ -1,6 +1,7 @@
 import json
 import os
 import html
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -14,29 +15,59 @@ router = APIRouter()
 @router.get("/admin/manage", response_class=HTMLResponse)
 def admin_manage(request: Request, user: models.User = Depends(role_required(["Admin", "Manager"]))):
     """Admin management panel for clients, sites, brands, engineers, and admins"""
-    clients_res = supabase.table("clients").select("*").execute()
-    clients = [models.Client(**c) for c in clients_res.data] if clients_res.data else []
-    
-    sites_res = supabase.table("client_sites").select("*").execute()
-    sites = [models.ClientSite(**s) for s in sites_res.data] if sites_res.data else []
-    
-    brands_res = supabase.table("brands").select("*").execute()
-    brands = [models.Brand(**b) for b in brands_res.data] if brands_res.data else []
-    
-    engineers_res = supabase.table("engineers").select("*").execute()
-    engineers = [models.Engineer(**e) for e in engineers_res.data] if engineers_res.data else []
+    def fetch_clients():
+        res = supabase.table("clients").select("*").execute()
+        return [models.Client(**c) for c in (res.data or [])]
 
-    try:
-        sub_contractors_res = supabase.table("sub_contractors").select("*").order("client_name").order("sub_contractor_name").execute()
-        sub_contractors = [models.SubContractor(**s) for s in sub_contractors_res.data] if sub_contractors_res.data else []
-    except Exception:
-        sub_contractors = []
-    
-    admins_res = supabase.table("users").select("*").execute()
-    admins = [models.User(**a) for a in admins_res.data] if admins_res.data else []
-    
-    settings_res = supabase.table("system_settings").select("*").execute()
-    settings_dict = {s['key']: s['value'] for s in settings_res.data} if settings_res.data else {}
+    def fetch_sites():
+        res = supabase.table("client_sites").select("*").execute()
+        return [models.ClientSite(**s) for s in (res.data or [])]
+
+    def fetch_brands():
+        res = supabase.table("brands").select("*").execute()
+        return [models.Brand(**b) for b in (res.data or [])]
+
+    def fetch_engineers():
+        res = supabase.table("engineers").select("*").execute()
+        return [models.Engineer(**e) for e in (res.data or [])]
+
+    def fetch_sub_contractors():
+        try:
+            res = supabase.table("sub_contractors").select("*").order("client_name").order("sub_contractor_name").execute()
+            return [models.SubContractor(**s) for s in (res.data or [])]
+        except Exception as exc:
+            print(f"Warning: sub_contractors admin load failed: {exc}")
+            return []
+
+    def fetch_admins():
+        res = supabase.table("users").select("*").execute()
+        return [models.User(**a) for a in (res.data or [])]
+
+    def fetch_settings():
+        try:
+            res = supabase.table("system_settings").select("*").execute()
+            return {s["key"]: s["value"] for s in (res.data or [])}
+        except Exception as exc:
+            print(f"Warning: system_settings admin load failed: {exc}")
+            return {}
+
+    with ThreadPoolExecutor(max_workers=7) as executor:
+        futures = {
+            "clients": executor.submit(fetch_clients),
+            "sites": executor.submit(fetch_sites),
+            "brands": executor.submit(fetch_brands),
+            "engineers": executor.submit(fetch_engineers),
+            "sub_contractors": executor.submit(fetch_sub_contractors),
+            "admins": executor.submit(fetch_admins),
+            "settings": executor.submit(fetch_settings),
+        }
+        clients = futures["clients"].result()
+        sites = futures["sites"].result()
+        brands = futures["brands"].result()
+        engineers = futures["engineers"].result()
+        sub_contractors = futures["sub_contractors"].result()
+        admins = futures["admins"].result()
+        settings_dict = futures["settings"].result()
     
     try:
         report_notification_settings = json.loads(settings_dict.get("report_notification_recipients", "[]"))
