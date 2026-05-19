@@ -13,9 +13,9 @@
     <!-- Allocation Form -->
     <div class="card bg-white shadow-2xl border border-slate-100 overflow-hidden">
         <div class="card-body p-8 lg:p-12">
-            <form hx-post="/job-allocation" hx-target="#form-feedback" class="space-y-8">
-
-                <div id="form-feedback" class="min-h-[1rem]"></div>
+            <form hx-post="/job-allocation" hx-target="#allocation-result" hx-swap="innerHTML"
+                hx-on::after-request="document.getElementById('allocation-result-dialog')?.showModal()"
+                class="space-y-8">
 
                 <!-- Section 1: Job Identifiers -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -288,7 +288,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-control">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Lead Engineer</label>
-                        <select name="engineer_name"
+                        <select name="engineer_name" id="lead-engineer-selector"
                             class="select select-bordered border-primary/30 text-primary font-bold focus:border-primary"
                             required>
                             <option value="" disabled selected>Select Engineer</option>
@@ -298,6 +298,45 @@
                         </select>
                     </div>
                     <div class="form-control">
+                        <label class="label font-bold text-slate-600 uppercase text-xs">Supervisor (Optional)</label>
+                        <select name="supervisor_name" id="supervisor-selector"
+                            class="select select-bordered font-medium">
+                            <option value="">No supervisor</option>
+                            {% for eng in engineers %}
+                            <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-control md:col-span-2">
+                        <label class="label cursor-pointer justify-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <input id="additional-engineers-toggle" type="checkbox"
+                                class="checkbox checkbox-sm checkbox-primary" />
+                            <span class="label-text font-bold text-slate-700">Add contributing engineers</span>
+                        </label>
+                        <div id="additional-engineers-panel" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                            <div class="form-control">
+                                <label class="label font-bold text-slate-600 uppercase text-xs">Contributing Engineer 1</label>
+                                <select name="contributing_engineer_names"
+                                    class="select select-bordered font-medium js-contributor-select">
+                                    <option value="">None</option>
+                                    {% for eng in engineers %}
+                                    <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label font-bold text-slate-600 uppercase text-xs">Contributing Engineer 2</label>
+                                <select name="contributing_engineer_names"
+                                    class="select select-bordered font-medium js-contributor-select">
+                                    <option value="">None</option>
+                                    {% for eng in engineers %}
+                                    <option value="{{ eng.contact_name }}">{{ eng.contact_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-control md:col-span-2">
                         <label class="label font-bold text-slate-600 uppercase text-xs">Site Contact (Optional)</label>
                         <select name="site_contact_name" class="select select-bordered font-medium">
                             <option value="">None / New Contact</option>
@@ -328,10 +367,27 @@
         </div>
     </div>
 </div>
+
+<dialog id="allocation-result-dialog" class="modal">
+    <div class="modal-box max-w-3xl">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">x</button>
+        </form>
+        <div id="allocation-result"></div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 <script>
     (() => {
         const companySelector = document.getElementById('client-selector');
         const subcontractorSelector = document.getElementById('subcontractor-selector');
+        const leadEngineerSelector = document.getElementById('lead-engineer-selector');
+        const supervisorSelector = document.getElementById('supervisor-selector');
+        const additionalEngineersToggle = document.getElementById('additional-engineers-toggle');
+        const additionalEngineersPanel = document.getElementById('additional-engineers-panel');
+        const contributorSelectors = Array.from(document.querySelectorAll('.js-contributor-select'));
         const storeNameSelector = document.getElementById('site-selector-name');
         const storeIdSelector = document.getElementById('site-selector-id');
         const storeIdValue = document.getElementById('site-selector');
@@ -377,6 +433,76 @@
             storeNameSelector.addEventListener('change', () => syncStoreSelection(storeNameSelector, storeIdSelector));
             storeIdSelector.addEventListener('change', () => syncStoreSelection(storeIdSelector, storeNameSelector));
         }
+
+        function updateContributorOptions() {
+            const selectedLead = leadEngineerSelector ? leadEngineerSelector.value : '';
+            if (supervisorSelector && supervisorSelector.value === selectedLead) {
+                supervisorSelector.value = '';
+            }
+            let selectedSupervisor = supervisorSelector ? supervisorSelector.value : '';
+            const seenContributors = new Set();
+            contributorSelectors.forEach((select) => {
+                if (!select.value) return;
+                if (select.value === selectedLead || select.value === selectedSupervisor || seenContributors.has(select.value)) {
+                    select.value = '';
+                    return;
+                }
+                seenContributors.add(select.value);
+            });
+            const selectedContributors = contributorSelectors.map((select) => select.value).filter(Boolean);
+            if (supervisorSelector && selectedContributors.includes(supervisorSelector.value)) {
+                supervisorSelector.value = '';
+                selectedSupervisor = '';
+            }
+            contributorSelectors.forEach((select) => {
+                Array.from(select.options).forEach((option) => {
+                    if (!option.value) {
+                        option.disabled = false;
+                        return;
+                    }
+                    option.disabled = option.value === selectedLead ||
+                        option.value === selectedSupervisor ||
+                        (option.value !== select.value && selectedContributors.includes(option.value));
+                });
+            });
+            if (supervisorSelector) {
+                Array.from(supervisorSelector.options).forEach((option) => {
+                    if (!option.value) {
+                        option.disabled = false;
+                        return;
+                    }
+                    option.disabled = option.value === selectedLead || selectedContributors.includes(option.value);
+                });
+            }
+        }
+
+        if (additionalEngineersToggle && additionalEngineersPanel) {
+            additionalEngineersToggle.addEventListener('change', () => {
+                additionalEngineersPanel.classList.toggle('hidden', !additionalEngineersToggle.checked);
+                if (!additionalEngineersToggle.checked) {
+                    contributorSelectors.forEach((select) => {
+                        select.value = '';
+                    });
+                }
+                updateContributorOptions();
+            });
+        }
+        if (leadEngineerSelector) {
+            leadEngineerSelector.addEventListener('change', updateContributorOptions);
+        }
+        if (supervisorSelector) {
+            supervisorSelector.addEventListener('change', updateContributorOptions);
+        }
+        contributorSelectors.forEach((select) => select.addEventListener('change', updateContributorOptions));
+
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            if (event.detail && event.detail.target && event.detail.target.id === 'allocation-result') {
+                const allocationDialog = document.getElementById('allocation-result-dialog');
+                if (allocationDialog && typeof allocationDialog.showModal === 'function') {
+                    allocationDialog.showModal();
+                }
+            }
+        });
 
         window.refreshStoreSelectors = function () {
             const clientName = companySelector ? companySelector.value : '';

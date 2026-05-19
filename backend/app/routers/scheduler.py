@@ -1,7 +1,8 @@
 from datetime import datetime
 import re
 import json
-from typing import Optional
+import html
+from typing import List, Optional
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from postgrest.exceptions import APIError
@@ -12,6 +13,136 @@ from ..dependencies import templates, login_required, role_required
 from ..utils import generate_whatsapp_link, generate_whatsapp_app_link, get_report_link
 
 router = APIRouter()
+
+
+def _job_engineers_select():
+    return supabase.table("job_engineers").select("*")
+
+
+def _get_job_engineer_rows(job_numbers: List[str]):
+    if not job_numbers:
+        return []
+    try:
+        return _job_engineers_select().in_("job_number", job_numbers).execute().data or []
+    except Exception as exc:
+        print(f"Warning: job_engineers lookup unavailable; falling back to lead engineer only: {exc}")
+        return []
+
+
+def _attach_engineer_team(jobs: List[models.Job]) -> List[models.Job]:
+    rows = _get_job_engineer_rows([job.job_number for job in jobs])
+    team_by_job = {}
+    role_by_job_engineer = {}
+    for row in rows:
+        job_number = row.get("job_number")
+        engineer_name = row.get("engineer_contact_name")
+        if not job_number or not engineer_name:
+            continue
+        team_by_job.setdefault(job_number, []).append(engineer_name)
+        role_by_job_engineer[(job_number, engineer_name)] = row.get("engineer_role") or "Contributing"
+
+    for job in jobs:
+        team = team_by_job.get(job.job_number) or []
+        if job.engineer_contact_name and job.engineer_contact_name not in team:
+            team.insert(0, job.engineer_contact_name)
+        team.sort(key=lambda engineer_name: (
+            0 if engineer_name == job.engineer_contact_name else
+            2 if role_by_job_engineer.get((job.job_number, engineer_name)) == "Supervisor" else
+            1
+        ))
+        job.engineer_team = team
+        job.contributing_engineer_names = [
+            engineer_name for engineer_name in team
+            if role_by_job_engineer.get((job.job_number, engineer_name)) == "Contributing"
+        ]
+        job.supervisor_name = next(
+            (
+                engineer_name for engineer_name in team
+                if role_by_job_engineer.get((job.job_number, engineer_name)) == "Supervisor"
+            ),
+            None
+        )
+        if job.engineer_contact_name:
+            job.engineer_role = role_by_job_engineer.get((job.job_number, job.engineer_contact_name), "Lead")
+    return jobs
+
+
+def _get_jobs_for_engineer(engineer_name: str, date: Optional[str] = None) -> List[models.Job]:
+    jobs_by_number = {}
+
+    query = supabase.table("jobs").select("*").eq("engineer_contact_name", engineer_name)
+    if date:
+        query = query.eq("date", date)
+    lead_res = query.order("time" if date else "date").execute()
+    for row in lead_res.data or []:
+        jobs_by_number[row.get("job_number")] = row
+
+    try:
+        assignment_res = supabase.table("job_engineers").select("job_number,engineer_role").eq("engineer_contact_name", engineer_name).execute()
+        assigned_numbers = [row["job_number"] for row in (assignment_res.data or []) if row.get("job_number")]
+        if assigned_numbers:
+            assigned_query = supabase.table("jobs").select("*").in_("job_number", assigned_numbers)
+            if date:
+                assigned_query = assigned_query.eq("date", date)
+            assigned_res = assigned_query.order("time" if date else "date").execute()
+            for row in assigned_res.data or []:
+                jobs_by_number[row.get("job_number")] = row
+    except Exception as exc:
+        print(f"Warning: job_engineers lookup unavailable for engineer portal: {exc}")
+
+    jobs = [models.Job(**row) for row in jobs_by_number.values() if row]
+    jobs.sort(key=lambda job: (job.date, job.time))
+    return _attach_engineer_team(jobs)
+
+
+def _sync_job_engineers(
+    job_number: str,
+    lead_engineer: str,
+    contributing_engineers: List[str],
+    supervisor_name: Optional[str] = None
+):
+    seen = set()
+    assignments = []
+    assignment_candidates = (
+        [(lead_engineer, "Lead")]
+        + [(name, "Contributing") for name in contributing_engineers]
+        + [(supervisor_name, "Supervisor")]
+    )
+    for engineer_name, role in assignment_candidates:
+        cleaned_name = (engineer_name or "").strip()
+        if not cleaned_name or cleaned_name in seen:
+            continue
+        seen.add(cleaned_name)
+        assignments.append({
+            "job_number": job_number,
+            "engineer_contact_name": cleaned_name,
+            "engineer_role": role
+        })
+
+    if not assignments:
+        return
+
+    try:
+        supabase.table("job_engineers").delete().eq("job_number", job_number).execute()
+        supabase.table("job_engineers").insert(assignments).execute()
+    except Exception as exc:
+        print(f"Warning: job_engineers sync unavailable; job remains assigned to lead only: {exc}")
+
+
+def _get_engineers_by_name(names: List[str]):
+    cleaned_names = []
+    seen = set()
+    for name in names:
+        cleaned_name = (name or "").strip()
+        if cleaned_name and cleaned_name not in seen:
+            seen.add(cleaned_name)
+            cleaned_names.append(cleaned_name)
+    if not cleaned_names:
+        return []
+    res = supabase.table("engineers").select("*").in_("contact_name", cleaned_names).execute()
+    engineers = [models.Engineer(**row) for row in (res.data or [])]
+    by_name = {engineer.contact_name: engineer for engineer in engineers}
+    return [by_name[name] for name in cleaned_names if name in by_name]
 
 
 def _get_next_job_number() -> str:
@@ -62,8 +193,7 @@ def engineer_portal(token: str, request: Request):
          raise HTTPException(status_code=403, detail="Invalid Token Format")
 
     today_str = datetime.now().strftime('%Y-%m-%d')
-    j_res = supabase.table("jobs").select("*").eq("engineer_contact_name", engineer.contact_name).eq("date", today_str).order("time").execute()
-    today_jobs = [models.Job(**j) for j in j_res.data]
+    today_jobs = _get_jobs_for_engineer(engineer.contact_name, date=today_str)
     
     for job in today_jobs:
         job.wa_link = generate_whatsapp_link(job, engineer, request.url.netloc)
@@ -83,12 +213,16 @@ def get_engineer_events(token: str):
     engineer = models.Engineer(**res.data[0])
     
     events = []
-    j_res = supabase.table("jobs").select("*").eq("engineer_contact_name", engineer.contact_name).execute()
-    for j in j_res.data:
-        job = models.Job(**j)
+    for job in _get_jobs_for_engineer(engineer.contact_name):
         start_dt = f"{job.date}T{job.time}"
+        if job.engineer_contact_name == engineer.contact_name:
+            role = "Lead"
+        elif job.supervisor_name == engineer.contact_name:
+            role = "Supervisor"
+        else:
+            role = "Contributing"
         events.append({
-            "title": f"{job.client_name} ({job.priority})",
+            "title": f"{job.client_name} ({role})",
             "start": start_dt,
             "backgroundColor": "#3b82f6",
             "borderColor": "#2563eb",
@@ -147,8 +281,8 @@ async def submit_leave_request(token: str, request: Request):
 def get_admin_events(user: models.User = Depends(login_required)):
     events = []
     j_res = supabase.table("jobs").select("*").execute()
-    for j in j_res.data:
-        job = models.Job(**j)
+    jobs = _attach_engineer_team([models.Job(**j) for j in (j_res.data or [])])
+    for job in jobs:
         start_dt = f"{job.date}T{job.time}"
         # Color coding: orange for breakdown jobs, blue for regular not completed, green for completed
         if job.job_type == "Breakdown/Callout":
@@ -157,12 +291,13 @@ def get_admin_events(user: models.User = Depends(login_required)):
             bg_color = "#3b82f6"  # blue
         else:
             bg_color = "#10b981"  # green
+        team = job.engineer_team or ([job.engineer_contact_name] if job.engineer_contact_name else [])
         events.append({
             "id": job.id,
-            "title": f"[{job.engineer_contact_name}] {job.client_name}",
+            "title": f"[{', '.join(team) if team else 'Unassigned'}] {job.client_name}",
             "start": start_dt,
             "backgroundColor": bg_color,
-            "extendedProps": { "location": job.address, "engineer": job.engineer_contact_name }
+            "extendedProps": { "location": job.address, "engineer": ", ".join(team) if team else job.engineer_contact_name }
         })
     return JSONResponse(content=events)
 
@@ -196,7 +331,19 @@ async def book_leave_for_staff(request: Request, user: models.User = Depends(log
 def management_dashboard(request: Request, user: models.User = Depends(role_required(["Admin", "Manager"]))):
     engineers_res = supabase.table("engineers").select("*").execute()
     engineers = [models.Engineer(**e) for e in engineers_res.data]
-    return templates.TemplateResponse("manager_diary.html", {"request": request, "engineers": engineers, "user": user})
+    jobs_res = supabase.table("jobs").select("*").order("date").order("time").execute()
+    jobs = _attach_engineer_team([models.Job(**j) for j in (jobs_res.data or [])])
+    return templates.TemplateResponse("manager_diary.html", {"request": request, "engineers": engineers, "jobs": jobs, "user": user})
+
+
+@router.get("/admin/jobs/filter", response_class=HTMLResponse)
+def filter_admin_jobs(request: Request, engineer_name: str = "", user: models.User = Depends(login_required)):
+    if engineer_name:
+        jobs = _get_jobs_for_engineer(engineer_name)
+    else:
+        jobs_res = supabase.table("jobs").select("*").order("date").order("time").execute()
+        jobs = _attach_engineer_team([models.Job(**j) for j in (jobs_res.data or [])])
+    return templates.TemplateResponse("partials/job_rows.html", {"request": request, "jobs": jobs})
 
 @router.get("/engineer-diary", response_class=HTMLResponse)
 def engineer_diary(request: Request, user: models.User = Depends(login_required)):
@@ -206,8 +353,20 @@ def engineer_diary(request: Request, user: models.User = Depends(login_required)
     query = supabase.table("jobs").select("*")
     
     # Check for engineer_contact_name matching username OR engineer_email matching user email
+    jobs_by_number = {}
     res = query.or_(f"engineer_contact_name.eq.{user.username},engineer_email.eq.{user.email}").order("date").order("time").execute()
-    jobs = [models.Job(**j) for j in res.data] if res.data else []
+    for row in res.data or []:
+        jobs_by_number[row.get("job_number")] = row
+    try:
+        assignment_res = supabase.table("job_engineers").select("job_number").eq("engineer_contact_name", user.username).execute()
+        assigned_numbers = [row["job_number"] for row in (assignment_res.data or []) if row.get("job_number")]
+        if assigned_numbers:
+            assigned_res = supabase.table("jobs").select("*").in_("job_number", assigned_numbers).execute()
+            for row in assigned_res.data or []:
+                jobs_by_number[row.get("job_number")] = row
+    except Exception as exc:
+        print(f"Warning: job_engineers lookup unavailable for user diary: {exc}")
+    jobs = _attach_engineer_team([models.Job(**j) for j in jobs_by_number.values() if j])
     
     return templates.TemplateResponse("engineer_diary.html", {
         "request": request, 
@@ -269,17 +428,37 @@ async def allocate_job(
     site_id: Optional[int] = Form(None),
     brand_name: Optional[str] = Form(None),
     engineer_name: str = Form(...),
+    contributing_engineer_names: Optional[List[str]] = Form(None),
+    supervisor_name: Optional[str] = Form(None),
     site_contact_name: Optional[str] = Form(None),
     notes: Optional[str] = Form(None),
     user: models.User = Depends(login_required)
 ):
-    print(f"JOB ALLOCATION REQUEST: date={date}, time={time}, job_type={job_type}, client={client_name}, engineer={engineer_name}")
+    supervisor_name = (supervisor_name or "").strip()
+    contributing_engineer_names = contributing_engineer_names or []
+    contributing_engineer_names = [
+        name for name in contributing_engineer_names
+        if (name or "").strip()
+        and (name or "").strip() != engineer_name
+        and (name or "").strip() != supervisor_name
+    ]
+    deduped_contributors = []
+    seen_contributors = set()
+    for name in contributing_engineer_names:
+        cleaned_name = (name or "").strip()
+        if cleaned_name and cleaned_name not in seen_contributors:
+            seen_contributors.add(cleaned_name)
+            deduped_contributors.append(cleaned_name)
+    contributing_engineer_names = deduped_contributors
+    if supervisor_name == engineer_name:
+        supervisor_name = ""
+    print(f"JOB ALLOCATION REQUEST: date={date}, time={time}, job_type={job_type}, client={client_name}, engineer={engineer_name}, contributors={contributing_engineer_names}, supervisor={supervisor_name}")
     try:
         requested_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
         print(f"Parsed datetime: {requested_dt}")
         if requested_dt < datetime.now():
             print("ERROR: Job in the past")
-            return HTMLResponse(content=f"<div class='alert alert-error font-bold'>Error: Cannot allocate a job in the past ({requested_dt.strftime('%d/%m/%Y %H:%M')})</div>", status_code=400)
+            return HTMLResponse(content=f"<div class='alert alert-error font-bold'>Error: Cannot allocate a job in the past ({requested_dt.strftime('%d/%m/%Y %H:%M')})</div>")
 
         site_name_val = None
         company_val = None
@@ -348,8 +527,7 @@ async def allocate_job(
             except Exception as e:
                 if "duplicate" in str(e).lower():
                     return HTMLResponse(
-                        content=f"<div class='alert alert-error'>Error: Job number {requested_job_number} already exists.</div>",
-                        status_code=400
+                        content=f"<div class='alert alert-error'>Error: Job number {requested_job_number} already exists.</div>"
                     )
                 raise
         else:
@@ -390,41 +568,92 @@ async def allocate_job(
         res_job = supabase.table("jobs").select("*").eq("job_number", created_job_number).execute()
         job_obj = models.Job(**res_job.data[0])
         job_obj.job_type = job_type
-        res_eng = supabase.table("engineers").select("*").eq("contact_name", engineer_name).execute()
-        eng_obj = models.Engineer(**res_eng.data[0]) if res_eng.data else None
-        wa_web_link = generate_whatsapp_link(job_obj, eng_obj, request.url.netloc)
-        wa_app_link = generate_whatsapp_app_link(job_obj, eng_obj, request.url.netloc)
+        _sync_job_engineers(created_job_number, engineer_name, contributing_engineer_names, supervisor_name)
+        assigned_engineer_names = [engineer_name] + contributing_engineer_names
+        dispatch_recipient_names = assigned_engineer_names + ([supervisor_name] if supervisor_name else [])
+        assigned_engineers = _get_engineers_by_name(dispatch_recipient_names)
+        job_obj.engineer_team = dispatch_recipient_names
+        job_obj.contributing_engineer_names = contributing_engineer_names
+        job_obj.supervisor_name = supervisor_name or None
         report_link = get_report_link(job_obj, request.url.netloc)
 
-        wa_dispatch = ""
         wa_action_html = ""
-        if wa_web_link:
-            app_js = json.dumps(wa_app_link) if wa_app_link else "null"
-            web_js = json.dumps(wa_web_link)
-            wa_action_html = f"<a class='btn btn-sm btn-success' href='{wa_web_link}' target='_blank' rel='noopener'>Open WhatsApp</a>"
-            wa_dispatch = (
-                "<script>"
-                f"const waApp = {app_js};"
-                f"const waWeb = {web_js};"
-                "if (waApp) {"
-                "  window.location.href = waApp;"
-                "  setTimeout(() => { window.open(waWeb, '_blank'); }, 1200);"
-                "} else {"
-                "  window.open(waWeb, '_blank');"
-                "}"
-                "</script>"
+        wa_links = []
+        wa_missing = []
+        found_engineer_names = {engineer.contact_name for engineer in assigned_engineers}
+        for recipient_name in dispatch_recipient_names:
+            if recipient_name not in found_engineer_names:
+                wa_missing.append(f"{recipient_name} (not found in engineers)")
+        for assigned_engineer in assigned_engineers:
+            link = generate_whatsapp_link(job_obj, assigned_engineer, request.url.netloc)
+            app_link = generate_whatsapp_app_link(job_obj, assigned_engineer, request.url.netloc)
+            if link:
+                if assigned_engineer.contact_name == engineer_name:
+                    role = "Lead"
+                elif supervisor_name and assigned_engineer.contact_name == supervisor_name:
+                    role = "Supervisor"
+                else:
+                    role = "Contributing"
+                wa_links.append({
+                    "name": assigned_engineer.contact_name,
+                    "role": role,
+                    "web": link,
+                    "app": app_link
+                })
+            else:
+                wa_missing.append(f"{assigned_engineer.contact_name} (missing or invalid phone)")
+
+        if wa_links or wa_missing:
+            wa_buttons = []
+            for index, link in enumerate(wa_links, start=1):
+                name = html.escape(link["name"])
+                role = html.escape(link["role"])
+                wa_buttons.append(
+                    "<a class='btn btn-sm btn-success justify-start' "
+                    f"href='{html.escape(link['web'])}' target='_blank' rel='noopener'>"
+                    f"{index}. WhatsApp {name} ({role})"
+                    "</a>"
+                )
+            missing_html = ""
+            if wa_missing:
+                missing_items = "".join([
+                    f"<li>{html.escape(item)}</li>"
+                    for item in wa_missing
+                ])
+                missing_html = (
+                    "<div class='alert alert-warning mt-3 text-sm'>"
+                    "<div>"
+                    "<div class='font-bold'>Some WhatsApp drafts could not be created</div>"
+                    f"<ul class='list-disc ml-4'>{missing_items}</ul>"
+                    "</div>"
+                    "</div>"
+                )
+            wa_action_html = (
+                "<div class='divider text-[10px] uppercase tracking-widest text-slate-400 font-black'>Dispatch Messages</div>"
+                "<div class='alert alert-info text-sm'>"
+                "<div>"
+                "<div class='font-bold'>WhatsApp dispatch required</div>"
+                "<div>Open each WhatsApp draft below and press send for every assigned person.</div>"
+                "</div>"
+                "</div>"
+                "<div class='mt-3 grid grid-cols-1 md:grid-cols-2 gap-2'>"
+                + "".join(wa_buttons) +
+                "</div>"
+                f"{missing_html}"
             )
 
         next_job_number = _get_next_job_number()
         print(f"SUCCESS: Job {created_job_number} allocated successfully")
+        team_label = ", ".join(assigned_engineer_names)
+        supervisor_label = f" Supervisor: {supervisor_name}." if supervisor_name else ""
         return HTMLResponse(content=(
             f"<div class='alert alert-success italic font-bold'>"
-            f"Job {created_job_number} successfully allocated & Dispatched!"
+            f"Job {created_job_number} successfully allocated to {team_label}!{supervisor_label}"
             f"</div>"
             f"<div class='mt-3 flex flex-wrap gap-2'>"
             f"<a class='btn btn-sm btn-outline btn-success' href='{report_link}' target='_blank' rel='noopener'>Open Blank Report</a>"
-            f"{wa_action_html}"
             f"</div>"
+            f"{wa_action_html}"
             f"<script>"
             f"const jobInput = document.getElementById('job-number-input');"
             f"if (jobInput) jobInput.value = '{next_job_number}';"
@@ -432,13 +661,12 @@ async def allocate_job(
             f"if (overrideToggle) overrideToggle.checked = false;"
             f"if (jobInput) jobInput.setAttribute('readonly', 'readonly');"
             f"</script>"
-            f"{wa_dispatch}"
         ))
     except Exception as e:
         print(f"ERROR: {str(e)}")
         import traceback
         print(traceback.format_exc())
-        return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}</div>", status_code=400)
+        return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}</div>")
 
 @router.post("/admin/jobs/{job_number}/archive")
 def archive_job(job_number: str, user: models.User = Depends(login_required)):

@@ -32,8 +32,22 @@
                         else '?' }}</span>
                 </div>
             </div>
-            <div class="text-xs font-bold text-slate-600">{{ job.engineer_contact_name or 'Unassigned' }}</div>
+            <div>
+                <div class="text-xs font-bold text-slate-600">{{ job.engineer_contact_name or 'Unassigned' }}</div>
+                {% if job.engineer_team and job.engineer_team|length > 1 %}
+                <div class="text-[10px] text-slate-400">Team of {{ job.engineer_team|length }}</div>
+                {% endif %}
+            </div>
         </div>
+        {% if job.engineer_team and job.engineer_team|length > 1 %}
+        <div class="mt-2 flex flex-wrap gap-1">
+            {% for engineer_name in job.engineer_team %}
+            <span class="badge badge-xs {% if engineer_name == job.engineer_contact_name %}badge-primary{% elif engineer_name == job.supervisor_name %}badge-secondary{% else %}badge-ghost{% endif %}">
+                {% if engineer_name == job.engineer_contact_name %}Lead: {% elif engineer_name == job.supervisor_name %}Supervisor: {% endif %}{{ engineer_name }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
     </td>
     <td>
         <span class="badge badge-sm font-black text-[10px] 

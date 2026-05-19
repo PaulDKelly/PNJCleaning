@@ -40,6 +40,15 @@
                     {% if job.brand %}<span class="text-primary">{{ job.brand }}</span> @ {% endif %}{{ job.client_name
                     }}
                 </h3>
+                {% if job.engineer_team and job.engineer_team|length > 1 %}
+                <div class="mb-3 flex flex-wrap gap-1">
+                    {% for engineer_name in job.engineer_team %}
+                    <span class="badge badge-xs {% if engineer_name == user.username %}badge-primary{% elif engineer_name == job.supervisor_name %}badge-secondary{% else %}badge-ghost{% endif %}">
+                        {% if engineer_name == user.username %}You{% elif engineer_name == job.supervisor_name %}Supervisor: {{ engineer_name }}{% else %}{{ engineer_name }}{% endif %}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div class="flex items-start gap-2 text-slate-500 text-sm mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 shrink-0" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">

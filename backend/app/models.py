@@ -97,6 +97,10 @@ class Job(BaseModel):
     photos: Optional[str] = None
     created_at: Optional[datetime] = None
     wa_link: Optional[str] = None # Runtime helper field
+    engineer_team: Optional[List[str]] = None # Runtime helper field
+    contributing_engineer_names: Optional[List[str]] = None # Runtime helper field
+    supervisor_name: Optional[str] = None # Runtime helper field
+    engineer_role: Optional[str] = None # Runtime helper field
 
     def model_post_init(self, __context) -> None:
         if (self.job_type in (None, "", "Extraction")) and self.notes and self.notes.startswith(CALL_OUT_MARKER):

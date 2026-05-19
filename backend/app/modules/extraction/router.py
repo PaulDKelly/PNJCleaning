@@ -40,7 +40,21 @@ def _engineer_can_access_job(engineer: Optional[models.Engineer], job_number: Op
     res = supabase.table("jobs").select("engineer_contact_name").eq("job_number", job_number).execute()
     if not res.data:
         return False
-    return (res.data[0].get("engineer_contact_name") or "") == engineer.contact_name
+    if (res.data[0].get("engineer_contact_name") or "") == engineer.contact_name:
+        return True
+    try:
+        assignment_res = (
+            supabase.table("job_engineers")
+            .select("id")
+            .eq("job_number", job_number)
+            .eq("engineer_contact_name", engineer.contact_name)
+            .limit(1)
+            .execute()
+        )
+        return bool(assignment_res.data)
+    except Exception as exc:
+        print(f"Warning: job_engineers access lookup unavailable: {exc}")
+        return False
 
 
 def _send_report_email(to_email: str, subject: str, body: str):

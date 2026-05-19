@@ -58,6 +58,15 @@
                         <p class="text-slate-500 text-sm font-medium">{{ job.site_name or 'Main Site' }}</p>
                         <p class="text-xs text-slate-400 mt-1 uppercase font-bold tracking-wider">{{ job.job_number }}
                         </p>
+                        {% if job.engineer_team and job.engineer_team|length > 1 %}
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            {% for engineer_name in job.engineer_team %}
+                            <span class="badge badge-xs {% if engineer_name == engineer.contact_name %}badge-primary{% elif engineer_name == job.supervisor_name %}badge-secondary{% else %}badge-ghost{% endif %}">
+                                {% if engineer_name == engineer.contact_name %}You{% elif engineer_name == job.supervisor_name %}Supervisor: {{ engineer_name }}{% else %}{{ engineer_name }}{% endif %}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="flex flex-col gap-2">
                         {% if job.status == 'Scheduled' %}
