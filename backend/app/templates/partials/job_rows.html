@@ -157,8 +157,8 @@
             </dialog>
             {% endif %}
             {% if job.status == 'Submitted' or job.status == 'Completed' %}
-            <a href="/admin/reports" class="btn btn-success btn-xs text-white" title="Curate Report">
-                Curate
+            <a href="/admin/reports/job/{{ job.job_number }}" class="btn btn-success btn-xs text-white" title="Curate Report">
+                Curate Report
             </a>
             <form hx-post="/admin/jobs/{{ job.job_number }}/archive"
                 hx-confirm="This will move the job to historical records. Finalize first?" hx-swap="outerHTML">

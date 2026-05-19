@@ -167,8 +167,13 @@
                             </td>
                             <td class="text-sm italic text-slate-500">{{ job.engineer_contact_name or 'Unassigned' }}</td>
                             <td class="text-right">
+                                {% if job.status == 'Submitted' or job.status == 'Completed' %}
+                                <a href="/admin/reports/job/{{ job.job_number }}"
+                                    class="btn btn-success btn-xs text-white font-bold">Curate Report</a>
+                                {% else %}
                                 <a href="/extraction-report?job_number={{ job.job_number }}"
-                                    class="btn btn-ghost btn-xs text-emerald-600 font-bold">Report</a>
+                                    class="btn btn-ghost btn-xs text-emerald-600 font-bold">Open Report</a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}

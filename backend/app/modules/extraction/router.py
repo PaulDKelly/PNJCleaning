@@ -592,6 +592,22 @@ def admin_reports(request: Request, user: models.User = Depends(role_required(["
         "reports": reports
     })
 
+
+@router.get("/admin/reports/job/{job_number}")
+def redirect_to_latest_job_report(job_number: str, user: models.User = Depends(role_required(["Admin", "Manager", "Viewer"]))):
+    res = (
+        supabase.table("extraction_reports")
+        .select("id")
+        .eq("job_number", job_number)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not res.data:
+        return RedirectResponse(url="/admin/reports", status_code=303)
+    return RedirectResponse(url=f"/admin/reports/{res.data[0]['id']}", status_code=303)
+
+
 @router.get("/admin/reports/{report_id}", response_class=HTMLResponse)
 def review_report(report_id: int, request: Request, user: models.User = Depends(login_required)):
     res = supabase.table("extraction_reports").select("*").eq("id", report_id).execute()
