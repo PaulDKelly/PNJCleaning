@@ -70,6 +70,92 @@
                 </svg>
             </a>
             {% endif %}
+            {% if job.status not in ['Submitted', 'Completed', 'Archived'] %}
+            <button type="button" class="btn btn-primary btn-xs"
+                onclick="document.getElementById('edit-job-{{ job.job_number }}').showModal()">
+                Edit
+            </button>
+            <dialog id="edit-job-{{ job.job_number }}" class="modal">
+                <div class="modal-box max-w-3xl text-left">
+                    <form method="dialog">
+                        <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4">x</button>
+                    </form>
+                    <h3 class="font-bold text-lg text-slate-800">Edit {{ job.job_number }}</h3>
+                    <p class="text-sm text-slate-500 mb-4">Update schedule, priority, notes, or assigned team before completion.</p>
+                    <form hx-post="/admin/jobs/{{ job.job_number }}/edit" hx-target="#edit-job-feedback-{{ job.job_number }}"
+                        hx-swap="innerHTML" class="space-y-4">
+                        <div id="edit-job-feedback-{{ job.job_number }}"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Date</span>
+                                <input type="date" name="date" value="{{ job.date.strftime('%Y-%m-%d') }}"
+                                    class="input input-bordered input-sm" required />
+                            </label>
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Time</span>
+                                <input type="time" name="time" value="{{ job.time.strftime('%H:%M') }}"
+                                    class="input input-bordered input-sm" required />
+                            </label>
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Priority</span>
+                                <select name="priority" class="select select-bordered select-sm">
+                                    <option value="Low" {% if job.priority == 'Low' %}selected{% endif %}>Low</option>
+                                    <option value="Medium" {% if job.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                                    <option value="High" {% if job.priority == 'High' %}selected{% endif %}>High</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Lead Engineer</span>
+                                <select name="engineer_name" class="select select-bordered select-sm" required>
+                                    {% for eng in engineers %}
+                                    <option value="{{ eng.contact_name }}" {% if eng.contact_name == job.engineer_contact_name %}selected{% endif %}>{{ eng.contact_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Supervisor</span>
+                                <select name="supervisor_name" class="select select-bordered select-sm">
+                                    <option value="">No supervisor</option>
+                                    {% for eng in engineers %}
+                                    <option value="{{ eng.contact_name }}" {% if eng.contact_name == job.supervisor_name %}selected{% endif %}>{{ eng.contact_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Contributing Engineer 1</span>
+                                <select name="contributing_engineer_names" class="select select-bordered select-sm">
+                                    <option value="">None</option>
+                                    {% for eng in engineers %}
+                                    <option value="{{ eng.contact_name }}" {% if job.contributing_engineer_names and eng.contact_name == job.contributing_engineer_names[0] %}selected{% endif %}>{{ eng.contact_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                            <label class="form-control">
+                                <span class="label-text text-xs font-bold uppercase text-slate-500">Contributing Engineer 2</span>
+                                <select name="contributing_engineer_names" class="select select-bordered select-sm">
+                                    <option value="">None</option>
+                                    {% for eng in engineers %}
+                                    <option value="{{ eng.contact_name }}" {% if job.contributing_engineer_names and job.contributing_engineer_names|length > 1 and eng.contact_name == job.contributing_engineer_names[1] %}selected{% endif %}>{{ eng.contact_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                        </div>
+                        <label class="form-control">
+                            <span class="label-text text-xs font-bold uppercase text-slate-500">Notes</span>
+                            <textarea name="notes" class="textarea textarea-bordered h-24">{{ job.notes or '' }}</textarea>
+                        </label>
+                        <div class="modal-action">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+                <form method="dialog" class="modal-backdrop">
+                    <button>close</button>
+                </form>
+            </dialog>
+            {% endif %}
             {% if job.status == 'Submitted' or job.status == 'Completed' %}
             <a href="/admin/reports" class="btn btn-success btn-xs text-white" title="Curate Report">
                 Curate
@@ -78,7 +164,7 @@
                 hx-confirm="This will move the job to historical records. Finalize first?" hx-swap="outerHTML">
                 <button type="submit"
                     class="btn btn-ghost btn-xs text-slate-400 hover:text-indigo-600 border border-slate-200">
-                    Done & Archive
+                    Archive
                 </button>
             </form>
             {% else %}

@@ -145,6 +145,76 @@ def _get_engineers_by_name(names: List[str]):
     return [by_name[name] for name in cleaned_names if name in by_name]
 
 
+def _normalise_assignment_names(
+    lead_engineer: str,
+    contributing_engineers: Optional[List[str]] = None,
+    supervisor_name: Optional[str] = None
+):
+    lead_engineer = (lead_engineer or "").strip()
+    supervisor_name = (supervisor_name or "").strip()
+    if supervisor_name == lead_engineer:
+        supervisor_name = ""
+
+    contributors = []
+    seen = {lead_engineer} if lead_engineer else set()
+    if supervisor_name:
+        seen.add(supervisor_name)
+
+    for name in contributing_engineers or []:
+        cleaned_name = (name or "").strip()
+        if cleaned_name and cleaned_name not in seen:
+            seen.add(cleaned_name)
+            contributors.append(cleaned_name)
+
+    assigned_names = [lead_engineer] + contributors + ([supervisor_name] if supervisor_name else [])
+    return lead_engineer, contributors, supervisor_name, [name for name in assigned_names if name]
+
+
+def _get_slot_conflicts(date: str, time: str, engineer_names: List[str], exclude_job_number: Optional[str] = None):
+    engineer_names = [name for name in dict.fromkeys([name for name in engineer_names if name])]
+    if not date or not time or not engineer_names:
+        return []
+
+    jobs_res = (
+        supabase.table("jobs")
+        .select("*")
+        .eq("date", date)
+        .eq("time", time)
+        .neq("status", "Archived")
+        .execute()
+    )
+    jobs = [models.Job(**row) for row in (jobs_res.data or []) if row.get("job_number") != exclude_job_number]
+    jobs = _attach_engineer_team(jobs)
+
+    conflicts = []
+    wanted = set(engineer_names)
+    for job in jobs:
+        assigned = set(job.engineer_team or ([job.engineer_contact_name] if job.engineer_contact_name else []))
+        overlapping = sorted(wanted.intersection(assigned))
+        if overlapping:
+            conflicts.append({
+                "job_number": job.job_number,
+                "client_name": job.client_name,
+                "engineers": overlapping
+            })
+    return conflicts
+
+
+def _format_slot_conflict(conflicts):
+    items = "".join([
+        f"<li>{html.escape(', '.join(conflict['engineers']))} already has {html.escape(conflict['job_number'])} ({html.escape(conflict['client_name'] or 'Unknown client')})</li>"
+        for conflict in conflicts
+    ])
+    return (
+        "<div class='alert alert-error text-sm'>"
+        "<div>"
+        "<div class='font-bold'>Engineer time slot clash</div>"
+        f"<ul class='list-disc ml-4'>{items}</ul>"
+        "</div>"
+        "</div>"
+    )
+
+
 def _get_next_job_number() -> str:
     """Generate the first available PNJ number (fills gaps, starts at pnj0001)."""
     res = supabase.table("jobs").select("job_number").execute()
@@ -338,12 +408,14 @@ def management_dashboard(request: Request, user: models.User = Depends(role_requ
 
 @router.get("/admin/jobs/filter", response_class=HTMLResponse)
 def filter_admin_jobs(request: Request, engineer_name: str = "", user: models.User = Depends(login_required)):
+    engineers_res = supabase.table("engineers").select("*").order("contact_name").execute()
+    engineers = [models.Engineer(**e) for e in (engineers_res.data or [])]
     if engineer_name:
         jobs = _get_jobs_for_engineer(engineer_name)
     else:
         jobs_res = supabase.table("jobs").select("*").order("date").order("time").execute()
         jobs = _attach_engineer_team([models.Job(**j) for j in (jobs_res.data or [])])
-    return templates.TemplateResponse("partials/job_rows.html", {"request": request, "jobs": jobs})
+    return templates.TemplateResponse("partials/job_rows.html", {"request": request, "jobs": jobs, "engineers": engineers})
 
 @router.get("/engineer-diary", response_class=HTMLResponse)
 def engineer_diary(request: Request, user: models.User = Depends(login_required)):
@@ -434,24 +506,11 @@ async def allocate_job(
     notes: Optional[str] = Form(None),
     user: models.User = Depends(login_required)
 ):
-    supervisor_name = (supervisor_name or "").strip()
-    contributing_engineer_names = contributing_engineer_names or []
-    contributing_engineer_names = [
-        name for name in contributing_engineer_names
-        if (name or "").strip()
-        and (name or "").strip() != engineer_name
-        and (name or "").strip() != supervisor_name
-    ]
-    deduped_contributors = []
-    seen_contributors = set()
-    for name in contributing_engineer_names:
-        cleaned_name = (name or "").strip()
-        if cleaned_name and cleaned_name not in seen_contributors:
-            seen_contributors.add(cleaned_name)
-            deduped_contributors.append(cleaned_name)
-    contributing_engineer_names = deduped_contributors
-    if supervisor_name == engineer_name:
-        supervisor_name = ""
+    engineer_name, contributing_engineer_names, supervisor_name, allocation_names = _normalise_assignment_names(
+        engineer_name,
+        contributing_engineer_names,
+        supervisor_name
+    )
     print(f"JOB ALLOCATION REQUEST: date={date}, time={time}, job_type={job_type}, client={client_name}, engineer={engineer_name}, contributors={contributing_engineer_names}, supervisor={supervisor_name}")
     try:
         requested_dt = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
@@ -459,6 +518,10 @@ async def allocate_job(
         if requested_dt < datetime.now():
             print("ERROR: Job in the past")
             return HTMLResponse(content=f"<div class='alert alert-error font-bold'>Error: Cannot allocate a job in the past ({requested_dt.strftime('%d/%m/%Y %H:%M')})</div>")
+
+        conflicts = _get_slot_conflicts(date, time, allocation_names)
+        if conflicts:
+            return HTMLResponse(content=_format_slot_conflict(conflicts))
 
         site_name_val = None
         company_val = None
@@ -668,8 +731,59 @@ async def allocate_job(
         print(traceback.format_exc())
         return HTMLResponse(content=f"<div class='alert alert-error'>Error: {str(e)}</div>")
 
+
+@router.post("/admin/jobs/{job_number}/edit", response_class=HTMLResponse)
+async def edit_job(job_number: str, request: Request, user: models.User = Depends(role_required(["Admin", "Manager"]))):
+    form_data = await request.form()
+    job_res = supabase.table("jobs").select("*").eq("job_number", job_number).execute()
+    if not job_res.data:
+        return HTMLResponse("<div class='alert alert-error text-sm'>Job not found.</div>")
+
+    existing_job = models.Job(**job_res.data[0])
+    if existing_job.status in {"Submitted", "Completed", "Archived"}:
+        return HTMLResponse("<div class='alert alert-error text-sm'>Submitted, completed, or archived jobs cannot be edited here.</div>")
+
+    date = form_data.get("date")
+    time = form_data.get("time")
+    priority = form_data.get("priority") or existing_job.priority
+    engineer_name = form_data.get("engineer_name") or existing_job.engineer_contact_name
+    contributing_engineer_names = form_data.getlist("contributing_engineer_names")
+    supervisor_name = form_data.get("supervisor_name")
+    notes = form_data.get("notes")
+
+    engineer_name, contributing_engineer_names, supervisor_name, allocation_names = _normalise_assignment_names(
+        engineer_name,
+        contributing_engineer_names,
+        supervisor_name
+    )
+
+    conflicts = _get_slot_conflicts(date, time, allocation_names, exclude_job_number=job_number)
+    if conflicts:
+        return HTMLResponse(content=_format_slot_conflict(conflicts))
+
+    supabase.table("jobs").update({
+        "date": date,
+        "time": time,
+        "priority": priority,
+        "engineer_contact_name": engineer_name,
+        "notes": notes
+    }).eq("job_number", job_number).execute()
+    _sync_job_engineers(job_number, engineer_name, contributing_engineer_names, supervisor_name)
+
+    return HTMLResponse(
+        "<div class='alert alert-success text-sm font-bold'>Job updated.</div>"
+        "<script>"
+        "setTimeout(() => {"
+        "  htmx.ajax('GET', '/admin/jobs/filter', { target: '#job-rows' });"
+        "  const dialog = document.currentScript?.closest('dialog');"
+        "  if (dialog) dialog.close();"
+        "}, 500);"
+        "</script>"
+    )
+
+
 @router.post("/admin/jobs/{job_number}/archive")
-def archive_job(job_number: str, user: models.User = Depends(login_required)):
+def archive_job(job_number: str, user: models.User = Depends(role_required(["Admin", "Manager"]))):
     supabase.table("jobs").update({"status": "Archived"}).eq("job_number", job_number).execute()
     return HTMLResponse(content="<span class='badge badge-ghost font-bold italic'>Archived</span>")
 
